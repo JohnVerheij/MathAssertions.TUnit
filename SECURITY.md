@@ -105,7 +105,7 @@ Both attestations are signed via [Sigstore](https://www.sigstore.dev/) keyless s
 | Build to SBOM (sibling) | CycloneDX dotnet tool + `actions/attest-sbom@v2` | CycloneDX 1.6 + Sigstore signature |
 | Build to vulnerability disclosure | VEX (Vulnerability Exploitability eXchange) | [OpenVEX v0.2.0](https://github.com/openvex/spec) sibling release artifact |
 | Artifact to nuget.org | NuGet OIDC Trusted Publishing | (n/a) |
-| Git commits + tags | SSH-signed via 1Password | (n/a) |
+| Git commits + tags | SSH-signed | (n/a) |
 
 This stack matches what most CRA-bound EU Manufacturers will be required to ship from December 2027. Personal-OSS distributed outside the course of commercial activity is excluded from CRA scope; shipping the stack anyway is a hygiene choice.
 
