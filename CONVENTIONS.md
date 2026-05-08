@@ -5,7 +5,7 @@ Rules for how code is written across the assertion family (`LogAssertions.TUnit`
 file is copied identically into each repo.
 
 **Document version:** v0.2 (2026-05-07). Changes from v0.1: codified the family rule against
-promoting Verify; added polling-loop default-calibration agreement; added `ToSnapshotString()`
+promoting Verify; added polling-loop default-schedule agreement; added `ToSnapshotString()`
 format-version header rule; added test-projects-only scope blockquote as a binding
 cross-repo convention; codified TFM policy (LTS-anchored; multi-target during STS support
 windows); expanded the `CancellationToken` plumbing rule with provider-driven polling-sleep
@@ -44,7 +44,7 @@ For polling, looping, or internal-timeout APIs, the additional rules are:
   for the next sleep to surface cancellation.
 - For sleep / delay between iterations, use `Task.Delay(interval, ct)` for cancellation
   cleanup. When a `TimeProvider?` is supplied non-null on the API, see the polling-loop
-  default-calibration section below for the provider-driven variant.
+  default-schedule section below for the provider-driven variant.
 - For internal-timeout APIs (e.g. `WithinHardTimeBudget(TimeSpan)`), create the internal
   `CancellationTokenSource(timeout)` and link it with the supplied external CT via
   `CancellationTokenSource.CreateLinkedTokenSource(externalCt, internalCts.Token)`. Either
@@ -61,12 +61,12 @@ the optional parameter and the assertion uses `timeProvider.GetTimestamp()` /
 `TimeAssertions.TUnit` is the canonical implementation of this convention. Every sibling
 package's timing-related API accepts `TimeProvider` independently; no shared dependency.
 
-## Polling-loop default-calibration agreement
+## Polling-loop default-schedule agreement
 
 `LogAssertions.WithinTimeout` and `TimeAssertions.Eventually` (and any future polling
 terminator across the family) follow an explicit, fully-pinned schedule. Each package
 implements independently (the family rule forbids cross-package code reference); the
-convention pins the calibration so consumers see uniform behaviour without literal code
+convention pins the schedule so consumers see uniform behaviour without literal code
 sharing.
 
 **Schedule.** Exponential schedule: 100ms, 200ms, 400ms, 800ms, then 1000ms cap. Escalates
