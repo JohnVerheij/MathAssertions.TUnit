@@ -658,6 +658,33 @@ internal sealed class MathToleranceTests
     }
 
     [Test]
+    public async Task IsApproximatelyEqual_Vector4_FirstComponentOutsideTolerance_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = new Vector4(1, 2, 3, 4);
+        var b = new Vector4(99, 2, 3, 4);
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, 0.001)).IsFalse();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_Vector4_SecondComponentOutsideTolerance_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = new Vector4(1, 2, 3, 4);
+        var b = new Vector4(1, 99, 3, 4);
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, 0.001)).IsFalse();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_Vector4_ThirdComponentOutsideTolerance_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = new Vector4(1, 2, 3, 4);
+        var b = new Vector4(1, 2, 99, 4);
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, 0.001)).IsFalse();
+    }
+
+    [Test]
     public async Task IsApproximatelyEqual_Vector4_LastComponentOutsideTolerance_False(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
