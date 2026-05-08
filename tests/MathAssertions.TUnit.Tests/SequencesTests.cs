@@ -237,6 +237,17 @@ internal sealed class SequencesTests
             .Throws<ArgumentOutOfRangeException>();
     }
 
+    [Test]
+    public async Task IsBounded_NaNMax_ThrowsEvenOnEmptySpan(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // Symmetric to the NaN-min variant; pins both validation legs against
+        // ordering regressions that might let one fire after the loop while the other
+        // fires before it.
+        await Assert.That(() => Sequences.IsBounded(ReadOnlySpan<double>.Empty, 0.0, double.NaN))
+            .Throws<ArgumentOutOfRangeException>();
+    }
+
     // ----- IsArithmeticProgression -----
 
     [Test]
@@ -400,6 +411,17 @@ internal sealed class SequencesTests
             ReadOnlySpan<double> values = [1.0];
             return Sequences.ConvergesTo(values, 1.0, -1e-6);
         }).Throws<ArgumentOutOfRangeException>();
+    }
+
+    [Test]
+    public async Task ConvergesTo_NegativeTolerance_ThrowsEvenOnEmptySpan(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // Pins "tolerance is validated before the empty-span early-return." Without the
+        // ordering, an empty span with an invalid tolerance would silently return false
+        // and the caller would never see the validation failure.
+        await Assert.That(() => Sequences.ConvergesTo(ReadOnlySpan<double>.Empty, 1.0, -1e-6))
+            .Throws<ArgumentOutOfRangeException>();
     }
 
     // ----- IsCauchyConvergent -----
