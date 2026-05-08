@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (`MathAssertions`, framework-agnostic core) — 0.1.0 Cluster 4: statistical-property checks
+
+New static class `MathAssertions.Statistics`:
+
+- `Statistics.MeanAndVariance(ReadOnlySpan<double>)`: returns the sample mean and unbiased sample variance (`N-1` denominator) in a single numerically stable pass via Welford's online algorithm (Knuth, *The Art of Computer Programming Vol. 2*, §4.2.2). Empty spans yield `(NaN, NaN)`; single-element spans yield `(value, 0)`.
+- `Statistics.HasMeanApproximately`, `HasVarianceApproximately`, `HasStdDevApproximately`, `HasSumApproximately`: tolerance-aware checks of the corresponding moment against an expected value. Variance and standard deviation require at least two observations; the sum of an empty sample is zero by convention.
+- `Statistics.HasMedianApproximately`: tolerance-aware median check; for even-length samples the median is the mean of the two middle values after sorting. Sorts a copy of the input so callers do not observe a side effect on the original span.
+- `Statistics.HasPercentileApproximately`: tolerance-aware percentile check using linear interpolation between adjacent ranks per the NIST/SEMATECH e-Handbook of Statistical Methods §1.3.5.6. Validates the percentile is in `[0, 100]` and not NaN.
+- `Statistics.IsWithinSigmasOfMean(value, sample, sigmas)`: returns `true` when the value lies within the requested number of standard deviations of the sample's mean.
+- `Statistics.AreAllWithinSigmasOfMean(values, sigmas)`: returns `true` when every value lies within the requested sigma envelope of the sample's own mean. Computes mean and standard deviation once and reuses them across all element checks (O(N), not the O(N^2) shape that per-element delegation would produce).
+
+All tolerance- and sigma-taking methods validate the bound up front so an invalid input throws even when the early-return path would otherwise skip the inner `MathTolerance` call. Same family-wide validation-order pattern that `MathAssertions.Sequences.ConvergesTo` and `IsBounded` enforce.
+
 ### Added (`MathAssertions`, framework-agnostic core) — 0.1.0 Cluster 3: sequence-property checks
 
 New static class `MathAssertions.Sequences` for `ReadOnlySpan<double>` (and the two length predicates for any element type):

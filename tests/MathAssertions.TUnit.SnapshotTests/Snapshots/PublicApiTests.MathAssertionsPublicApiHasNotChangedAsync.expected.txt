@@ -46,4 +46,19 @@ namespace MathAssertions
         public static bool IsStrictlyMonotonicallyDecreasing(System.ReadOnlySpan<double> values) { }
         public static bool IsStrictlyMonotonicallyIncreasing(System.ReadOnlySpan<double> values) { }
     }
+    public static class Statistics
+    {
+        public static bool AreAllWithinSigmasOfMean(System.ReadOnlySpan<double> values, double sigmas) { }
+        public static bool HasMeanApproximately(System.ReadOnlySpan<double> values, double expected, double tolerance) { }
+        public static bool HasMedianApproximately(System.ReadOnlySpan<double> values, double expected, double tolerance) { }
+        public static bool HasPercentileApproximately(System.ReadOnlySpan<double> values, double percentile, double expected, double tolerance) { }
+        public static bool HasStdDevApproximately(System.ReadOnlySpan<double> values, double expected, double tolerance) { }
+        public static bool HasSumApproximately(System.ReadOnlySpan<double> values, double expected, double tolerance) { }
+        public static bool HasVarianceApproximately(System.ReadOnlySpan<double> values, double expected, double tolerance) { }
+        public static bool IsWithinSigmasOfMean(double value, System.ReadOnlySpan<double> sample, double sigmas) { }
+        [return: System.Runtime.CompilerServices.TupleElementNames(new string[] {
+                "Mean",
+                "Variance"})]
+        public static System.ValueTuple<double, double> MeanAndVariance(System.ReadOnlySpan<double> values) { }
+    }
 }
