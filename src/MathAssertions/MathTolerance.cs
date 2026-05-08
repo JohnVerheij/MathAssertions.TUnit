@@ -1,5 +1,6 @@
 using System;
 using System.Numerics;
+using System.Numerics.Tensors;
 
 namespace MathAssertions;
 
@@ -18,9 +19,15 @@ namespace MathAssertions;
 /// 0.1.0 Cluster 1 covers the tolerance primitives: NaN- and infinity-aware absolute
 /// comparison for <see cref="double"/>/<see cref="float"/>, ULP-distance equality,
 /// combined relative+absolute tolerance, finiteness predicates, probability/percentage
-/// range checks, and an invertible-transformation roundtrip-identity helper. Compound
-/// types (Vector2/4, Quaternion + rotational equivalence, Matrix4x4, Plane + geometric
-/// equivalence, Complex, span overloads) ship across Clusters 2-7 of the 0.1.0 plan.
+/// range checks, and an invertible-transformation roundtrip-identity helper. 0.1.0
+/// Cluster 2 adds <see cref="System.Numerics"/> compounds: <see cref="Vector2"/>,
+/// <see cref="Vector3"/>, <see cref="Vector4"/>, <see cref="Quaternion"/> (component-wise
+/// plus rotational equivalence), <see cref="Matrix4x4"/>, <see cref="Plane"/>
+/// (component-wise plus geometric equivalence under the <c>(n, d) = (-n, -d)</c>
+/// sign-flip symmetry), <see cref="Complex"/>, <see cref="ReadOnlySpan{T}"/> for
+/// <see cref="double"/> and <see cref="float"/>, and a generic
+/// <see cref="ReadOnlyTensorSpan{T}"/> overload for any
+/// <see cref="System.Numerics.INumber{TSelf}"/>.
 /// </para>
 /// </remarks>
 public static class MathTolerance
@@ -84,6 +91,28 @@ public static class MathTolerance
     }
 
     /// <summary>
+    /// Component-wise tolerance comparison for two <see cref="Vector2"/> values.
+    /// Components widen to <see cref="double"/> before comparing against the
+    /// caller's <c>double</c> tolerance; see the <see cref="Vector3"/> overload
+    /// for the full precision-preservation rationale.
+    /// </summary>
+    /// <param name="a">First vector.</param>
+    /// <param name="b">Second vector.</param>
+    /// <param name="tolerance">Maximum allowed absolute difference per component.</param>
+    /// <returns>
+    /// <see langword="true"/> if every component is approximately equal under
+    /// <see cref="IsApproximatelyEqual(double, double, double)"/> semantics.
+    /// </returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
+    public static bool IsApproximatelyEqual(Vector2 a, Vector2 b, double tolerance)
+    {
+        ValidateTolerance(tolerance);
+
+        return IsApproximatelyEqual((double)a.X, (double)b.X, tolerance)
+            && IsApproximatelyEqual((double)a.Y, (double)b.Y, tolerance);
+    }
+
+    /// <summary>
     /// Component-wise tolerance comparison for two <see cref="Vector3"/> values.
     /// </summary>
     /// <remarks>
@@ -108,6 +137,227 @@ public static class MathTolerance
         return IsApproximatelyEqual((double)a.X, (double)b.X, tolerance)
             && IsApproximatelyEqual((double)a.Y, (double)b.Y, tolerance)
             && IsApproximatelyEqual((double)a.Z, (double)b.Z, tolerance);
+    }
+
+    /// <summary>
+    /// Component-wise tolerance comparison for two <see cref="Vector4"/> values. Components
+    /// widen to <see cref="double"/> before comparing against the caller's <c>double</c>
+    /// tolerance; see the <see cref="Vector3"/> overload for the full precision-preservation
+    /// rationale.
+    /// </summary>
+    /// <param name="a">First vector.</param>
+    /// <param name="b">Second vector.</param>
+    /// <param name="tolerance">Maximum allowed absolute difference per component.</param>
+    /// <returns>
+    /// <see langword="true"/> if every component is approximately equal under
+    /// <see cref="IsApproximatelyEqual(double, double, double)"/> semantics.
+    /// </returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
+    public static bool IsApproximatelyEqual(Vector4 a, Vector4 b, double tolerance)
+    {
+        ValidateTolerance(tolerance);
+
+        return IsApproximatelyEqual((double)a.X, (double)b.X, tolerance)
+            && IsApproximatelyEqual((double)a.Y, (double)b.Y, tolerance)
+            && IsApproximatelyEqual((double)a.Z, (double)b.Z, tolerance)
+            && IsApproximatelyEqual((double)a.W, (double)b.W, tolerance);
+    }
+
+    /// <summary>
+    /// Component-wise tolerance comparison for two <see cref="Quaternion"/> values across
+    /// X, Y, Z, W. Distinguishes the quaternion <c>q</c> from <c>-q</c>; for rotational
+    /// equivalence (where <c>q</c> and <c>-q</c> represent the same rotation), use
+    /// <see cref="IsRotationallyEquivalent(Quaternion, Quaternion, double)"/> instead.
+    /// </summary>
+    /// <param name="a">First quaternion.</param>
+    /// <param name="b">Second quaternion.</param>
+    /// <param name="tolerance">Maximum allowed absolute difference per component.</param>
+    /// <returns><see langword="true"/> if every component is approximately equal.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
+    public static bool IsApproximatelyEqual(Quaternion a, Quaternion b, double tolerance)
+    {
+        ValidateTolerance(tolerance);
+
+        return IsApproximatelyEqual((double)a.X, (double)b.X, tolerance)
+            && IsApproximatelyEqual((double)a.Y, (double)b.Y, tolerance)
+            && IsApproximatelyEqual((double)a.Z, (double)b.Z, tolerance)
+            && IsApproximatelyEqual((double)a.W, (double)b.W, tolerance);
+    }
+
+    /// <summary>
+    /// Element-wise tolerance comparison for two <see cref="Matrix4x4"/> values across all
+    /// sixteen elements. Elements widen to <see cref="double"/> before comparing against
+    /// the caller's <c>double</c> tolerance.
+    /// </summary>
+    /// <param name="a">First matrix.</param>
+    /// <param name="b">Second matrix.</param>
+    /// <param name="tolerance">Maximum allowed absolute difference per element.</param>
+    /// <returns><see langword="true"/> if every element is approximately equal.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
+    public static bool IsApproximatelyEqual(Matrix4x4 a, Matrix4x4 b, double tolerance)
+    {
+        ValidateTolerance(tolerance);
+
+        for (var row = 0; row < 4; row++)
+        {
+            for (var col = 0; col < 4; col++)
+            {
+                if (!IsApproximatelyEqual((double)a[row, col], (double)b[row, col], tolerance))
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Component-wise tolerance comparison for two <see cref="Plane"/> values across
+    /// <see cref="Plane.Normal"/> and <see cref="Plane.D"/>. Distinguishes a plane from
+    /// its sign-flipped representation; for geometric equivalence (where <c>(n, d)</c>
+    /// and <c>(-n, -d)</c> describe the same point set), use
+    /// <see cref="IsGeometricallyEquivalent(Plane, Plane, double)"/> instead.
+    /// </summary>
+    /// <param name="a">First plane.</param>
+    /// <param name="b">Second plane.</param>
+    /// <param name="tolerance">Maximum allowed absolute difference per component.</param>
+    /// <returns><see langword="true"/> if every component is approximately equal.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
+    public static bool IsApproximatelyEqual(Plane a, Plane b, double tolerance)
+    {
+        ValidateTolerance(tolerance);
+
+        return IsApproximatelyEqual(a.Normal, b.Normal, tolerance)
+            && IsApproximatelyEqual((double)a.D, (double)b.D, tolerance);
+    }
+
+    /// <summary>
+    /// Component-wise tolerance comparison for two <see cref="Complex"/> values across
+    /// real and imaginary parts.
+    /// </summary>
+    /// <param name="a">First complex number.</param>
+    /// <param name="b">Second complex number.</param>
+    /// <param name="tolerance">Maximum allowed absolute difference per component.</param>
+    /// <returns><see langword="true"/> if both real and imaginary parts are approximately equal.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
+    public static bool IsApproximatelyEqual(Complex a, Complex b, double tolerance)
+    {
+        ValidateTolerance(tolerance);
+
+        return IsApproximatelyEqual(a.Real, b.Real, tolerance)
+            && IsApproximatelyEqual(a.Imaginary, b.Imaginary, tolerance);
+    }
+
+    /// <summary>
+    /// Element-wise tolerance comparison for two <see cref="double"/> spans. A length
+    /// mismatch returns <see langword="false"/> rather than throwing; explicit length
+    /// validation belongs at higher layers (for example the array-overload extensions in
+    /// the TUnit adapter, which throw on null inputs and surface length-mismatch as a
+    /// dedicated assertion failure).
+    /// </summary>
+    /// <param name="a">First span.</param>
+    /// <param name="b">Second span.</param>
+    /// <param name="tolerance">Maximum allowed absolute difference per element.</param>
+    /// <returns><see langword="true"/> if both spans have the same length and every
+    /// element pair is approximately equal.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
+    public static bool IsApproximatelyEqual(ReadOnlySpan<double> a, ReadOnlySpan<double> b, double tolerance)
+    {
+        ValidateTolerance(tolerance);
+
+        if (a.Length != b.Length)
+            return false;
+        for (var i = 0; i < a.Length; i++)
+        {
+            if (!IsApproximatelyEqual(a[i], b[i], tolerance))
+                return false;
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Element-wise tolerance comparison for two <see cref="float"/> spans. See the
+    /// <see cref="double"/> span overload for length-mismatch semantics.
+    /// </summary>
+    /// <param name="a">First span.</param>
+    /// <param name="b">Second span.</param>
+    /// <param name="tolerance">Maximum allowed absolute difference per element.</param>
+    /// <returns><see langword="true"/> if both spans have the same length and every
+    /// element pair is approximately equal.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
+    public static bool IsApproximatelyEqual(ReadOnlySpan<float> a, ReadOnlySpan<float> b, float tolerance)
+    {
+        ValidateTolerance(tolerance);
+
+        if (a.Length != b.Length)
+            return false;
+        for (var i = 0; i < a.Length; i++)
+        {
+            if (!IsApproximatelyEqual(a[i], b[i], tolerance))
+                return false;
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Element-wise tolerance comparison for two <see cref="ReadOnlyTensorSpan{T}"/>
+    /// values for any <see cref="INumber{TSelf}"/>. Shape mismatch (different rank or
+    /// different per-dimension length) returns <see langword="false"/>; only when both
+    /// shapes match are the elements iterated and compared.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// NaN handling matches the floating-point scalar overloads: both NaN at the same
+    /// position counts as equal; one NaN counts as unequal. For integer <typeparamref name="T"/>
+    /// the NaN branches are unreachable because <see cref="INumberBase{T}.IsNaN(T)"/>
+    /// returns <see langword="false"/> for non-floating-point representations.
+    /// </para>
+    /// <para>
+    /// Iteration uses the tensor span's own enumerator so strided (non-dense) shapes
+    /// produced by tensor slicing work correctly.
+    /// </para>
+    /// </remarks>
+    /// <typeparam name="T">Element type, any <see cref="INumber{TSelf}"/>.</typeparam>
+    /// <param name="a">First tensor span.</param>
+    /// <param name="b">Second tensor span.</param>
+    /// <param name="tolerance">Maximum allowed absolute difference per element. Must be
+    /// non-negative and not NaN.</param>
+    /// <returns><see langword="true"/> when shapes match and every element pair is
+    /// approximately equal.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
+    public static bool IsApproximatelyEqual<T>(
+        ReadOnlyTensorSpan<T> a,
+        ReadOnlyTensorSpan<T> b,
+        T tolerance)
+        where T : INumber<T>
+    {
+        if (T.IsNaN(tolerance))
+            throw new ArgumentOutOfRangeException(nameof(tolerance), "Tolerance cannot be NaN.");
+        if (tolerance < T.Zero)
+            throw new ArgumentOutOfRangeException(nameof(tolerance), "Tolerance cannot be negative.");
+
+        var aLengths = a.Lengths;
+        var bLengths = b.Lengths;
+        if (aLengths.Length != bLengths.Length)
+            return false;
+        for (var i = 0; i < aLengths.Length; i++)
+        {
+            if (aLengths[i] != bLengths[i])
+                return false;
+        }
+
+        var ae = a.GetEnumerator();
+        var be = b.GetEnumerator();
+        while (ae.MoveNext() && be.MoveNext())
+        {
+            var av = ae.Current;
+            var bv = be.Current;
+            if (T.IsNaN(av) && T.IsNaN(bv))
+                continue;
+            if (T.IsNaN(av) || T.IsNaN(bv))
+                return false;
+            if (T.Abs(av - bv) > tolerance)
+                return false;
+        }
+        return true;
     }
 
     /// <summary>
@@ -332,6 +582,62 @@ public static class MathTolerance
 
         var roundtripped = inverse(forward(x));
         return IsApproximatelyEqual(x, roundtripped, tolerance);
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> when two quaternions represent the same rotation
+    /// within tolerance, treating <c>q</c> and <c>-q</c> as equivalent (the well-known
+    /// double-cover of <c>SO(3)</c>).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Implementation normalizes both inputs first so non-unit quaternions still produce
+    /// the correct verdict; the dot-product test
+    /// <c>|q1 . q2| &gt;= 1 - tolerance</c> identifies the same-rotation condition robustly.
+    /// </para>
+    /// <para>
+    /// Reference: Hanson, <i>Visualizing Quaternions</i>, §4.6.
+    /// </para>
+    /// </remarks>
+    /// <param name="a">First quaternion.</param>
+    /// <param name="b">Second quaternion.</param>
+    /// <param name="tolerance">Maximum allowed deviation of <c>|dot|</c> from <c>1</c>.
+    /// Must be non-negative and not NaN.</param>
+    /// <returns><see langword="true"/> if the two quaternions encode the same rotation
+    /// within the requested tolerance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
+    public static bool IsRotationallyEquivalent(Quaternion a, Quaternion b, double tolerance)
+    {
+        ValidateTolerance(tolerance);
+
+        var aNormalized = Quaternion.Normalize(a);
+        var bNormalized = Quaternion.Normalize(b);
+        var dot = Math.Abs((double)Quaternion.Dot(aNormalized, bNormalized));
+        return dot >= 1.0 - tolerance;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> when two planes describe the same set of points in
+    /// 3-space within tolerance. A plane <c>(n, d)</c> and its sign-flipped counterpart
+    /// <c>(-n, -d)</c> describe the same geometric plane; this method treats them as
+    /// equivalent, while <see cref="IsApproximatelyEqual(Plane, Plane, double)"/> does not.
+    /// </summary>
+    /// <param name="a">First plane.</param>
+    /// <param name="b">Second plane.</param>
+    /// <param name="tolerance">Maximum allowed absolute difference per component for either
+    /// the matching or the flipped representation. Must be non-negative and not NaN.</param>
+    /// <returns><see langword="true"/> if the two planes describe the same point set
+    /// within the requested tolerance under either sign convention.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
+    public static bool IsGeometricallyEquivalent(Plane a, Plane b, double tolerance)
+    {
+        ValidateTolerance(tolerance);
+
+        if (IsApproximatelyEqual(a, b, tolerance))
+            return true;
+
+        var flipped = new Plane(-b.Normal, -b.D);
+        return IsApproximatelyEqual(a, flipped, tolerance);
     }
 
     private static void ValidateTolerance(double tolerance, string paramName = "tolerance")

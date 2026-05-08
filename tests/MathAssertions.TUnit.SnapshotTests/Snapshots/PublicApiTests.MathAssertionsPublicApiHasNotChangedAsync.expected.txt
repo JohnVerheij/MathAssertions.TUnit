@@ -7,16 +7,28 @@ namespace MathAssertions
     public static class MathTolerance
     {
         public static bool HasRoundtripIdentity(double x, System.Func<double, double> forward, System.Func<double, double> inverse, double tolerance) { }
+        public static bool IsApproximatelyEqual(System.Numerics.Complex a, System.Numerics.Complex b, double tolerance) { }
+        public static bool IsApproximatelyEqual(System.Numerics.Matrix4x4 a, System.Numerics.Matrix4x4 b, double tolerance) { }
+        public static bool IsApproximatelyEqual(System.Numerics.Plane a, System.Numerics.Plane b, double tolerance) { }
+        public static bool IsApproximatelyEqual(System.Numerics.Quaternion a, System.Numerics.Quaternion b, double tolerance) { }
+        public static bool IsApproximatelyEqual(System.Numerics.Vector2 a, System.Numerics.Vector2 b, double tolerance) { }
         public static bool IsApproximatelyEqual(System.Numerics.Vector3 a, System.Numerics.Vector3 b, double tolerance) { }
+        public static bool IsApproximatelyEqual(System.Numerics.Vector4 a, System.Numerics.Vector4 b, double tolerance) { }
+        public static bool IsApproximatelyEqual(System.ReadOnlySpan<double> a, System.ReadOnlySpan<double> b, double tolerance) { }
+        public static bool IsApproximatelyEqual(System.ReadOnlySpan<float> a, System.ReadOnlySpan<float> b, float tolerance) { }
         public static bool IsApproximatelyEqual(double a, double b, double tolerance) { }
         public static bool IsApproximatelyEqual(float a, float b, float tolerance) { }
+        public static bool IsApproximatelyEqual<T>(System.Numerics.Tensors.ReadOnlyTensorSpan<T> a, System.Numerics.Tensors.ReadOnlyTensorSpan<T> b, T tolerance)
+            where T : System.Numerics.INumber<T> { }
         public static bool IsCloseInUlps(double a, double b, long ulpDistance) { }
         public static bool IsCloseInUlps(float a, float b, int ulpDistance) { }
         public static bool IsFinite(double v) { }
         public static bool IsFinite(float v) { }
+        public static bool IsGeometricallyEquivalent(System.Numerics.Plane a, System.Numerics.Plane b, double tolerance) { }
         public static bool IsNonNegativeFinite(double v) { }
         public static bool IsPercentage(double v) { }
         public static bool IsProbability(double v) { }
         public static bool IsRelativelyAndAbsolutelyClose(double a, double b, double relativeTolerance, double absoluteTolerance) { }
+        public static bool IsRotationallyEquivalent(System.Numerics.Quaternion a, System.Numerics.Quaternion b, double tolerance) { }
     }
 }

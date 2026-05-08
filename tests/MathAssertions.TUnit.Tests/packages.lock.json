@@ -127,7 +127,10 @@
         }
       },
       "mathassertions": {
-        "type": "Project"
+        "type": "Project",
+        "dependencies": {
+          "System.Numerics.Tensors": "[10.0.7, )"
+        }
       },
       "mathassertions.tunit": {
         "type": "Project",
@@ -136,6 +139,12 @@
           "TUnit.Assertions": "[1.43.11, )",
           "TUnit.Core": "[1.43.11, )"
         }
+      },
+      "System.Numerics.Tensors": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.7, )",
+        "resolved": "10.0.7",
+        "contentHash": "zcjjmjfSStqwt4ByTM/AETMDJI5CpR07yYweEoBaXnOHwXS3vAvc7ezOQjGN4dRCzk0LWEG7wYLvWsubZ2UzZg=="
       },
       "TUnit.Assertions": {
         "type": "CentralTransitive",

@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (`MathAssertions`, framework-agnostic core) — 0.1.0 Cluster 2: System.Numerics compounds
+
+- `MathTolerance.IsApproximatelyEqual(Vector2, Vector2, double)`, `(Vector4, Vector4, double)`: component-wise tolerance comparison for the remaining `System.Numerics` vector types. Components widen to `double` before comparing against the caller's `double` tolerance, the same precision-preserving rule the existing `Vector3` overload follows.
+- `MathTolerance.IsApproximatelyEqual(Quaternion, Quaternion, double)`: component-wise across X, Y, Z, W. Distinguishes the quaternion `q` from `-q`; use `IsRotationallyEquivalent` for the SO(3) double-cover view.
+- `MathTolerance.IsRotationallyEquivalent(Quaternion, Quaternion, double)`: returns `true` when two quaternions encode the same rotation within tolerance, treating `q` and `-q` as equivalent. Implementation normalizes both inputs first so non-unit input still produces the correct verdict (Hanson, *Visualizing Quaternions*, §4.6).
+- `MathTolerance.IsApproximatelyEqual(Matrix4x4, Matrix4x4, double)`: element-wise across all sixteen elements via the row/column indexer. Elements widen to `double`.
+- `MathTolerance.IsApproximatelyEqual(Plane, Plane, double)`: component-wise across `Normal` and `D`. Distinguishes `(n, d)` from its sign-flipped representation `(-n, -d)`; use `IsGeometricallyEquivalent` for the geometric-plane view.
+- `MathTolerance.IsGeometricallyEquivalent(Plane, Plane, double)`: returns `true` when two planes describe the same set of points in 3-space, treating `(n, d)` and `(-n, -d)` as equivalent.
+- `MathTolerance.IsApproximatelyEqual(Complex, Complex, double)`: component-wise across real and imaginary parts.
+- `MathTolerance.IsApproximatelyEqual(ReadOnlySpan<double>, ReadOnlySpan<double>, double)` and `(ReadOnlySpan<float>, ReadOnlySpan<float>, float)`: element-wise comparison for spans. A length mismatch returns `false` rather than throwing; explicit length validation belongs at higher layers.
+- `MathTolerance.IsApproximatelyEqual<T>(ReadOnlyTensorSpan<T>, ReadOnlyTensorSpan<T>, T) where T : INumber<T>`: element-wise tolerance comparison for `System.Numerics.Tensors.ReadOnlyTensorSpan<T>`. Shape mismatch (different rank or different per-dimension length) returns `false`. NaN handling matches the floating-point scalar overloads. Iteration uses the tensor span's enumerator so strided shapes from slicing work correctly.
+
+### Changed (`MathAssertions`, framework-agnostic core)
+
+- The package now depends on `System.Numerics.Tensors` (BCL, MIT, no transitive deps) for the new `ReadOnlyTensorSpan<T>` overload. The package remains AOT-compatible, trimmable, and reflection-free in the assertion path.
+
 ### Added (`MathAssertions`, framework-agnostic core) — 0.1.0 Cluster 1: tolerance primitives
 
 - `MathTolerance.IsCloseInUlps(double, double, long)` and `(float, float, int)`: ULP-distance equality. Two values compare equal when they are within the requested number of representable floats (or doubles) of each other under IEEE 754. Both NaN compare equal; one NaN compares unequal; opposite-sign values are never within any finite ULP distance; positive and negative zero compare equal regardless of distance.

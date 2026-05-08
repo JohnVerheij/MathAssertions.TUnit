@@ -61,6 +61,12 @@
         "resolved": "10.25.0.139117",
         "contentHash": "2iBZIkcgsaUNyIPFqR9ECv5PLbAwV9I/v/PeEiMdkfhWEAnqD7VyNXzukQDlL/D24f5OoUc4MbWF5SgYI7x3CA=="
       },
+      "System.Numerics.Tensors": {
+        "type": "Direct",
+        "requested": "[10.0.7, )",
+        "resolved": "10.0.7",
+        "contentHash": "zcjjmjfSStqwt4ByTM/AETMDJI5CpR07yYweEoBaXnOHwXS3vAvc7ezOQjGN4dRCzk0LWEG7wYLvWsubZ2UzZg=="
+      },
       "Microsoft.Build.Tasks.Git": {
         "type": "Transitive",
         "resolved": "10.0.203",
