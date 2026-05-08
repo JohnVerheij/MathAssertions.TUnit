@@ -353,8 +353,10 @@ Issues and pull requests welcome. Before opening a PR:
 - Match the existing code style (`.editorconfig` is authoritative; `dotnet format` covers formatting).
 - For new assertions, include a test for both the happy path and a representative failure case so the failure-message rendering is verified.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full PR review checklist and API design principles.
+For larger ideas (new entry points, breaking changes, cross-cutting refactors), open a [Discussion](https://github.com/JohnVerheij/MathAssertions.TUnit/discussions) first to align on direction before investing implementation time.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full PR review checklist and API design principles, and [CONVENTIONS.md](CONVENTIONS.md) for the family-wide code conventions shared across `LogAssertions.TUnit`, `SnapshotAssertions.TUnit`, `TimeAssertions.TUnit`, and this repo.
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). Copyright (c) 2026 John Verheij.
