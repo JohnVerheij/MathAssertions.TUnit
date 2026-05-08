@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (`MathAssertions`, framework-agnostic core) — 0.1.0 Cluster 7b: 3D-geometry containment + closest-point distance
+
+Builds on Cluster 7a (the eight `Geometry3D` primitives plus the property predicates). Adds two static classes of extension methods:
+
+`Geometry3D.Containment`:
+
+- `box.Contains(point)`, `outer.Contains(inner)`, `box.Contains(sphere)` for `AxisAlignedBox`.
+- `sphere.Contains(point)`, compared via squared distance so no square root is computed.
+- `obb.Contains(point)` for `OrientedBox`, by rotating the point into the box's local frame via the inverse orientation and applying a half-extent test component-wise.
+- `Containment.ConvexHullContains(hullVertices, point, tolerance)`: half-space inclusion against each face triangle. Hull vertices are supplied as flat triples-of-three (each three consecutive vertices form one face triangle, CCW-wound when viewed from outside). Spans whose length is not a positive multiple of three return `false` (malformed input).
+
+`Geometry3D.Distance`:
+
+- `point.DistanceFrom(plane)`: assumes a unit-normal plane (the standard `Plane` convention from `Plane.CreateFromVertices`).
+- `point.DistanceFrom(segment)`: clamps the projection parameter to `[0, 1]`. Degenerate segments where both endpoints coincide are handled explicitly via a bit-magnitude zero check on `|ab|^2` (the same pattern `MathTolerance.IsCloseInUlps` uses to keep the operator-`==` floating-point analyzer flag silent on the value path) and fall through to a point-to-point distance. Reference: Ericson, *Real-Time Collision Detection*, §5.1.2.
+- `point.DistanceFrom(triangle)`: Voronoi-region classification of the projection, returning the distance to the corresponding vertex, edge, or interior face. Reference: Ericson, *Real-Time Collision Detection*, §5.1.5.
+
 ### Added (`MathAssertions`, framework-agnostic core) — 0.1.0 Cluster 7a: 3D-geometry primitives + property predicates
 
 New namespace `MathAssertions.Geometry3D` with eight primitive record-structs and a property-predicate static class. The cluster is split into 7a (primitives + properties), 7b (containment + distance), and 7c (intersection + pointcloud) so each lands as a focused PR; 7a is the foundation the other two build on.
