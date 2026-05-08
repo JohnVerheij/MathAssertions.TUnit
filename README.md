@@ -128,7 +128,7 @@ Match TUnit's `IsCloseTo` primitive semantics:
 - .NET 10, C# 14, `Nullable=enable`, `TreatWarningsAsErrors=true`
 - Five Roslyn analyzer packs at full strength: Meziantou, SonarAnalyzer, Roslynator, Microsoft.VisualStudio.Threading, DotNetProjectFile
 - `BannedApiAnalyzers` enforces no-reflection in the assertion path
-- 90% line / 80% branch coverage CI gates
+- 90% line / 90% branch coverage CI gates
 - ApiCompat strict mode wired (`PackageValidationBaselineVersion` will pin once v0.0.1 ships)
 - Public API surface pinned via snapshot tests on every PR
 - External-consumer smoke test plus AOT-publish CI gate on `linux-x64`
@@ -151,7 +151,7 @@ The family composes; any `[GenerateAssertion]`-emitted method from any of these 
 
 Issues and pull requests welcome. Before opening a PR:
 
-- Run `dotnet build` and `dotnet test` locally; the CI pipeline enforces the same quality bar (zero warnings as errors, 90% line / 80% branch coverage minimum).
+- Run `dotnet build` and `dotnet test` locally; the CI pipeline enforces the same quality bar (zero warnings as errors, 90% line / 90% branch coverage minimum).
 - Match the existing code style (`.editorconfig` is authoritative; `dotnet format` covers formatting).
 - For new assertions, include a test for both the happy path and a representative failure case so the failure-message rendering is verified.
 
