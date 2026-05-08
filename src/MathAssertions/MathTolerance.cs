@@ -4,9 +4,9 @@ using System.Numerics;
 namespace MathAssertions;
 
 /// <summary>
-/// Tolerance-comparison helpers for floating-point primitives and a single
-/// <see cref="System.Numerics.Vector3"/> overload. NaN-aware, infinity-aware,
-/// allocation-free. Callable from any test framework or production code.
+/// Tolerance-comparison helpers for floating-point primitives and selected
+/// <see cref="System.Numerics"/> types. NaN-aware, infinity-aware, allocation-free.
+/// Callable from any test framework or production code.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -15,10 +15,12 @@ namespace MathAssertions;
 /// extensions on private types call them directly to inherit the same semantics.
 /// </para>
 /// <para>
-/// The 0.0.1 surface is deliberately narrow: scalar plus a single Vector3 component-wise
-/// comparison. The wider surface for Vector2/4, Quaternion, Matrix4x4, Plane, Complex,
-/// span overloads, ULP-distance equality, relative+absolute combined tolerance, and
-/// <c>IsRotationallyEquivalent</c> ships in 0.1.0.
+/// 0.1.0 Cluster 1 covers the tolerance primitives: NaN- and infinity-aware absolute
+/// comparison for <see cref="double"/>/<see cref="float"/>, ULP-distance equality,
+/// combined relative+absolute tolerance, finiteness predicates, probability/percentage
+/// range checks, and an invertible-transformation roundtrip-identity helper. Compound
+/// types (Vector2/4, Quaternion + rotational equivalence, Matrix4x4, Plane + geometric
+/// equivalence, Complex, span overloads) ship across Clusters 2-7 of the 0.1.0 plan.
 /// </para>
 /// </remarks>
 public static class MathTolerance
@@ -108,27 +110,251 @@ public static class MathTolerance
             && IsApproximatelyEqual((double)a.Z, (double)b.Z, tolerance);
     }
 
-    private static void ValidateTolerance(double tolerance)
+    /// <summary>
+    /// ULP-distance equality for two doubles. Returns <see langword="true"/> when the two
+    /// values are within <paramref name="ulpDistance"/> representable doubles of each other
+    /// under IEEE 754.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ULP ("unit in the last place") distance is the count of representable floats between
+    /// two values. It is the natural metric for "as close as floating-point can express,"
+    /// scaling with the magnitude of the values without the caller picking an absolute
+    /// tolerance. Values with opposite signs are never within any finite ULP distance and
+    /// always compare as <see langword="false"/>; positive and negative zero are treated
+    /// as equal.
+    /// </para>
+    /// <para>
+    /// Reference: Goldberg, <i>What Every Computer Scientist Should Know About
+    /// Floating-Point Arithmetic</i>, ACM Computing Surveys, 1991.
+    /// </para>
+    /// </remarks>
+    /// <param name="a">First value.</param>
+    /// <param name="b">Second value.</param>
+    /// <param name="ulpDistance">Maximum allowed number of representable doubles between
+    /// <paramref name="a"/> and <paramref name="b"/>. Must be non-negative.</param>
+    /// <returns><see langword="true"/> if both NaN, both zero (regardless of sign), or
+    /// within <paramref name="ulpDistance"/> ULPs and same-signed.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="ulpDistance"/> is negative.</exception>
+    public static bool IsCloseInUlps(double a, double b, long ulpDistance)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(ulpDistance);
+
+        if (double.IsNaN(a) && double.IsNaN(b))
+            return true;
+        if (double.IsNaN(a) || double.IsNaN(b))
+            return false;
+
+        var aBits = BitConverter.DoubleToInt64Bits(a);
+        var bBits = BitConverter.DoubleToInt64Bits(b);
+
+        // +0 and -0 are equal under IEEE 754 even though their bit patterns differ
+        // by 2^63. The cheap test "value is zero" is "the magnitude bits are zero,"
+        // which masking off the sign bit captures for both signs at once.
+        const long MagnitudeMask = 0x7FFF_FFFF_FFFF_FFFFL;
+        if ((aBits & MagnitudeMask) == 0 && (bBits & MagnitudeMask) == 0)
+            return true;
+
+        if (aBits == bBits)
+            return true;
+
+        if ((aBits < 0) != (bBits < 0))
+            return false;
+
+        return Math.Abs(aBits - bBits) <= ulpDistance;
+    }
+
+    /// <summary>
+    /// ULP-distance equality for two floats. Returns <see langword="true"/> when the two
+    /// values are within <paramref name="ulpDistance"/> representable floats of each other
+    /// under IEEE 754. See the double overload for full semantics.
+    /// </summary>
+    /// <param name="a">First value.</param>
+    /// <param name="b">Second value.</param>
+    /// <param name="ulpDistance">Maximum allowed number of representable floats between
+    /// <paramref name="a"/> and <paramref name="b"/>. Must be non-negative.</param>
+    /// <returns><see langword="true"/> if both NaN, both zero (regardless of sign), or
+    /// within <paramref name="ulpDistance"/> ULPs and same-signed.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="ulpDistance"/> is negative.</exception>
+    public static bool IsCloseInUlps(float a, float b, int ulpDistance)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(ulpDistance);
+
+        if (float.IsNaN(a) && float.IsNaN(b))
+            return true;
+        if (float.IsNaN(a) || float.IsNaN(b))
+            return false;
+
+        var aBits = BitConverter.SingleToInt32Bits(a);
+        var bBits = BitConverter.SingleToInt32Bits(b);
+
+        const int MagnitudeMask = 0x7FFF_FFFF;
+        if ((aBits & MagnitudeMask) == 0 && (bBits & MagnitudeMask) == 0)
+            return true;
+
+        if (aBits == bBits)
+            return true;
+
+        if ((aBits < 0) != (bBits < 0))
+            return false;
+
+        return Math.Abs(aBits - bBits) <= ulpDistance;
+    }
+
+    /// <summary>
+    /// Combined relative + absolute tolerance check. Returns <see langword="true"/> when
+    /// <c>|a - b| &lt;= max(absoluteTolerance, relativeTolerance * max(|a|, |b|))</c>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The textbook combined-tolerance check from Knuth, <i>The Art of Computer
+    /// Programming</i>, Vol. 2. The absolute term dominates near zero where the relative
+    /// term collapses; the relative term dominates at large magnitudes where a fixed
+    /// absolute tolerance would be unreasonably tight or unreasonably loose.
+    /// </para>
+    /// <para>
+    /// Both NaN compare equal; one NaN compares unequal. When either operand is infinite,
+    /// the values compare equal only when they have the same bit representation (same sign
+    /// of infinity); a finite and an infinite value are unequal regardless of either
+    /// tolerance.
+    /// </para>
+    /// </remarks>
+    /// <param name="a">First value.</param>
+    /// <param name="b">Second value.</param>
+    /// <param name="relativeTolerance">Relative tolerance, applied against the larger of
+    /// <c>|a|</c> and <c>|b|</c>. Must be non-negative and not NaN.</param>
+    /// <param name="absoluteTolerance">Absolute tolerance, the floor used near zero. Must
+    /// be non-negative and not NaN.</param>
+    /// <returns><see langword="true"/> if approximately equal under the combined rule.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">Either tolerance is NaN or negative.</exception>
+    public static bool IsRelativelyAndAbsolutelyClose(
+        double a,
+        double b,
+        double relativeTolerance,
+        double absoluteTolerance)
+    {
+        ValidateTolerance(relativeTolerance, nameof(relativeTolerance));
+        ValidateTolerance(absoluteTolerance, nameof(absoluteTolerance));
+
+        if (double.IsNaN(a) && double.IsNaN(b))
+            return true;
+        if (double.IsNaN(a) || double.IsNaN(b))
+            return false;
+        if (!double.IsFinite(a) || !double.IsFinite(b))
+            return BitConverter.DoubleToInt64Bits(a) == BitConverter.DoubleToInt64Bits(b);
+
+        var diff = Math.Abs(a - b);
+        var scale = Math.Max(Math.Abs(a), Math.Abs(b));
+        return diff <= Math.Max(absoluteTolerance, relativeTolerance * scale);
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> when <paramref name="v"/> is finite (neither NaN nor
+    /// infinite). Mirrors <see cref="double.IsFinite(double)"/> as a one-stop predicate
+    /// alongside the other tolerance helpers, useful in fluent assertion chains where the
+    /// caller wants a single namespace.
+    /// </summary>
+    /// <param name="v">Value to check.</param>
+    /// <returns><see langword="true"/> if <paramref name="v"/> is finite.</returns>
+    public static bool IsFinite(double v) => double.IsFinite(v);
+
+    /// <summary>
+    /// Returns <see langword="true"/> when <paramref name="v"/> is finite (neither NaN nor
+    /// infinite). Mirrors <see cref="float.IsFinite(float)"/>.
+    /// </summary>
+    /// <param name="v">Value to check.</param>
+    /// <returns><see langword="true"/> if <paramref name="v"/> is finite.</returns>
+    public static bool IsFinite(float v) => float.IsFinite(v);
+
+    /// <summary>
+    /// Returns <see langword="true"/> when <paramref name="v"/> is finite and non-negative
+    /// (zero is allowed). The natural domain check for magnitudes, distances, durations,
+    /// counts cast to <see cref="double"/>, and similar non-negative quantities.
+    /// </summary>
+    /// <param name="v">Value to check.</param>
+    /// <returns><see langword="true"/> if <paramref name="v"/> is finite and <c>&gt;= 0</c>.</returns>
+    public static bool IsNonNegativeFinite(double v) => double.IsFinite(v) && v >= 0.0;
+
+    /// <summary>
+    /// Returns <see langword="true"/> when <paramref name="v"/> is finite and in the closed
+    /// interval <c>[0, 1]</c>. The standard probability-domain check.
+    /// </summary>
+    /// <param name="v">Value to check.</param>
+    /// <returns><see langword="true"/> if <paramref name="v"/> is finite and <c>0 &lt;= v &lt;= 1</c>.</returns>
+    public static bool IsProbability(double v) => double.IsFinite(v) && v >= 0.0 && v <= 1.0;
+
+    /// <summary>
+    /// Returns <see langword="true"/> when <paramref name="v"/> is finite and in the closed
+    /// interval <c>[0, 100]</c>. The standard percentage-domain check.
+    /// </summary>
+    /// <param name="v">Value to check.</param>
+    /// <returns><see langword="true"/> if <paramref name="v"/> is finite and <c>0 &lt;= v &lt;= 100</c>.</returns>
+    public static bool IsPercentage(double v) => double.IsFinite(v) && v >= 0.0 && v <= 100.0;
+
+    /// <summary>
+    /// Returns <see langword="true"/> when <c>inverse(forward(x))</c> equals <paramref name="x"/>
+    /// within <paramref name="tolerance"/>. Verifies the roundtrip identity for invertible
+    /// transformations such as <c>Sin/Asin</c>, <c>Log/Exp</c>, encode/decode pairs, or
+    /// degree/radian conversions.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The double overload covers the dominant case. Consumers needing the same check on
+    /// other types (vectors, quaternions, custom domain types) compose their own predicate
+    /// out of the type-specific <c>IsApproximatelyEqual</c> overload, typically inside a
+    /// <c>[GenerateAssertion]</c> extension on their own type. Keeping the core surface
+    /// double-only avoids locking a generic equality shape into the public API at 0.1.0.
+    /// </para>
+    /// <para>
+    /// NaN-tolerant equality is delegated to
+    /// <see cref="IsApproximatelyEqual(double, double, double)"/>; both NaN counts as equal,
+    /// which is appropriate for transformations whose domain includes NaN as a meaningful
+    /// "no value" sentinel.
+    /// </para>
+    /// </remarks>
+    /// <param name="x">Value to roundtrip.</param>
+    /// <param name="forward">Forward transformation, applied to <paramref name="x"/>.</param>
+    /// <param name="inverse">Inverse transformation, applied to the forward result.</param>
+    /// <param name="tolerance">Maximum allowed absolute difference between <paramref name="x"/>
+    /// and <c>inverse(forward(x))</c>. Must be non-negative and not NaN.</param>
+    /// <returns><see langword="true"/> if the roundtrip recovers <paramref name="x"/> within tolerance.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="forward"/> or <paramref name="inverse"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
+    public static bool HasRoundtripIdentity(
+        double x,
+        Func<double, double> forward,
+        Func<double, double> inverse,
+        double tolerance)
+    {
+        ArgumentNullException.ThrowIfNull(forward);
+        ArgumentNullException.ThrowIfNull(inverse);
+        ValidateTolerance(tolerance);
+
+        var roundtripped = inverse(forward(x));
+        return IsApproximatelyEqual(x, roundtripped, tolerance);
+    }
+
+    private static void ValidateTolerance(double tolerance, string paramName = "tolerance")
     {
         if (double.IsNaN(tolerance))
         {
-            throw new ArgumentOutOfRangeException(nameof(tolerance), "Tolerance cannot be NaN.");
+            throw new ArgumentOutOfRangeException(paramName, "Tolerance cannot be NaN.");
         }
         if (tolerance < 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(tolerance), "Tolerance cannot be negative.");
+            throw new ArgumentOutOfRangeException(paramName, "Tolerance cannot be negative.");
         }
     }
 
-    private static void ValidateTolerance(float tolerance)
+    private static void ValidateTolerance(float tolerance, string paramName = "tolerance")
     {
         if (float.IsNaN(tolerance))
         {
-            throw new ArgumentOutOfRangeException(nameof(tolerance), "Tolerance cannot be NaN.");
+            throw new ArgumentOutOfRangeException(paramName, "Tolerance cannot be NaN.");
         }
         if (tolerance < 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(tolerance), "Tolerance cannot be negative.");
+            throw new ArgumentOutOfRangeException(paramName, "Tolerance cannot be negative.");
         }
     }
 }

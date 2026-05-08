@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (`MathAssertions`, framework-agnostic core) — 0.1.0 Cluster 1: tolerance primitives
+
+- `MathTolerance.IsCloseInUlps(double, double, long)` and `(float, float, int)`: ULP-distance equality. Two values compare equal when they are within the requested number of representable floats (or doubles) of each other under IEEE 754. Both NaN compare equal; one NaN compares unequal; opposite-sign values are never within any finite ULP distance; positive and negative zero compare equal regardless of distance.
+- `MathTolerance.IsRelativelyAndAbsolutelyClose(double, double, double, double)`: combined relative and absolute tolerance. Returns `true` when `|a - b| <= max(absoluteTolerance, relativeTolerance * max(|a|, |b|))`. The textbook combined-tolerance check from Knuth, *The Art of Computer Programming*, Vol. 2; the absolute term is the floor near zero, the relative term scales with magnitude.
+- `MathTolerance.IsFinite(double)` and `(float)`: thin wrappers over the corresponding BCL predicates, exposed alongside the other helpers so fluent assertion chains stay in a single namespace.
+- `MathTolerance.IsNonNegativeFinite(double)`: `true` when the value is finite and `>= 0`. Domain check for magnitudes, distances, durations, and similar non-negative quantities.
+- `MathTolerance.IsProbability(double)`: `true` when the value is finite and in `[0, 1]`.
+- `MathTolerance.IsPercentage(double)`: `true` when the value is finite and in `[0, 100]`.
+- `MathTolerance.HasRoundtripIdentity(double, Func<double, double>, Func<double, double>, double)`: invertible-transformation roundtrip-identity check. Returns `true` when `inverse(forward(x))` equals `x` within tolerance. Double-only on purpose; consumers needing the same check on other types compose their own predicate with the type-specific `IsApproximatelyEqual` overload, typically inside a `[GenerateAssertion]` extension on their own type.
+
 ## [0.0.1] - Initial preview: skeleton release establishing repository, package identifiers, and quality bar
 
 First public release. Two packages ship together: `MathAssertions` (framework-agnostic core, BCL only) and `MathAssertions.TUnit` (TUnit fluent adapter). .NET 10, AOT-compatible, trimmable, no runtime reflection in the assertion path.

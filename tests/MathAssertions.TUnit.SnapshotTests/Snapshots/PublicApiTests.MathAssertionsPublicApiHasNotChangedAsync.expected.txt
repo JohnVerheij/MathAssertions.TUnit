@@ -6,8 +6,17 @@ namespace MathAssertions
 {
     public static class MathTolerance
     {
+        public static bool HasRoundtripIdentity(double x, System.Func<double, double> forward, System.Func<double, double> inverse, double tolerance) { }
         public static bool IsApproximatelyEqual(System.Numerics.Vector3 a, System.Numerics.Vector3 b, double tolerance) { }
         public static bool IsApproximatelyEqual(double a, double b, double tolerance) { }
         public static bool IsApproximatelyEqual(float a, float b, float tolerance) { }
+        public static bool IsCloseInUlps(double a, double b, long ulpDistance) { }
+        public static bool IsCloseInUlps(float a, float b, int ulpDistance) { }
+        public static bool IsFinite(double v) { }
+        public static bool IsFinite(float v) { }
+        public static bool IsNonNegativeFinite(double v) { }
+        public static bool IsPercentage(double v) { }
+        public static bool IsProbability(double v) { }
+        public static bool IsRelativelyAndAbsolutelyClose(double a, double b, double relativeTolerance, double absoluteTolerance) { }
     }
 }
