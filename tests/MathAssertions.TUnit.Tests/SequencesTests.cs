@@ -202,6 +202,41 @@ internal sealed class SequencesTests
         }).Throws<ArgumentException>();
     }
 
+    [Test]
+    public async Task IsBounded_NaNMin_Throws(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // NaN bounds are rejected at entry. Without this guard, every comparison against
+        // NaN returns false under IEEE 754 and any sequence (including the empty span)
+        // would pass the bound check vacuously, silently inverting the method's contract.
+        await Assert.That(() =>
+        {
+            ReadOnlySpan<double> values = [1.0];
+            return Sequences.IsBounded(values, double.NaN, 10.0);
+        }).Throws<ArgumentOutOfRangeException>();
+    }
+
+    [Test]
+    public async Task IsBounded_NaNMax_Throws(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        await Assert.That(() =>
+        {
+            ReadOnlySpan<double> values = [1.0];
+            return Sequences.IsBounded(values, 0.0, double.NaN);
+        }).Throws<ArgumentOutOfRangeException>();
+    }
+
+    [Test]
+    public async Task IsBounded_NaNMin_ThrowsEvenOnEmptySpan(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // Validation must happen before the loop so the caller sees the failure even when
+        // the sequence is empty (no value would have triggered an in-loop check).
+        await Assert.That(() => Sequences.IsBounded(ReadOnlySpan<double>.Empty, double.NaN, 10.0))
+            .Throws<ArgumentOutOfRangeException>();
+    }
+
     // ----- IsArithmeticProgression -----
 
     [Test]
@@ -458,5 +493,31 @@ internal sealed class SequencesTests
         ct.ThrowIfCancellationRequested();
         ReadOnlySpan<int> values = [1, 2];
         await Assert.That(Sequences.HasMinLength(values, 3)).IsFalse();
+    }
+
+    [Test]
+    public async Task HasLength_NegativeExpected_Throws(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // Span.Length is non-negative; a negative expected is always a caller bug, not a
+        // useful "no value will match" sentinel. Failing fast surfaces the typo.
+        await Assert.That(() =>
+        {
+            ReadOnlySpan<int> values = [1];
+            return Sequences.HasLength(values, -1);
+        }).Throws<ArgumentOutOfRangeException>();
+    }
+
+    [Test]
+    public async Task HasMinLength_NegativeExpected_Throws(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // Without the guard, HasMinLength(values, -1) is trivially true for any span
+        // (Length >= -1 always), masking caller-side typos.
+        await Assert.That(() =>
+        {
+            ReadOnlySpan<int> values = [1];
+            return Sequences.HasMinLength(values, -1);
+        }).Throws<ArgumentOutOfRangeException>();
     }
 }

@@ -93,13 +93,26 @@ public static class Sequences
     /// <c>[<paramref name="min"/>, <paramref name="max"/>]</c>. NaN values fail the bound
     /// check (no NaN is "within" any range). An empty span is vacuously bounded.
     /// </summary>
+    /// <remarks>
+    /// NaN bounds are rejected at entry. IEEE 754 makes every comparison against NaN
+    /// return <see langword="false"/>, which would let any sequence pass the bound check
+    /// vacuously and silently invert the method's contract. Validation happens before the
+    /// loop so the caller sees the failure even on empty input.
+    /// </remarks>
     /// <param name="values">Sequence to inspect.</param>
-    /// <param name="min">Lower bound, inclusive.</param>
-    /// <param name="max">Upper bound, inclusive. Must satisfy <c>max &gt;= min</c>.</param>
+    /// <param name="min">Lower bound, inclusive. Must not be NaN.</param>
+    /// <param name="max">Upper bound, inclusive. Must not be NaN, and must satisfy
+    /// <c>max &gt;= min</c>.</param>
     /// <returns><see langword="true"/> if every value is in <c>[min, max]</c>.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="min"/> or
+    /// <paramref name="max"/> is NaN.</exception>
     /// <exception cref="ArgumentException"><paramref name="max"/> is less than <paramref name="min"/>.</exception>
     public static bool IsBounded(ReadOnlySpan<double> values, double min, double max)
     {
+        if (double.IsNaN(min))
+            throw new ArgumentOutOfRangeException(nameof(min), "min cannot be NaN.");
+        if (double.IsNaN(max))
+            throw new ArgumentOutOfRangeException(nameof(max), "max cannot be NaN.");
         if (max < min)
             throw new ArgumentException("max must be greater than or equal to min.", nameof(max));
 
@@ -225,21 +238,42 @@ public static class Sequences
     /// Returns <see langword="true"/> when the span has exactly <paramref name="expected"/>
     /// elements.
     /// </summary>
+    /// <remarks>
+    /// Negative <paramref name="expected"/> is rejected at entry. <see cref="ReadOnlySpan{T}.Length"/>
+    /// is non-negative, so a negative argument is always a caller bug rather than a useful
+    /// "no value will match" sentinel; failing fast surfaces the typo at the call site.
+    /// </remarks>
     /// <typeparam name="T">Element type.</typeparam>
     /// <param name="values">Sequence to inspect.</param>
-    /// <param name="expected">Required length.</param>
+    /// <param name="expected">Required length. Must be non-negative.</param>
     /// <returns><see langword="true"/> if <c>values.Length == expected</c>.</returns>
-    public static bool HasLength<T>(ReadOnlySpan<T> values, int expected) => values.Length == expected;
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="expected"/> is negative.</exception>
+    public static bool HasLength<T>(ReadOnlySpan<T> values, int expected)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(expected);
+        return values.Length == expected;
+    }
 
     /// <summary>
     /// Returns <see langword="true"/> when the span has at least <paramref name="expected"/>
     /// elements.
     /// </summary>
+    /// <remarks>
+    /// Negative <paramref name="expected"/> is rejected at entry. <see cref="ReadOnlySpan{T}.Length"/>
+    /// is non-negative, so any negative threshold makes the result trivially
+    /// <see langword="true"/> and would mask caller-side typos in the
+    /// <c>HasMinLength(values, -1)</c> shape.
+    /// </remarks>
     /// <typeparam name="T">Element type.</typeparam>
     /// <param name="values">Sequence to inspect.</param>
-    /// <param name="expected">Minimum required length.</param>
+    /// <param name="expected">Minimum required length. Must be non-negative.</param>
     /// <returns><see langword="true"/> if <c>values.Length &gt;= expected</c>.</returns>
-    public static bool HasMinLength<T>(ReadOnlySpan<T> values, int expected) => values.Length >= expected;
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="expected"/> is negative.</exception>
+    public static bool HasMinLength<T>(ReadOnlySpan<T> values, int expected)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(expected);
+        return values.Length >= expected;
+    }
 
     private static void ValidateTolerance(double tolerance)
     {
