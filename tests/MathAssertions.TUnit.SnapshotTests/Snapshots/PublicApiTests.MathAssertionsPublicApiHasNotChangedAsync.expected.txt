@@ -4,6 +4,18 @@
 [assembly: System.Runtime.Versioning.TargetFramework(".NETCoreApp,Version=v10.0", FrameworkDisplayName=".NET 10.0")]
 namespace MathAssertions
 {
+    public static class LinearAlgebra
+    {
+        public static bool AreLinearlyIndependent(System.ReadOnlySpan<System.Numerics.Vector3> vectors, double tolerance) { }
+        public static bool AreOrthogonal(System.Numerics.Vector3 u, System.Numerics.Vector3 v, double tolerance) { }
+        public static bool AreParallel(System.Numerics.Vector3 u, System.Numerics.Vector3 v, double tolerance) { }
+        public static bool HasDeterminantApproximately(System.Numerics.Matrix4x4 m, double expected, double tolerance) { }
+        public static bool HasTraceApproximately(System.Numerics.Matrix4x4 m, double expected, double tolerance) { }
+        public static bool IsIdentity(System.Numerics.Matrix4x4 m, double tolerance) { }
+        public static bool IsInvertible(System.Numerics.Matrix4x4 m, double tolerance) { }
+        public static bool IsOrthogonal(System.Numerics.Matrix4x4 m, double tolerance) { }
+        public static bool IsSymmetric(System.Numerics.Matrix4x4 m, double tolerance) { }
+    }
     public static class MathTolerance
     {
         public static bool HasRoundtripIdentity(double x, System.Func<double, double> forward, System.Func<double, double> inverse, double tolerance) { }
