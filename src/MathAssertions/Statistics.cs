@@ -156,8 +156,17 @@ public static class Statistics
     /// span returns <see langword="false"/>.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Sorts a copy of the input, so callers do not observe a side effect on the original
     /// span backing store. The copy is the algorithm's only allocation.
+    /// </para>
+    /// <para>
+    /// Even-length median uses the overflow-safe form <c>a/2 + b/2</c> rather than the
+    /// textbook <c>(a + b)/2</c>. The latter overflows to <see cref="double.PositiveInfinity"/>
+    /// for samples whose two middle values sum past <see cref="double.MaxValue"/>
+    /// (for example <c>[double.MaxValue, double.MaxValue]</c>); the half-then-add form
+    /// is exact for the same input.
+    /// </para>
     /// </remarks>
     /// <param name="values">Sample to inspect.</param>
     /// <param name="expected">Expected median.</param>
@@ -176,9 +185,17 @@ public static class Statistics
         var sorted = values.ToArray();
         Array.Sort(sorted);
 
-        var median = sorted.Length % 2 == 1
-            ? sorted[sorted.Length / 2]
-            : (sorted[(sorted.Length / 2) - 1] + sorted[sorted.Length / 2]) / 2.0;
+        double median;
+        if (sorted.Length % 2 == 1)
+        {
+            median = sorted[sorted.Length / 2];
+        }
+        else
+        {
+            var lower = sorted[(sorted.Length / 2) - 1];
+            var upper = sorted[sorted.Length / 2];
+            median = (lower / 2.0) + (upper / 2.0);
+        }
         return MathTolerance.IsApproximatelyEqual(median, expected, tolerance);
     }
 
@@ -189,7 +206,17 @@ public static class Statistics
     /// NIST/SEMATECH e-Handbook of Statistical Methods §1.3.5.6.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Allocates a sorted copy of the input. The empty span returns <see langword="false"/>.
+    /// </para>
+    /// <para>
+    /// Interpolation uses the overflow-safe lerp form <c>a*(1-f) + b*f</c> rather than the
+    /// textbook <c>a + f*(b - a)</c>. The latter overflows when <c>b - a</c> exceeds
+    /// <see cref="double.MaxValue"/> (for example <c>[-double.MaxValue, double.MaxValue]</c>),
+    /// which would silently return <see cref="double.PositiveInfinity"/> for the median
+    /// percentile of that input. The two forms are algebraically equal for finite inputs;
+    /// the lerp form keeps each multiplication within the original magnitude band.
+    /// </para>
     /// </remarks>
     /// <param name="values">Sample to inspect.</param>
     /// <param name="percentile">Percentile in the closed interval <c>[0, 100]</c>.</param>
@@ -225,7 +252,7 @@ public static class Statistics
 
         var pct = lo == hi
             ? sorted[lo]
-            : sorted[lo] + (frac * (sorted[hi] - sorted[lo]));
+            : (sorted[lo] * (1.0 - frac)) + (sorted[hi] * frac);
         return MathTolerance.IsApproximatelyEqual(pct, expected, tolerance);
     }
 
@@ -258,13 +285,24 @@ public static class Statistics
     /// Returns <see langword="true"/> when every value in <paramref name="values"/> lies
     /// within <paramref name="sigmas"/> standard deviations of that same sample's mean.
     /// Returns <see langword="false"/> for samples with fewer than two observations
-    /// (standard deviation undefined).
+    /// (standard deviation undefined) and for samples that contain NaN or infinity (the
+    /// envelope is undefined).
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Computes the sample's mean and standard deviation once and reuses them for every
     /// element check, so the method is O(N) rather than the O(N^2) shape that would
     /// result from per-element delegation to
     /// <see cref="IsWithinSigmasOfMean(double, ReadOnlySpan{double}, double)"/>.
+    /// </para>
+    /// <para>
+    /// Non-finite inputs propagate NaN through the mean/variance/threshold path; the
+    /// per-element check is written as <c>!(|v - mean| &lt;= threshold)</c> rather than
+    /// the equivalent-for-finite-inputs <c>|v - mean| &gt; threshold</c> so that a NaN
+    /// comparison short-circuits to <see langword="false"/> on the first element rather
+    /// than silently passing every check (the IEEE 754 rule that any comparison against
+    /// NaN is false would otherwise let the loop fall through to a vacuous-true return).
+    /// </para>
     /// </remarks>
     /// <param name="values">Sample to inspect, both as the reference and as the test set.</param>
     /// <param name="sigmas">Number of standard deviations defining the envelope. Must be
@@ -282,7 +320,7 @@ public static class Statistics
         var threshold = sigmas * stdDev;
         foreach (var v in values)
         {
-            if (Math.Abs(v - mean) > threshold)
+            if (!(Math.Abs(v - mean) <= threshold))
                 return false;
         }
         return true;

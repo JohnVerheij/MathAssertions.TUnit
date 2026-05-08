@@ -295,6 +295,29 @@ internal sealed class StatisticsTests
         }).Throws<ArgumentOutOfRangeException>();
     }
 
+    [Test]
+    public async Task HasMedianApproximately_TwoMaxValueElements_NoOverflow(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // Pins the overflow-safe even-length median formula (a/2 + b/2). The textbook
+        // (a + b) / 2 form returns +Infinity for this input because MaxValue + MaxValue
+        // overflows, then Inf / 2 is still Inf.
+        ReadOnlySpan<double> values = [double.MaxValue, double.MaxValue];
+        await Assert.That(Statistics.HasMedianApproximately(values, double.MaxValue, 0.0)).IsTrue();
+    }
+
+    [Test]
+    public async Task HasMedianApproximately_OppositeMaxValues_ReturnsZero(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // Symmetric overflow case: the half-then-add form produces -MaxValue/2 + MaxValue/2 = 0
+        // exactly. The textbook form would compute (-MaxValue + MaxValue) / 2 = 0 / 2 = 0
+        // here too, so this is mostly a sanity check for the new formula on opposite-sign
+        // operands.
+        ReadOnlySpan<double> values = [-double.MaxValue, double.MaxValue];
+        await Assert.That(Statistics.HasMedianApproximately(values, 0.0, 0.0)).IsTrue();
+    }
+
     // ----- HasPercentileApproximately -----
 
     [Test]
@@ -390,6 +413,20 @@ internal sealed class StatisticsTests
             ReadOnlySpan<double> values = [1.0];
             return Statistics.HasPercentileApproximately(values, 50.0, 1.0, -1e-6);
         }).Throws<ArgumentOutOfRangeException>();
+    }
+
+    [Test]
+    public async Task HasPercentileApproximately_OppositeMaxValues_NoOverflow(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // Pins the overflow-safe lerp. The textbook anchor-plus-fraction-of-difference form
+        // would need to compute the difference of the two operands, which exceeds MaxValue
+        // and overflows to positive infinity, then collapses the entire expression to
+        // infinity. The convex-combination form keeps each term within the original
+        // magnitude band, so a sample of the negative and positive maxima at the median
+        // percentile resolves to exactly zero.
+        ReadOnlySpan<double> values = [-double.MaxValue, double.MaxValue];
+        await Assert.That(Statistics.HasPercentileApproximately(values, 50.0, 0.0, 0.0)).IsTrue();
     }
 
     // ----- IsWithinSigmasOfMean -----
@@ -516,5 +553,36 @@ internal sealed class StatisticsTests
         // ConvergesTo / IsBounded pattern surfaced in Cluster 3).
         await Assert.That(() => Statistics.AreAllWithinSigmasOfMean(ReadOnlySpan<double>.Empty, double.NaN))
             .Throws<ArgumentOutOfRangeException>();
+    }
+
+    [Test]
+    public async Task AreAllWithinSigmasOfMean_NaNInSample_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // Pins the NaN-propagation fix: a sample containing NaN poisons mean, variance,
+        // and threshold to NaN. Without the !(<=) idiom, every per-element comparison
+        // would be a NaN > NaN check (always false under IEEE 754), the loop would never
+        // return false, and the method would silently return true for invalid samples.
+        ReadOnlySpan<double> values = [1.0, double.NaN, 3.0];
+        await Assert.That(Statistics.AreAllWithinSigmasOfMean(values, 1.0)).IsFalse();
+    }
+
+    [Test]
+    public async Task AreAllWithinSigmasOfMean_PositiveInfinityInSample_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // +Infinity in the sample makes Welford's variance NaN (Inf - Inf at the
+        // delta step), which propagates to threshold NaN; same NaN-propagation
+        // logic as the NaN-in-sample case rejects it.
+        ReadOnlySpan<double> values = [1.0, double.PositiveInfinity, 3.0];
+        await Assert.That(Statistics.AreAllWithinSigmasOfMean(values, 1.0)).IsFalse();
+    }
+
+    [Test]
+    public async Task AreAllWithinSigmasOfMean_NegativeInfinityInSample_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        ReadOnlySpan<double> values = [1.0, double.NegativeInfinity, 3.0];
+        await Assert.That(Statistics.AreAllWithinSigmasOfMean(values, 1.0)).IsFalse();
     }
 }
