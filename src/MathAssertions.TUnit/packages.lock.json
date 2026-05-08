@@ -92,7 +92,16 @@
         "contentHash": "6hsjdSr4VOXSOnhALkYplHpAxnTG1J33YN42IB6nH2fEg4QnJqrZ4Ft+qn7mkrKAOYC8pCSFYwVWw6rQbmwgLQ=="
       },
       "mathassertions": {
-        "type": "Project"
+        "type": "Project",
+        "dependencies": {
+          "System.Numerics.Tensors": "[10.0.7, )"
+        }
+      },
+      "System.Numerics.Tensors": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.7, )",
+        "resolved": "10.0.7",
+        "contentHash": "zcjjmjfSStqwt4ByTM/AETMDJI5CpR07yYweEoBaXnOHwXS3vAvc7ezOQjGN4dRCzk0LWEG7wYLvWsubZ2UzZg=="
       }
     }
   }

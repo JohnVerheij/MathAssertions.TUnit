@@ -1,5 +1,6 @@
 using System;
 using System.Numerics;
+using System.Numerics.Tensors;
 using System.Threading;
 using System.Threading.Tasks;
 using MathAssertions;
@@ -17,6 +18,18 @@ namespace MathAssertions.TUnit.Tests;
 [Timeout(5_000)]
 internal sealed class MathToleranceTests
 {
+    // Tensor shape literals lifted to static readonly fields per CA1861. The
+    // ReadOnlyTensorSpan constructor accepts ReadOnlySpan<nint> and the implicit
+    // conversion from nint[] is what each call site relies on.
+    private static readonly nint[] Shape1 = [(nint)1];
+    private static readonly nint[] Shape3 = [(nint)3];
+    private static readonly nint[] Shape4 = [(nint)4];
+    private static readonly nint[] Shape2x2 = [(nint)2, (nint)2];
+    private static readonly nint[] Shape2x3 = [(nint)2, (nint)3];
+
+    // Single-element backing arrays for the throws-tests, lifted to static readonly per CA1861.
+    private static readonly double[] OneDouble = [1.0];
+
     [Test]
     [Arguments(1.0, 1.0001, 0.001, true)]
     [Arguments(0.0, 0.0, 0.0, true)]
@@ -582,6 +595,566 @@ internal sealed class MathToleranceTests
     {
         ct.ThrowIfCancellationRequested();
         await Assert.That(() => MathTolerance.HasRoundtripIdentity(1.0, x => x, x => x, -1e-9))
+            .Throws<ArgumentOutOfRangeException>();
+    }
+
+    // ===== Cluster 2 — System.Numerics compounds =====
+
+    // ----- Vector2 -----
+
+    [Test]
+    public async Task IsApproximatelyEqual_Vector2_AllComponentsWithinTolerance_True(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = new Vector2(1, 2);
+        var b = new Vector2(1.0001f, 2.0001f);
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, 0.001)).IsTrue();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_Vector2_FirstComponentOutsideTolerance_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = new Vector2(1, 2);
+        var b = new Vector2(99, 2);
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, 0.001)).IsFalse();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_Vector2_LastComponentOutsideTolerance_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = new Vector2(1, 2);
+        var b = new Vector2(1, 99);
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, 0.001)).IsFalse();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_Vector2_NaNComponent_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = new Vector2(1, 2);
+        var b = new Vector2(float.NaN, 2);
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, 0.001)).IsFalse();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_Vector2_NegativeTolerance_Throws(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        await Assert.That(() => MathTolerance.IsApproximatelyEqual(Vector2.Zero, Vector2.Zero, -1e-6))
+            .Throws<ArgumentOutOfRangeException>();
+    }
+
+    // ----- Vector4 -----
+
+    [Test]
+    public async Task IsApproximatelyEqual_Vector4_AllComponentsWithinTolerance_True(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = new Vector4(1, 2, 3, 4);
+        var b = new Vector4(1.0001f, 2.0001f, 3.0001f, 4.0001f);
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, 0.001)).IsTrue();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_Vector4_FirstComponentOutsideTolerance_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = new Vector4(1, 2, 3, 4);
+        var b = new Vector4(99, 2, 3, 4);
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, 0.001)).IsFalse();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_Vector4_SecondComponentOutsideTolerance_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = new Vector4(1, 2, 3, 4);
+        var b = new Vector4(1, 99, 3, 4);
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, 0.001)).IsFalse();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_Vector4_ThirdComponentOutsideTolerance_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = new Vector4(1, 2, 3, 4);
+        var b = new Vector4(1, 2, 99, 4);
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, 0.001)).IsFalse();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_Vector4_LastComponentOutsideTolerance_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = new Vector4(1, 2, 3, 4);
+        var b = new Vector4(1, 2, 3, 99);
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, 0.001)).IsFalse();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_Vector4_InfinityComponent_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = new Vector4(1, 2, 3, 4);
+        var b = new Vector4(1, 2, 3, float.PositiveInfinity);
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, 0.001)).IsFalse();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_Vector4_NegativeTolerance_Throws(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        await Assert.That(() => MathTolerance.IsApproximatelyEqual(Vector4.Zero, Vector4.Zero, -1e-6))
+            .Throws<ArgumentOutOfRangeException>();
+    }
+
+    // ----- Quaternion (component-wise) -----
+
+    [Test]
+    public async Task IsApproximatelyEqual_Quaternion_AllComponentsWithinTolerance_True(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = new Quaternion(0.1f, 0.2f, 0.3f, 0.9f);
+        var b = new Quaternion(0.1001f, 0.2001f, 0.3001f, 0.9001f);
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, 0.001)).IsTrue();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_Quaternion_DistinguishesQFromMinusQ(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // q and -q encode the same rotation but are component-wise NOT equal — that's what
+        // IsRotationallyEquivalent is for. Pin the distinction.
+        var a = new Quaternion(0.1f, 0.2f, 0.3f, 0.9f);
+        var negA = new Quaternion(-0.1f, -0.2f, -0.3f, -0.9f);
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, negA, 0.001)).IsFalse();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_Quaternion_NegativeTolerance_Throws(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        await Assert.That(() => MathTolerance.IsApproximatelyEqual(Quaternion.Identity, Quaternion.Identity, -1e-6))
+            .Throws<ArgumentOutOfRangeException>();
+    }
+
+    // ----- IsRotationallyEquivalent (M-2 fix) -----
+
+    [Test]
+    public async Task IsRotationallyEquivalent_QAndMinusQ_True(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // q and -q represent the same rotation under SO(3) double-cover.
+        var q = Quaternion.Normalize(new Quaternion(0.1f, 0.2f, 0.3f, 0.9f));
+        var negQ = new Quaternion(-q.X, -q.Y, -q.Z, -q.W);
+        await Assert.That(MathTolerance.IsRotationallyEquivalent(q, negQ, 1e-6)).IsTrue();
+    }
+
+    [Test]
+    public async Task IsRotationallyEquivalent_NonUnitQuaternion_StillCorrect(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // M-2 fix: scaling either input shouldn't change the verdict because the impl
+        // normalizes before computing the dot product.
+        var q = new Quaternion(0.1f, 0.2f, 0.3f, 0.9f);
+        var scaled = new Quaternion(q.X * 2, q.Y * 2, q.Z * 2, q.W * 2);
+        await Assert.That(MathTolerance.IsRotationallyEquivalent(q, scaled, 1e-6)).IsTrue();
+    }
+
+    [Test]
+    public async Task IsRotationallyEquivalent_DifferentMagnitudes_SameRotation(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // M-2 fix: q and 0.5*q encode the same rotation; impl normalizes first.
+        var q = new Quaternion(0.1f, 0.2f, 0.3f, 0.9f);
+        var halfQ = new Quaternion(q.X * 0.5f, q.Y * 0.5f, q.Z * 0.5f, q.W * 0.5f);
+        await Assert.That(MathTolerance.IsRotationallyEquivalent(q, halfQ, 1e-6)).IsTrue();
+    }
+
+    [Test]
+    public async Task IsRotationallyEquivalent_DifferentRotations_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var ninetyAroundX = Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI / 2);
+        var ninetyAroundY = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI / 2);
+        await Assert.That(MathTolerance.IsRotationallyEquivalent(ninetyAroundX, ninetyAroundY, 1e-3)).IsFalse();
+    }
+
+    [Test]
+    public async Task IsRotationallyEquivalent_NegativeTolerance_Throws(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        await Assert.That(() => MathTolerance.IsRotationallyEquivalent(Quaternion.Identity, Quaternion.Identity, -1e-6))
+            .Throws<ArgumentOutOfRangeException>();
+    }
+
+    // ----- Matrix4x4 -----
+
+    [Test]
+    public async Task IsApproximatelyEqual_Matrix4x4_IdentityToItself_True(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        await Assert.That(MathTolerance.IsApproximatelyEqual(Matrix4x4.Identity, Matrix4x4.Identity, 0.0)).IsTrue();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_Matrix4x4_FirstElementOutsideTolerance_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = Matrix4x4.Identity;
+        var b = a;
+        b.M11 = 99f;
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, 0.001)).IsFalse();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_Matrix4x4_LastElementOutsideTolerance_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = Matrix4x4.Identity;
+        var b = a;
+        b.M44 = 99f;
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, 0.001)).IsFalse();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_Matrix4x4_RotationToItself_True(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var rotation = Matrix4x4.CreateRotationY(MathF.PI / 4);
+        await Assert.That(MathTolerance.IsApproximatelyEqual(rotation, rotation, 0.0)).IsTrue();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_Matrix4x4_NegativeTolerance_Throws(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        await Assert.That(() => MathTolerance.IsApproximatelyEqual(Matrix4x4.Identity, Matrix4x4.Identity, -1e-6))
+            .Throws<ArgumentOutOfRangeException>();
+    }
+
+    // ----- Plane (component-wise + M-3 geometric equivalence) -----
+
+    [Test]
+    public async Task IsApproximatelyEqual_Plane_SameRepresentation_True(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = new Plane(0, 1, 0, -5);
+        var b = new Plane(0.0001f, 1.0001f, 0.0001f, -5.0001f);
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, 0.001)).IsTrue();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_Plane_FlippedRepresentation_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // M-3 fix: component-wise IsApproximatelyEqual must NOT recognize the flipped
+        // representation as equal; that's what IsGeometricallyEquivalent is for.
+        var a = new Plane(0, 1, 0, -5);
+        var flipped = new Plane(-a.Normal, -a.D);
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, flipped, 0.001)).IsFalse();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_Plane_NegativeTolerance_Throws(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = new Plane(0, 1, 0, -5);
+        await Assert.That(() => MathTolerance.IsApproximatelyEqual(a, a, -1e-6))
+            .Throws<ArgumentOutOfRangeException>();
+    }
+
+    [Test]
+    public async Task IsGeometricallyEquivalent_Plane_SameRepresentation_True(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = new Plane(0, 1, 0, -5);
+        var b = new Plane(0.0001f, 1.0001f, 0.0001f, -5.0001f);
+        await Assert.That(MathTolerance.IsGeometricallyEquivalent(a, b, 0.001)).IsTrue();
+    }
+
+    [Test]
+    public async Task IsGeometricallyEquivalent_Plane_FlippedRepresentation_True(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // M-3 fix: (n, d) and (-n, -d) describe the same plane.
+        var a = new Plane(0, 1, 0, -5);
+        var flipped = new Plane(-a.Normal, -a.D);
+        await Assert.That(MathTolerance.IsGeometricallyEquivalent(a, flipped, 1e-6)).IsTrue();
+    }
+
+    [Test]
+    public async Task IsGeometricallyEquivalent_Plane_DifferentPlanes_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = new Plane(0, 1, 0, -5);
+        var b = new Plane(1, 0, 0, -5);
+        await Assert.That(MathTolerance.IsGeometricallyEquivalent(a, b, 0.001)).IsFalse();
+    }
+
+    [Test]
+    public async Task IsGeometricallyEquivalent_Plane_NegativeTolerance_Throws(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = new Plane(0, 1, 0, -5);
+        await Assert.That(() => MathTolerance.IsGeometricallyEquivalent(a, a, -1e-6))
+            .Throws<ArgumentOutOfRangeException>();
+    }
+
+    // ----- Complex -----
+
+    [Test]
+    public async Task IsApproximatelyEqual_Complex_BothPartsWithinTolerance_True(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = new Complex(1.0, 2.0);
+        var b = new Complex(1.0001, 2.0001);
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, 0.001)).IsTrue();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_Complex_RealOutsideTolerance_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = new Complex(1.0, 2.0);
+        var b = new Complex(99.0, 2.0);
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, 0.001)).IsFalse();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_Complex_ImaginaryOutsideTolerance_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = new Complex(1.0, 2.0);
+        var b = new Complex(1.0, 99.0);
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, 0.001)).IsFalse();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_Complex_NegativeTolerance_Throws(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        await Assert.That(() => MathTolerance.IsApproximatelyEqual(Complex.One, Complex.One, -1e-6))
+            .Throws<ArgumentOutOfRangeException>();
+    }
+
+    // ----- ReadOnlySpan<double> -----
+
+    [Test]
+    public async Task IsApproximatelyEqual_SpanDouble_BothEmpty_True(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        await Assert.That(MathTolerance.IsApproximatelyEqual(
+            ReadOnlySpan<double>.Empty, ReadOnlySpan<double>.Empty, 0.0)).IsTrue();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_SpanDouble_AllElementsMatch_True(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        ReadOnlySpan<double> a = [1.0, 2.0, 3.0];
+        ReadOnlySpan<double> b = [1.0001, 2.0001, 3.0001];
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, 0.001)).IsTrue();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_SpanDouble_LengthMismatch_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        ReadOnlySpan<double> a = [1.0, 2.0, 3.0];
+        ReadOnlySpan<double> b = [1.0, 2.0];
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, 0.001)).IsFalse();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_SpanDouble_OneElementMismatch_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        ReadOnlySpan<double> a = [1.0, 2.0, 3.0];
+        ReadOnlySpan<double> b = [1.0, 99.0, 3.0];
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, 0.001)).IsFalse();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_SpanDouble_NegativeTolerance_Throws(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // CT-aware lambda style isn't an option for span-typed arguments; allocate inside.
+        await Assert.That(() =>
+        {
+            ReadOnlySpan<double> a = [1.0];
+            ReadOnlySpan<double> b = [1.0];
+            return MathTolerance.IsApproximatelyEqual(a, b, -1e-6);
+        }).Throws<ArgumentOutOfRangeException>();
+    }
+
+    // ----- ReadOnlySpan<float> -----
+
+    [Test]
+    public async Task IsApproximatelyEqual_SpanFloat_AllElementsMatch_True(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        ReadOnlySpan<float> a = [1.0f, 2.0f, 3.0f];
+        ReadOnlySpan<float> b = [1.0001f, 2.0001f, 3.0001f];
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, 0.001f)).IsTrue();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_SpanFloat_LengthMismatch_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        ReadOnlySpan<float> a = [1.0f, 2.0f];
+        ReadOnlySpan<float> b = [1.0f, 2.0f, 3.0f];
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, 0.001f)).IsFalse();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_SpanFloat_OneElementMismatch_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        ReadOnlySpan<float> a = [1.0f, 2.0f, 3.0f];
+        ReadOnlySpan<float> b = [1.0f, 99.0f, 3.0f];
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, 0.001f)).IsFalse();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_SpanFloat_NegativeTolerance_Throws(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        await Assert.That(() =>
+        {
+            ReadOnlySpan<float> a = [1.0f];
+            ReadOnlySpan<float> b = [1.0f];
+            return MathTolerance.IsApproximatelyEqual(a, b, -1e-6f);
+        }).Throws<ArgumentOutOfRangeException>();
+    }
+
+    // ----- ReadOnlyTensorSpan<T> -----
+
+    [Test]
+    public async Task IsApproximatelyEqual_TensorDouble_HappyPath_True(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = new double[] { 1.0, 2.0, 3.0, 4.0 };
+        var b = new double[] { 1.0001, 2.0001, 3.0001, 4.0001 };
+        var result = MathTolerance.IsApproximatelyEqual(
+            new ReadOnlyTensorSpan<double>(a, Shape2x2, default),
+            new ReadOnlyTensorSpan<double>(b, Shape2x2, default),
+            0.001);
+        await Assert.That(result).IsTrue();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_TensorDouble_ElementMismatch_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = new double[] { 1.0, 2.0, 3.0, 4.0 };
+        var b = new double[] { 1.0, 99.0, 3.0, 4.0 };
+        var result = MathTolerance.IsApproximatelyEqual(
+            new ReadOnlyTensorSpan<double>(a, Shape2x2, default),
+            new ReadOnlyTensorSpan<double>(b, Shape2x2, default),
+            0.001);
+        await Assert.That(result).IsFalse();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_TensorDouble_RankMismatch_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var data = new double[] { 1.0, 2.0, 3.0, 4.0 };
+        var result = MathTolerance.IsApproximatelyEqual(
+            new ReadOnlyTensorSpan<double>(data, Shape4, default),
+            new ReadOnlyTensorSpan<double>(data, Shape2x2, default),
+            0.001);
+        await Assert.That(result).IsFalse();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_TensorDouble_PerDimensionLengthMismatch_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var four = new double[] { 1.0, 2.0, 3.0, 4.0 };
+        var six = new double[] { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 };
+        var result = MathTolerance.IsApproximatelyEqual(
+            new ReadOnlyTensorSpan<double>(four, Shape2x2, default),
+            new ReadOnlyTensorSpan<double>(six, Shape2x3, default),
+            0.001);
+        await Assert.That(result).IsFalse();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_TensorDouble_BothNaNAtSamePosition_True(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = new double[] { 1.0, double.NaN, 3.0 };
+        var b = new double[] { 1.0, double.NaN, 3.0 };
+        var result = MathTolerance.IsApproximatelyEqual(
+            new ReadOnlyTensorSpan<double>(a, Shape3, default),
+            new ReadOnlyTensorSpan<double>(b, Shape3, default),
+            0.001);
+        await Assert.That(result).IsTrue();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_TensorDouble_OneNaN_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = new double[] { 1.0, double.NaN, 3.0 };
+        var b = new double[] { 1.0, 2.0, 3.0 };
+        var result = MathTolerance.IsApproximatelyEqual(
+            new ReadOnlyTensorSpan<double>(a, Shape3, default),
+            new ReadOnlyTensorSpan<double>(b, Shape3, default),
+            0.001);
+        await Assert.That(result).IsFalse();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_TensorInt_WithinTolerance_True(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = new int[] { 1, 2, 3, 4 };
+        var b = new int[] { 1, 2, 4, 4 };
+        var result = MathTolerance.IsApproximatelyEqual(
+            new ReadOnlyTensorSpan<int>(a, Shape2x2, default),
+            new ReadOnlyTensorSpan<int>(b, Shape2x2, default),
+            1);
+        await Assert.That(result).IsTrue();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_TensorInt_ZeroToleranceRejectsOffByOne_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var a = new int[] { 1, 2, 3, 4 };
+        var b = new int[] { 1, 2, 4, 4 };
+        var result = MathTolerance.IsApproximatelyEqual(
+            new ReadOnlyTensorSpan<int>(a, Shape2x2, default),
+            new ReadOnlyTensorSpan<int>(b, Shape2x2, default),
+            0);
+        await Assert.That(result).IsFalse();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_TensorDouble_NaNTolerance_Throws(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        await Assert.That(() => MathTolerance.IsApproximatelyEqual(
+                new ReadOnlyTensorSpan<double>(OneDouble, Shape1, default),
+                new ReadOnlyTensorSpan<double>(OneDouble, Shape1, default),
+                double.NaN))
+            .Throws<ArgumentOutOfRangeException>();
+    }
+
+    [Test]
+    public async Task IsApproximatelyEqual_TensorDouble_NegativeTolerance_Throws(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        await Assert.That(() => MathTolerance.IsApproximatelyEqual(
+                new ReadOnlyTensorSpan<double>(OneDouble, Shape1, default),
+                new ReadOnlyTensorSpan<double>(OneDouble, Shape1, default),
+                -1e-6))
             .Throws<ArgumentOutOfRangeException>();
     }
 }

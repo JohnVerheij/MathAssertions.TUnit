@@ -14,7 +14,7 @@
     <Version>0.0.1</Version>
     <Authors>John Verheij</Authors>
     <Copyright>Copyright (c) 2026 John Verheij</Copyright>
-    <Description>Framework-agnostic core for tolerance-aware numeric assertions on System.Numerics types and BCL primitives. v0.0.1 ships MathTolerance helpers for NaN-aware, infinity-aware comparison of double, float, and Vector3. The wider catalog (Vector2/4, Quaternion, Matrix4x4, Plane, Complex, span overloads, ULP-distance equality, rotational equivalence, statistics, linear-algebra invariants, number theory, 3D geometry) lands at 0.1.0. Test-framework-specific entry points live in adapter packages, starting with MathAssertions.TUnit.</Description>
+    <Description>Framework-agnostic core for tolerance-aware numeric assertions on System.Numerics types and BCL primitives. NaN-aware, infinity-aware, AOT-compatible. v0.0.1 ships MathTolerance helpers for double, float, and Vector3. The wider catalog (Vector2/4, Quaternion + rotational equivalence, Matrix4x4, Plane + geometric equivalence, Complex, ReadOnlySpan and ReadOnlyTensorSpan overloads, ULP-distance equality, combined relative+absolute tolerance, statistics, linear-algebra invariants, number theory, 3D geometry) lands at 0.1.0. Test-framework-specific entry points live in adapter packages, starting with MathAssertions.TUnit.</Description>
     <PackageTags>assertions;math;tolerance;numerics;geometry;statistics;aot</PackageTags>
     <PackageProjectUrl>https://github.com/JohnVerheij/MathAssertions.TUnit</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -55,6 +55,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Sbom.Targets" PrivateAssets="all" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="all" />
+    <PackageReference Include="System.Numerics.Tensors" />
   </ItemGroup>
 
   <ItemGroup>
