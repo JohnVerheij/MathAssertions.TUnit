@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (`MathAssertions`, framework-agnostic core) — 0.1.0 Cluster 6: number-theory predicates
+
+New static class `MathAssertions.NumberTheory` for exact integer-arithmetic checks over `long`. No floating-point tolerance involved; the methods throw `ArgumentOutOfRangeException` for the inputs where the underlying mathematical operation is undefined (zero divisor, base <= 1, modulus <= 0, `long.MinValue` for GCD/LCM).
+
+- `NumberTheory.IsDivisibleBy(value, divisor)`: throws on zero divisor.
+- `NumberTheory.IsPrime(value)`: wheel-of-six trial division. Loop bound uses `i <= value / i` rather than `i * i <= value` so the candidate-square computation cannot overflow for values approaching `long.MaxValue`.
+- `NumberTheory.AreCoprime(a, b)`, `NumberTheory.GreatestCommonDivisor(a, b)`: Euclidean algorithm. `long.MinValue` is rejected explicitly because its absolute value does not fit in `long` and the standard implementation produces a wrong-sign result for some input pairs in that regime; callers needing GCD across the full `long` range should widen to `BigInteger`.
+- `NumberTheory.LeastCommonMultiple(a, b)`: computed via `|a / gcd(a, b) * b|`, dividing first to keep the intermediate as small as possible. The product can still overflow for large coprime inputs; documented.
+- `NumberTheory.IsPowerOf(value, baseValue)`: throws on `baseValue <= 1`. Returns `true` for `value == 1` (the `baseValue^0` convention) and `false` for non-positive values.
+- `NumberTheory.IsPerfectSquare(value)`: uses `Math.Sqrt` truncated to `long` plus a successor-check to accommodate floating-point rounding. The successor check is skipped when squaring would overflow `long`; in that regime the candidate is the only admissible answer, returning `false` correctly for inputs above the largest perfect square in `long` range.
+- `NumberTheory.IsCongruent(a, b, modulus)`: throws on `modulus <= 0`. Implemented by comparing canonical non-negative residues rather than by checking `(a - b) % modulus == 0`; the subtraction would overflow `long` for inputs straddling the signed range (for example `long.MaxValue` and a negative value). Pinned by an explicit straddling test.
+
 ### Added (`MathAssertions`, framework-agnostic core) — 0.1.0 Cluster 5: linear-algebra invariants
 
 New static class `MathAssertions.LinearAlgebra` covering `Matrix4x4` invariants and `Vector3` pair / span properties:

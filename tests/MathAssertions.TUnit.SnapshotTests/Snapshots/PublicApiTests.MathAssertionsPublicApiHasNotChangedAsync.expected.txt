@@ -43,6 +43,17 @@ namespace MathAssertions
         public static bool IsRelativelyAndAbsolutelyClose(double a, double b, double relativeTolerance, double absoluteTolerance) { }
         public static bool IsRotationallyEquivalent(System.Numerics.Quaternion a, System.Numerics.Quaternion b, double tolerance) { }
     }
+    public static class NumberTheory
+    {
+        public static bool AreCoprime(long a, long b) { }
+        public static long GreatestCommonDivisor(long a, long b) { }
+        public static bool IsCongruent(long a, long b, long modulus) { }
+        public static bool IsDivisibleBy(long value, long divisor) { }
+        public static bool IsPerfectSquare(long value) { }
+        public static bool IsPowerOf(long value, long baseValue) { }
+        public static bool IsPrime(long value) { }
+        public static long LeastCommonMultiple(long a, long b) { }
+    }
     public static class Sequences
     {
         public static bool ConvergesTo(System.ReadOnlySpan<double> values, double limit, double tolerance) { }
