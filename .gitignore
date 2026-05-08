@@ -49,6 +49,9 @@ TestResults/
 *.swo
 .DS_Store
 
+# Snapshot test transient output (never commit; the .expected.txt baseline is what's tracked)
+*.actual.txt
+
 # Stryker
 StrykerOutput/
 
