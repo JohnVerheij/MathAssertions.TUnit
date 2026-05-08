@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (`MathAssertions`, framework-agnostic core) — 0.1.0 Cluster 3: sequence-property checks
+
+New static class `MathAssertions.Sequences` for `ReadOnlySpan<double>` (and the two length predicates for any element type):
+
+- `Sequences.IsMonotonicallyIncreasing` and `IsMonotonicallyDecreasing`: non-strict monotonicity (adjacent equal values allowed). Empty and single-element spans are vacuously monotonic.
+- `Sequences.IsStrictlyMonotonicallyIncreasing` and `IsStrictlyMonotonicallyDecreasing`: strict monotonicity (adjacent equal values fail).
+- `Sequences.IsSorted`: convenience alias for `IsMonotonicallyIncreasing`.
+- `Sequences.IsBounded(values, min, max)`: returns `true` when every value is in `[min, max]`. NaN values fail the bound check; an empty span is vacuously bounded; `max < min` throws `ArgumentException`.
+- `Sequences.IsArithmeticProgression(values, tolerance)`: adjacent differences are equal within tolerance (common difference). Empty and single-element spans pass vacuously.
+- `Sequences.IsGeometricProgression(values, tolerance)`: adjacent ratios are equal within tolerance (common ratio). Returns `false` when any divisor is zero (ratio undefined). The zero check uses a bit-magnitude mask so both `+0` and `-0` are caught without tripping the operator-`==` floating-point analyzer flag.
+- `Sequences.ConvergesTo(values, limit, tolerance)`: the last value of the sequence is within tolerance of the limit. The empty-span case returns `false` (no value has been observed).
+- `Sequences.IsCauchyConvergent(values, tolerance)`: a single-step approximation of the Cauchy criterion — the last two values are within tolerance of each other. Documented as the practical convergence proxy for unit tests of convergent algorithms, not a substitute for analytic proof.
+- `Sequences.HasLength<T>(values, expected)` and `HasMinLength<T>(values, expected)`: length predicates over any `ReadOnlySpan<T>`.
+
 ### Added (`MathAssertions`, framework-agnostic core) — 0.1.0 Cluster 2: System.Numerics compounds
 
 - `MathTolerance.IsApproximatelyEqual(Vector2, Vector2, double)`, `(Vector4, Vector4, double)`: component-wise tolerance comparison for the remaining `System.Numerics` vector types. Components widen to `double` before comparing against the caller's `double` tolerance, the same precision-preserving rule the existing `Vector3` overload follows.
