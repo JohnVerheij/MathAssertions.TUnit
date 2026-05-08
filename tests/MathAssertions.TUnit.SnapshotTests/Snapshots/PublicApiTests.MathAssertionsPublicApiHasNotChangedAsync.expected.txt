@@ -31,4 +31,19 @@ namespace MathAssertions
         public static bool IsRelativelyAndAbsolutelyClose(double a, double b, double relativeTolerance, double absoluteTolerance) { }
         public static bool IsRotationallyEquivalent(System.Numerics.Quaternion a, System.Numerics.Quaternion b, double tolerance) { }
     }
+    public static class Sequences
+    {
+        public static bool ConvergesTo(System.ReadOnlySpan<double> values, double limit, double tolerance) { }
+        public static bool HasLength<T>(System.ReadOnlySpan<T> values, int expected) { }
+        public static bool HasMinLength<T>(System.ReadOnlySpan<T> values, int expected) { }
+        public static bool IsArithmeticProgression(System.ReadOnlySpan<double> values, double tolerance) { }
+        public static bool IsBounded(System.ReadOnlySpan<double> values, double min, double max) { }
+        public static bool IsCauchyConvergent(System.ReadOnlySpan<double> values, double tolerance) { }
+        public static bool IsGeometricProgression(System.ReadOnlySpan<double> values, double tolerance) { }
+        public static bool IsMonotonicallyDecreasing(System.ReadOnlySpan<double> values) { }
+        public static bool IsMonotonicallyIncreasing(System.ReadOnlySpan<double> values) { }
+        public static bool IsSorted(System.ReadOnlySpan<double> values) { }
+        public static bool IsStrictlyMonotonicallyDecreasing(System.ReadOnlySpan<double> values) { }
+        public static bool IsStrictlyMonotonicallyIncreasing(System.ReadOnlySpan<double> values) { }
+    }
 }
