@@ -1,0 +1,78 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    External-consumer smoke-test project. Simulates a downstream consumer adopting
+    MathAssertions.TUnit cleanly:
+
+      - References MathAssertions.TUnit ONLY via PackageReference (NOT ProjectReference) so we
+        actually consume the packed nupkg, including its README, dependency graph, package
+        metadata, and source-generator wiring exactly as a real consumer would.
+      - Uses a deliberately-different namespace (Smoke.Consumer.*) so we don't get the
+        "tests/MathAssertions.TUnit.Tests" parent-namespace visibility that would mask any
+        future shorthand-resolution bug in the TUnit.Assertions.Extensions auto-discovery
+        path. If a future release breaks that path, the build of this project will fail with
+        CS0103 / CS1061 long before it ships.
+      - Opts out of central package management (Directory.Packages.props) because we float
+        MathAssertions.TUnit's version to whatever was just packed into the local feed, which
+        is incompatible with the centrally-pinned versions used by the main build.
+      - Lives outside MathAssertions.TUnit.slnx so dotnet restore on the main solution doesn't
+        try to resolve the unpublished local-feed version. The CI step packs the package first,
+        then restores + builds + tests this project against the local feed, then publishes
+        with native AOT to validate the AOT-clean claim end-to-end.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Smoke.Consumer</RootNamespace>
+    <AssemblyName>Smoke.Consumer</AssemblyName>
+
+    <IsPackable>false</IsPackable>
+    <IsPublishable>true</IsPublishable>
+    <IsTestProject>true</IsTestProject>
+    <OutputType>Exe</OutputType>
+
+    <!-- Opt out of central package management: this project pins versions inline so it can
+         float MathAssertions.TUnit to "whatever was just packed into the local feed". -->
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+
+    <!-- Disable lock-file enforcement: floating versions are incompatible with locked restore. -->
+    <RestorePackagesWithLockFile>false</RestorePackagesWithLockFile>
+
+    <!-- Forbid implicit using directives so the smoke test catches resolution failures
+         attributable to missing usings rather than masking them with the SDK's auto-imports. -->
+    <ImplicitUsings>disable</ImplicitUsings>
+
+    <!-- AOT publish is conditional on RuntimeIdentifier (so day-to-day `dotnet build` doesn't
+         pull ILCompiler). The CI step calls `dotnet publish -r linux-x64` to validate the
+         AOT-clean claim; without -r, this is a normal MTP test exe. -->
+    <PublishAot Condition="'$(RuntimeIdentifier)' != ''">true</PublishAot>
+
+    <!-- Detect whether the local NuGet feed at ../../artifacts has been populated by CI's
+         pack steps. The MathAssertions.TUnit PackageReference below is conditional on this:
+           - During main CI's smoke step (after Pack ran): artifacts/ exists -> PackageReference
+             active -> restore via local feed -> smoke test runs and validates the public surface.
+           - During GitHub's automatic NuGet dependency-submission action (which discovers every
+             .csproj and runs `dotnet restore` in a fresh checkout, NO Pack having run):
+             artifacts/ does NOT exist -> PackageReference skipped -> restore succeeds with just
+             the TUnit dep from nuget.org. The submitted dependency graph for this project is
+             incomplete (it omits MathAssertions.TUnit), but that is acceptable: this is a
+             smoke-test project, not production code, and its "real" dependency on
+             MathAssertions.TUnit is already submitted via the main package projects' graphs.
+           - During local dev without a prior pack: artifacts/ doesn't exist -> PackageReference
+             skipped -> build fails with CS0103/CS1061 on MathAssertions.TUnit types, signalling
+             clearly that you need to pack first. -->
+    <ArtifactsLocalFeedExists Condition="Exists('$(MSBuildThisFileDirectory)..\..\artifacts')">true</ArtifactsLocalFeedExists>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TUnit" Version="1.43.11" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(ArtifactsLocalFeedExists)' == 'true'">
+    <!-- Floating version: consumes whatever 0.0.x preview was packed into the local feed at
+         ../../artifacts. The 0.0.1-* prefix matches both prereleases (0.0.1-rc.x) and the
+         eventual stable 0.0.1 nupkg, so the smoke test resolves cleanly against either. -->
+    <PackageReference Include="MathAssertions.TUnit" Version="0.0.1-*" />
+  </ItemGroup>
+
+</Project>

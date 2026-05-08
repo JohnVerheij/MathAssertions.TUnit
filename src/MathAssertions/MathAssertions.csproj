@@ -1,0 +1,72 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>MathAssertions</RootNamespace>
+    <AssemblyName>MathAssertions</AssemblyName>
+    <IsPublishable>false</IsPublishable>
+
+    <!-- Package identity -->
+    <IsPackable>true</IsPackable>
+    <PackageId>MathAssertions</PackageId>
+    <ProductName>MathAssertions</ProductName>
+    <Version>0.0.1</Version>
+    <Authors>John Verheij</Authors>
+    <Copyright>Copyright (c) 2026 John Verheij</Copyright>
+    <Description>Framework-agnostic core for tolerance-aware numeric assertions on System.Numerics types and BCL primitives. v0.0.1 ships MathTolerance helpers for NaN-aware, infinity-aware comparison of double, float, and Vector3. The wider catalog (Vector2/4, Quaternion, Matrix4x4, Plane, Complex, span overloads, ULP-distance equality, rotational equivalence, statistics, linear-algebra invariants, number theory, 3D geometry) lands at 0.1.0. Test-framework-specific entry points live in adapter packages, starting with MathAssertions.TUnit.</Description>
+    <PackageTags>assertions;math;tolerance;numerics;geometry;statistics;aot</PackageTags>
+    <PackageProjectUrl>https://github.com/JohnVerheij/MathAssertions.TUnit</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotes>See CHANGELOG.md</PackageReleaseNotes>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+
+    <!-- Pre-1.0 suppressions:
+         Proj0212/Proj0213: PackageIcon and PackageIconUrl omitted; will be added by 1.0.0.
+         Proj0241 (PackageValidationBaselineVersion missing) is suppressed for 0.0.1 only,
+         since there is no prior shipped version to baseline against. Once 0.0.1 ships, set
+         PackageValidationBaselineVersion to the previous version below and remove Proj0241
+         from this NoWarn list. -->
+    <NoWarn>$(NoWarn);Proj0212;Proj0213;Proj0241</NoWarn>
+
+    <!-- Symbol package + API compat (strict mode quad per dpfa Proj0249/0250/0251/0252) -->
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <EnablePackageValidation>true</EnablePackageValidation>
+    <EnableStrictModeForCompatibleFrameworksInPackage>true</EnableStrictModeForCompatibleFrameworksInPackage>
+    <EnableStrictModeForBaselineValidation>true</EnableStrictModeForBaselineValidation>
+    <ApiCompatGenerateSuppressionFile>true</ApiCompatGenerateSuppressionFile>
+    <ApiCompatEnableRuleCannotChangeParameterName>true</ApiCompatEnableRuleCannotChangeParameterName>
+    <ApiCompatEnableRuleAttributesMustMatch>true</ApiCompatEnableRuleAttributesMustMatch>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <!-- SBOM generation per dpfa Proj0243 (Microsoft.Sbom.Targets pack-time generation) -->
+    <GenerateSBOM>true</GenerateSBOM>
+
+    <!-- AOT / trimming - core code uses no reflection, safe for AOT-mode test contexts -->
+    <IsAotCompatible>true</IsAotCompatible>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Alphabetical per dpfa Proj0015 -->
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Sbom.Targets" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Codifies the no-reflection convention from CONVENTIONS.md as a build-time error.
+         RS0030 fires if any banned API is referenced from production code; combined with
+         TreatWarningsAsErrors=true the build fails. Test projects do not reference this file
+         so reflection-using helpers stay usable in tests. -->
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)../../BannedSymbols.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+</Project>

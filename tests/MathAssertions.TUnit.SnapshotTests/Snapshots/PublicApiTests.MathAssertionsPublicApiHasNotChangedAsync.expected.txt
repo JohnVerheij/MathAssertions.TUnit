@@ -1,0 +1,13 @@
+[assembly: System.Reflection.AssemblyMetadata("IsAotCompatible", "True")]
+[assembly: System.Reflection.AssemblyMetadata("IsTrimmable", "True")]
+[assembly: System.Reflection.AssemblyMetadata("RepositoryUrl", "https://github.com/JohnVerheij/MathAssertions.TUnit")]
+[assembly: System.Runtime.Versioning.TargetFramework(".NETCoreApp,Version=v10.0", FrameworkDisplayName=".NET 10.0")]
+namespace MathAssertions
+{
+    public static class MathTolerance
+    {
+        public static bool IsApproximatelyEqual(System.Numerics.Vector3 a, System.Numerics.Vector3 b, double tolerance) { }
+        public static bool IsApproximatelyEqual(double a, double b, double tolerance) { }
+        public static bool IsApproximatelyEqual(float a, float b, float tolerance) { }
+    }
+}

@@ -1,0 +1,26 @@
+[assembly: System.Reflection.AssemblyMetadata("IsAotCompatible", "True")]
+[assembly: System.Reflection.AssemblyMetadata("IsTrimmable", "True")]
+[assembly: System.Reflection.AssemblyMetadata("RepositoryUrl", "https://github.com/JohnVerheij/MathAssertions.TUnit")]
+[assembly: System.Runtime.Versioning.TargetFramework(".NETCoreApp,Version=v10.0", FrameworkDisplayName=".NET 10.0")]
+namespace MathAssertions.TUnit
+{
+    public static class VectorAssertions
+    {
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be approximately equal to {expected} component-wise within tolerance {toleranc" +
+            "e}", InlineMethodBody=true)]
+        public static bool IsApproximatelyEqualTo(this System.Numerics.Vector3 value, System.Numerics.Vector3 expected, double tolerance) { }
+    }
+}
+namespace TUnit.Assertions.Extensions
+{
+    public sealed class Vector3_IsApproximatelyEqualTo_Vector3_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Vector3>
+    {
+        public Vector3_IsApproximatelyEqualTo_Vector3_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Vector3> context, System.Numerics.Vector3 expected, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Vector3> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public static class VectorAssertions
+    {
+        public static TUnit.Assertions.Extensions.Vector3_IsApproximatelyEqualTo_Vector3_Double_Assertion IsApproximatelyEqualTo(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Vector3> source, System.Numerics.Vector3 expected, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+    }
+}

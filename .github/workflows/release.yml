@@ -1,0 +1,206 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-*'
+
+permissions:
+  contents: write       # for GitHub Release creation
+  id-token: write       # for NuGet Trusted Publishing OIDC + Sigstore keyless signing
+  packages: write       # not strictly required for nuget.org but kept for symmetry
+  attestations: write   # for SLSA build-provenance + SBOM attestations
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false   # never cancel an in-progress release
+
+jobs:
+  publish:
+    name: Build, pack & publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: nuget
+      url: https://www.nuget.org/packages/MathAssertions.TUnit/
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
+        with:
+          dotnet-version: |
+            10.0.x
+
+      - name: Verify tag matches package version
+        # Both packages (MathAssertions and MathAssertions.TUnit) ship together in
+        # lockstep: they share a single tag and must declare the same Version in their csproj.
+        # This gate blocks the release if any of the three (tag, MathAssertions csproj,
+        # MathAssertions.TUnit csproj) disagree.
+        run: |
+          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+          CORE_VERSION=$(grep -oP '(?<=<Version>)[^<]+' src/MathAssertions/MathAssertions.csproj)
+          TUNIT_VERSION=$(grep -oP '(?<=<Version>)[^<]+' src/MathAssertions.TUnit/MathAssertions.TUnit.csproj)
+          if [ "$TAG_VERSION" != "$CORE_VERSION" ] || [ "$TAG_VERSION" != "$TUNIT_VERSION" ]; then
+            echo "::error::Version mismatch: tag=$TAG_VERSION  MathAssertions=$CORE_VERSION  MathAssertions.TUnit=$TUNIT_VERSION"
+            exit 1
+          fi
+          echo "All three agree on version $TAG_VERSION"
+          # Export to subsequent steps so attest-sbom (which doesn't accept globs in sbom-path)
+          # can reference exact version-tagged filenames.
+          echo "TAG_VERSION=$TAG_VERSION" >> "$GITHUB_ENV"
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Test main suite
+        run: dotnet run --project tests/MathAssertions.TUnit.Tests/MathAssertions.TUnit.Tests.csproj --configuration Release --no-build
+
+      - name: Test framework-agnostic core suite
+        run: dotnet run --project tests/MathAssertions.Tests/MathAssertions.Tests.csproj --configuration Release --no-build
+
+      - name: Test snapshot suite
+        run: dotnet run --project tests/MathAssertions.TUnit.SnapshotTests/MathAssertions.TUnit.SnapshotTests.csproj --configuration Release --no-build
+
+      - name: Pack MathAssertions (core)
+        run: dotnet pack src/MathAssertions/MathAssertions.csproj --configuration Release --no-build --output ./artifacts
+
+      - name: Pack MathAssertions.TUnit (TUnit adapter)
+        run: dotnet pack src/MathAssertions.TUnit/MathAssertions.TUnit.csproj --configuration Release --no-build --output ./artifacts
+
+      - name: Install CycloneDX dotnet tool
+        # Cross-format SBOM coverage: each nupkg already carries an SPDX 3.0 manifest under
+        # _manifest/spdx_3.0/ via Microsoft.Sbom.Targets at pack time (see
+        # <SbomGenerationManifestInfo> in the src csprojs). CycloneDX 1.6 lands as a sibling
+        # release artifact for security tooling that prefers CycloneDX (OWASP Dependency-Track,
+        # Snyk, etc.). CRA Annex I §2(1) says SBOM "in a commonly used and machine-readable
+        # format" - singular - so either format alone satisfies; emitting both gives consumers
+        # their choice.
+        # Pin to a specific version so the SBOM tooling itself is deterministic; matches the
+        # SHA-pinning posture for every other action in this workflow.
+        run: dotnet tool install --global CycloneDX --version 6.2.0
+
+      - name: Generate CycloneDX 1.6 SBOM (release artifact)
+        # --exclude-dev strips analyzer / build-time-only packages from the BOM so it lists
+        # only runtime-relevant dependencies; same set NuGet records under
+        # <dependencies>/<group> in the nuspec.
+        # --exclude-test-projects keeps the BOM free of test-only coupling.
+        # NOTE: serialNumber is intentionally INCLUDED. actions/attest-sbom uses serialNumber
+        # as part of its CycloneDX format-detection check (with bomFormat + specVersion); the
+        # earlier `--no-serial-number` flag (chosen for deterministic-friendly output) made
+        # the BOM unrecognisable to the attestation step. Determinism takes a back seat to
+        # attestability here.
+        run: |
+          dotnet CycloneDX src/MathAssertions/MathAssertions.csproj \
+            -o ./artifacts -F Json -spv 1.6 \
+            -fn "MathAssertions.${TAG_VERSION}.cdx.json" \
+            --exclude-dev --exclude-test-projects
+          dotnet CycloneDX src/MathAssertions.TUnit/MathAssertions.TUnit.csproj \
+            -o ./artifacts -F Json -spv 1.6 \
+            -fn "MathAssertions.TUnit.${TAG_VERSION}.cdx.json" \
+            --exclude-dev --exclude-test-projects
+
+      - name: Generate VEX (OpenVEX v0.2.0) document
+        # VEX (Vulnerability Exploitability eXchange) declares which dependency CVEs do or
+        # don't affect this package. OpenVEX v0.2.0 is the IETF-aligned format. Empty
+        # `statements: []` means "no public CVE in any dependency is known to apply to this
+        # release at the time of build". As CVEs land in deps, statements are added (e.g.
+        # `not_affected` with a justification, `affected` with a fixed-version pointer).
+        # Pairs naturally with the SBOM: the SBOM lists components, the VEX adds vuln context.
+        # CRA Article 14 / Annex I §2(7) requires producers to address known vulnerabilities
+        # in dependencies; VEX is the machine-readable mechanism for declaring "we considered
+        # this CVE; it doesn't apply because <reason>".
+        run: |
+          TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          for PKG in MathAssertions MathAssertions.TUnit; do
+            cat > "./artifacts/${PKG}.${TAG_VERSION}.vex.json" <<EOF
+          {
+            "@context": "https://openvex.dev/ns/v0.2.0",
+            "@id": "https://github.com/JohnVerheij/MathAssertions.TUnit/releases/download/v${TAG_VERSION}/${PKG}.${TAG_VERSION}.vex.json",
+            "author": "John Verheij",
+            "timestamp": "${TIMESTAMP}",
+            "version": 1,
+            "tooling": "Auto-generated stub at release time; statements populated as CVEs are triaged in dependencies",
+            "statements": []
+          }
+          EOF
+          done
+
+      - name: Attest build provenance (SLSA v1.0) for nupkg + snupkg artifacts
+        # Generates a cryptographically-signed SLSA v1.0 provenance attestation for each
+        # shipped artifact. The attestation records the source repo + commit SHA + build
+        # environment + build instructions, signed via Sigstore keyless signing (no long-lived
+        # signing key needed) and stored in GitHub's public transparency log.
+        #
+        # Consumers verify with:
+        #   gh attestation verify ./MathAssertions.<version>.nupkg --owner JohnVerheij
+        # which downloads the attestation, validates the Sigstore certificate chain, and
+        # confirms the artifact was built by THIS repo at THIS commit by THIS workflow.
+        # End-to-end supply-chain provenance: the missing link between "this nupkg is signed
+        # by some NuGet account" and "this nupkg was built from this audited source tree".
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
+        with:
+          subject-path: |
+            ./artifacts/*.nupkg
+            ./artifacts/*.snupkg
+
+      - name: Attest CycloneDX SBOM for MathAssertions (Sigstore-signed)
+        # Cryptographically attests that the MathAssertions.<ver>.cdx.json file is a faithful
+        # SBOM for MathAssertions.<ver>.nupkg, signed via Sigstore keyless. The SPDX 3.0 SBOM
+        # inside the nupkg is covered by the build-provenance attestation above (it's part of
+        # the artifact contents); this step adds the standalone signature for the sibling
+        # CycloneDX file so security tooling can verify either format chain end-to-end.
+        # Explicit filenames (not globs) because (a) sbom-path is single-file only, and (b)
+        # `MathAssertions.*.nupkg` would also match `MathAssertions.TUnit.<ver>.nupkg`, creating
+        # ambiguity about which package gets attested.
+        uses: actions/attest-sbom@bd218ad0dbcb3e146bd073d1d9c6d78e08aa8a0b # v2
+        with:
+          subject-path: ./artifacts/MathAssertions.${{ env.TAG_VERSION }}.nupkg
+          sbom-path: ./artifacts/MathAssertions.${{ env.TAG_VERSION }}.cdx.json
+
+      - name: Attest CycloneDX SBOM for MathAssertions.TUnit (Sigstore-signed)
+        uses: actions/attest-sbom@bd218ad0dbcb3e146bd073d1d9c6d78e08aa8a0b # v2
+        with:
+          subject-path: ./artifacts/MathAssertions.TUnit.${{ env.TAG_VERSION }}.nupkg
+          sbom-path: ./artifacts/MathAssertions.TUnit.${{ env.TAG_VERSION }}.cdx.json
+
+      # NuGet Trusted Publishing: exchanges the GitHub Actions OIDC token for a
+      # short-lived NuGet API key, written to the local NuGet config so the
+      # subsequent `dotnet nuget push` picks it up automatically. No long-lived
+      # secret is stored in this repository; the trust relationship is configured
+      # on nuget.org under Account -> Trusted Publishing.
+      - name: NuGet login (Trusted Publishing)
+        uses: NuGet/login@ebc737b6fc418a6ca0073cf116ec8dc156d8b81e # v1
+        id: nuget-login
+        with:
+          user: JohnVerheij
+
+      - name: Push to NuGet
+        env:
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+        run: |
+          dotnet nuget push ./artifacts/*.nupkg \
+            --api-key "$NUGET_API_KEY" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3
+        with:
+          name: ${{ github.ref_name }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          generate_release_notes: true
+          files: |
+            ./artifacts/*.nupkg
+            ./artifacts/*.snupkg
+            ./artifacts/*.cdx.json
+            ./artifacts/*.vex.json

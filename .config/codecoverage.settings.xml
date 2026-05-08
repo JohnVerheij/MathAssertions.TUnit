@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Microsoft.Testing.Platform code-coverage extension settings (MTP schema).
+
+  See SnapshotAssertions.TUnit's equivalent file for the schema rationale. The flat
+  Configuration/CodeCoverage root is what MTP's coverage-settings flag accepts; the
+  ModulePaths/Include directives below are required to ensure Linux runners actually
+  instrument the production assemblies (without them, MTP emits an empty 178-byte
+  cobertura stub).
+-->
+<Configuration>
+  <CodeCoverage>
+    <!-- Only instrument the production assemblies. Test DLL and third-party packages are
+         out of scope for coverage accounting. -->
+    <ModulePaths>
+      <Include>
+        <ModulePath>.*MathAssertions\.dll$</ModulePath>
+        <ModulePath>.*MathAssertions\.TUnit\.dll$</ModulePath>
+      </Include>
+    </ModulePaths>
+    <!-- Exclude source-generated and obj-emitted files. -->
+    <Sources>
+      <Exclude>
+        <Source>.*[/\\]obj[/\\].*</Source>
+      </Exclude>
+    </Sources>
+    <!-- Exclude generated / explicitly-opted-out code via attribute. -->
+    <Attributes>
+      <Exclude>
+        <Attribute>^System\.Diagnostics\.CodeAnalysis\.ExcludeFromCodeCoverageAttribute$</Attribute>
+        <Attribute>^System\.CodeDom\.Compiler\.GeneratedCodeAttribute$</Attribute>
+        <Attribute>^System\.Runtime\.CompilerServices\.CompilerGeneratedAttribute$</Attribute>
+        <!-- TUnit's [GenerateAssertion(InlineMethodBody=true)] inlines the method body
+             into the generator-emitted assertion class. The original static method becomes
+             unreachable at runtime (the inlined copy gets called instead), so coverage
+             reports it as 0%. Excluding the attribute restricts measurement to the
+             actually-exercised generated code; the method bodies themselves are tested
+             via MathToleranceTests (which exercise the helpers directly) and
+             AdapterAssertionsTests (which exercise the generator-emitted methods). -->
+        <Attribute>^TUnit\.Assertions\.Attributes\.GenerateAssertionAttribute$</Attribute>
+      </Exclude>
+    </Attributes>
+    <!-- MTP default is false (VSTest default was true). Explicit for clarity. -->
+    <IncludeTestAssembly>false</IncludeTestAssembly>
+  </CodeCoverage>
+</Configuration>

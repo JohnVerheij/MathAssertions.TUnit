@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Framework-agnostic test project for the MathAssertions core package.
+
+    Intentionally references ONLY MathAssertions, NOT MathAssertions.TUnit. The TUnit
+    test runner is referenced for [Test]/[Category]/Assert.That infrastructure, but
+    every test in this project exercises MathTolerance directly without going through
+    any MathAssertions.TUnit fluent entry point. If the core ever picked up a TUnit
+    dependency by accident, this project would fail to compile.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>MathAssertions.Tests</RootNamespace>
+    <AssemblyName>MathAssertions.Tests</AssemblyName>
+
+    <IsPackable>false</IsPackable>
+    <IsPublishable>false</IsPublishable>
+    <IsTestProject>true</IsTestProject>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Alphabetical per dpfa Proj0015 -->
+    <PackageReference Include="TUnit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/MathAssertions/MathAssertions.csproj" />
+  </ItemGroup>
+
+</Project>

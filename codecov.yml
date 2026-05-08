@@ -1,0 +1,21 @@
+# Codecov configuration for MathAssertions.TUnit.
+#
+# See SnapshotAssertions.TUnit's equivalent file for the rationale: Microsoft.Testing.Platform's
+# --coverage flag emits a cobertura XML that includes every source file the test execution
+# touched, including TUnit's [AssertionExtension] source-generator output. Codecov rejects
+# such reports as "Unusable" if the majority of paths point at build-time-generated files.
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        target: 80%
+
+ignore:
+  - "**/obj/**"
+  - "**/bin/**"
+  - "tests/**"
