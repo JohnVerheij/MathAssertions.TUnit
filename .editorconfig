@@ -18,13 +18,13 @@ dotnet_diagnostic.MA0004.severity = none
 dotnet_diagnostic.CA2007.severity = none
 dotnet_diagnostic.VSTHRD200.severity = none
 
-# Assertion-DSL code: same exemption applies. The public surface of TimeAssertions.TUnit's
-# assertion chain (e.g. Within) deliberately omits the Async suffix because the chain
-# is awaited as part of `await Assert.That(actual).IsOk().Within(...)`. Adding "Async" would
-# break the DSL ergonomics and diverge from TUnit's own value-returning patterns. The
-# assertion runtime executes on the same thread-pool / no-SyncContext model as the tests,
-# so ConfigureAwait(false) is equally a no-op here.
-[**/TimeAssertions.TUnit/*.cs]
+# Assertion-DSL code: same exemption applies. The public surface of MathAssertions.TUnit's
+# assertion chain (e.g. IsApproximatelyEqualTo) deliberately omits the Async suffix because
+# the chain is awaited as part of `await Assert.That(actual).IsApproximatelyEqualTo(...)`.
+# Adding "Async" would break the DSL ergonomics and diverge from TUnit's own value-returning
+# patterns. The assertion runtime executes on the same thread-pool / no-SyncContext model as
+# the tests, so ConfigureAwait(false) is equally a no-op here.
+[**/MathAssertions.TUnit/*.cs]
 dotnet_diagnostic.MA0004.severity = none
 dotnet_diagnostic.CA2007.severity = none
 dotnet_diagnostic.VSTHRD200.severity = none
