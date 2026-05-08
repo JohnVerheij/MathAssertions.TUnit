@@ -113,25 +113,36 @@ public static class NumberTheory
     /// <remarks>
     /// <para>
     /// Computed via <c>|a / gcd(a, b) * b|</c>, dividing first to keep the intermediate
-    /// product as small as possible. The product can still overflow <see cref="long"/>
-    /// for large coprime inputs; callers that need LCM across the full
-    /// <see cref="long"/> range should widen to <see cref="System.Numerics.BigInteger"/>.
+    /// as small as possible. The final multiplication runs in a <c>checked</c> context;
+    /// when the LCM does not fit in <see cref="long"/> (large coprime inputs near the
+    /// signed range, for example <c>lcm(long.MaxValue, 2)</c>) an
+    /// <see cref="OverflowException"/> is thrown rather than the wrapped negative result
+    /// the unchecked computation would silently produce. Callers needing LCM across the
+    /// full <see cref="long"/> range should widen to <see cref="System.Numerics.BigInteger"/>.
     /// </para>
     /// <para>
-    /// <see cref="long.MinValue"/> is rejected for the same reason
-    /// <see cref="GreatestCommonDivisor(long, long)"/> rejects it.
+    /// <see cref="long.MinValue"/> is rejected at entry for the same reason
+    /// <see cref="GreatestCommonDivisor(long, long)"/> rejects it. The check happens
+    /// before the <c>lcm(0, b) == 0</c> fast-path so the contract holds even when one
+    /// argument is zero and the other is <see cref="long.MinValue"/>.
     /// </para>
     /// </remarks>
     /// <param name="a">First value.</param>
     /// <param name="b">Second value.</param>
     /// <returns>The least common multiple.</returns>
     /// <exception cref="ArgumentOutOfRangeException">Either argument is <see cref="long.MinValue"/>.</exception>
+    /// <exception cref="OverflowException">The least common multiple does not fit in <see cref="long"/>.</exception>
     public static long LeastCommonMultiple(long a, long b)
     {
+        if (a == long.MinValue)
+            throw new ArgumentOutOfRangeException(nameof(a), "long.MinValue is not supported; its absolute value does not fit in long.");
+        if (b == long.MinValue)
+            throw new ArgumentOutOfRangeException(nameof(b), "long.MinValue is not supported; its absolute value does not fit in long.");
         if (a == 0 || b == 0)
             return 0;
+
         var gcd = GreatestCommonDivisor(a, b);
-        return Math.Abs(a / gcd * b);
+        return checked(Math.Abs(a / gcd * b));
     }
 
     /// <summary>

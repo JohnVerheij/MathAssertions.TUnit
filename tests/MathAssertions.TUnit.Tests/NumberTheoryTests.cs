@@ -149,6 +149,30 @@ internal sealed class NumberTheoryTests
             .Throws<ArgumentOutOfRangeException>();
     }
 
+    [Test]
+    public async Task LeastCommonMultiple_ZeroAndMinValue_StillThrows(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // Pins the contract that long.MinValue is rejected even on the lcm(0, b) == 0
+        // fast-path. A naive ordering would short-circuit on the zero check before
+        // validation runs; the explicit MinValue check at entry must fire first.
+        await Assert.That(() => NumberTheory.LeastCommonMultiple(0L, long.MinValue))
+            .Throws<ArgumentOutOfRangeException>();
+        await Assert.That(() => NumberTheory.LeastCommonMultiple(long.MinValue, 0L))
+            .Throws<ArgumentOutOfRangeException>();
+    }
+
+    [Test]
+    public async Task LeastCommonMultiple_OverflowingResult_Throws(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // gcd(long.MaxValue, 2) = 1 -> lcm = |long.MaxValue / 1 * 2| = 2 * long.MaxValue,
+        // which exceeds the long range. The checked() wrapper turns the silent wrap into
+        // an OverflowException so callers see the failure rather than a wrong answer.
+        await Assert.That(() => NumberTheory.LeastCommonMultiple(long.MaxValue, 2L))
+            .Throws<OverflowException>();
+    }
+
     // ----- IsPowerOf -----
 
     [Test]
