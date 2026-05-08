@@ -79,7 +79,11 @@ public static class LinearAlgebra
     /// <returns><see langword="true"/> if the matrix is approximately the identity.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
     public static bool IsIdentity(Matrix4x4 m, double tolerance)
-        => MathTolerance.IsApproximatelyEqual(m, Matrix4x4.Identity, tolerance);
+    {
+        ValidateTolerance(tolerance);
+
+        return MathTolerance.IsApproximatelyEqual(m, Matrix4x4.Identity, tolerance);
+    }
 
     /// <summary>
     /// Returns <see langword="true"/> when the matrix determinant is within
@@ -94,7 +98,11 @@ public static class LinearAlgebra
     /// <paramref name="expected"/>.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
     public static bool HasDeterminantApproximately(Matrix4x4 m, double expected, double tolerance)
-        => MathTolerance.IsApproximatelyEqual((double)m.GetDeterminant(), expected, tolerance);
+    {
+        ValidateTolerance(tolerance);
+
+        return MathTolerance.IsApproximatelyEqual((double)m.GetDeterminant(), expected, tolerance);
+    }
 
     /// <summary>
     /// Returns <see langword="true"/> when the matrix trace (sum of diagonal elements)
@@ -144,7 +152,11 @@ public static class LinearAlgebra
     /// <returns><see langword="true"/> if <c>u . v ~ 0</c>.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
     public static bool AreOrthogonal(Vector3 u, Vector3 v, double tolerance)
-        => MathTolerance.IsApproximatelyEqual((double)Vector3.Dot(u, v), 0.0, tolerance);
+    {
+        ValidateTolerance(tolerance);
+
+        return MathTolerance.IsApproximatelyEqual((double)Vector3.Dot(u, v), 0.0, tolerance);
+    }
 
     /// <summary>
     /// Returns <see langword="true"/> when the two vectors are parallel (or anti-parallel):
@@ -160,6 +172,8 @@ public static class LinearAlgebra
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
     public static bool AreParallel(Vector3 u, Vector3 v, double tolerance)
     {
+        ValidateTolerance(tolerance);
+
         var cross = Vector3.Cross(u, v);
         return MathTolerance.IsApproximatelyEqual((double)cross.Length(), 0.0, tolerance);
     }
