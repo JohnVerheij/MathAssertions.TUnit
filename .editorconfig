@@ -29,6 +29,13 @@ dotnet_diagnostic.MA0004.severity = none
 dotnet_diagnostic.CA2007.severity = none
 dotnet_diagnostic.VSTHRD200.severity = none
 
+# Snapshot baselines: never trim trailing whitespace or normalize line endings
+# (the whole point of a snapshot is byte-level fidelity to a captured artefact).
+[*.{expected,actual}.txt]
+trim_trailing_whitespace = false
+insert_final_newline = false
+generated_code = true
+
 [*.{json,csproj,props,targets}]
 indent_size = 2
 

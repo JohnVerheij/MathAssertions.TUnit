@@ -1,12 +1,35 @@
 # MathAssertions.TUnit
 
+[![NuGet](https://img.shields.io/nuget/v/MathAssertions.TUnit.svg)](https://www.nuget.org/packages/MathAssertions.TUnit/)
+[![Downloads](https://img.shields.io/nuget/dt/MathAssertions.TUnit.svg)](https://www.nuget.org/packages/MathAssertions.TUnit/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4.svg)](https://dotnet.microsoft.com/download/dotnet/10.0)
+
 > **Scope:** Test projects only. Not intended for production code.
 
-Tolerance-aware math assertions for [TUnit](https://github.com/thomhurst/TUnit). NaN-aware, infinity-aware, AOT-compatible, no runtime reflection.
+TUnit-native fluent math-assertion DSL for `System.Numerics` compound types and BCL floating-point primitives. NaN-aware, infinity-aware, AOT-compatible, no runtime reflection in the assertion path.
+
+> **Full documentation, "Why component-wise rather than Euclidean", cookbook, design notes, and roadmap:** [github.com/JohnVerheij/MathAssertions.TUnit](https://github.com/JohnVerheij/MathAssertions.TUnit)
 
 ## Status: v0.0.1 (initial preview)
 
-This first release ships a deliberately narrow skeleton to establish the package and lock the API style. The wider System.Numerics catalog plus statistics, linear-algebra invariants, number theory, and 3D geometry land at 0.1.0.
+This first release is a deliberately narrow skeleton. v0.0.1 ships a single fluent entry point: `Vector3.IsApproximatelyEqualTo(expected, tolerance)`. The wider System.Numerics catalog plus statistics, linear-algebra invariants, number theory, and 3D-geometry surface land at v0.1.0.
+
+## Install
+
+```bash
+dotnet add package MathAssertions.TUnit
+```
+
+`MathAssertions` (the framework-agnostic core) comes transitively. **Requirements:** TUnit 1.43.11 or later, .NET 10.
+
+The source-generated entry point (`IsApproximatelyEqualTo` on `Vector3`) auto-imports via `TUnit.Assertions.Extensions`. The only additional `using` you typically need is `System.Numerics` for the value type itself. If you call `MathTolerance.IsApproximatelyEqual` directly from a `[GenerateAssertion]` extension on a private domain type, add `MathAssertions` to your `GlobalUsings.cs`:
+
+```csharp
+global using MathAssertions;
+```
+
+## Quick start
 
 ```csharp
 using System.Numerics;
@@ -21,21 +44,13 @@ public async Task ComputedPositionIsApproximatelyAtTarget(CancellationToken ct)
 }
 ```
 
-## What this package adds (v0.0.1)
+## Entry points (v0.0.1)
 
-A single fluent entry point: `Vector3.IsApproximatelyEqualTo(expected, tolerance)`, generated via TUnit's `[GenerateAssertion]`. Component values widen to `double` so a `double` tolerance is honored at full precision.
+| Method | Purpose |
+|---|---|
+| `IsApproximatelyEqualTo(Vector3 expected, double tolerance)` | Component-wise tolerance check; components widen to `double` for precision; NaN-aware, infinity-aware (matches TUnit's primitive `IsCloseTo` semantics). |
 
-## What lands at v0.1.0
-
-Vector2 / Vector4, Quaternion (component-wise plus rotational equivalence), Matrix4x4, Plane (component-wise plus geometric equivalence), Complex, double[] / float[], plus the full statistics, linear-algebra, number-theory, and 3D-geometry surface.
-
-## Quick start
-
-```bash
-dotnet add package MathAssertions.TUnit
-```
-
-`MathAssertions` (the framework-agnostic core) comes transitively. **Requirements:** TUnit 1.43.11 or later, .NET 10.
+The wider catalog (Vector2/4, Quaternion + rotational equivalence, Matrix4x4, Plane + geometric equivalence, Complex, double[]/float[], spans) lands at v0.1.0 alongside additional method families (statistics, linear-algebra invariants, number theory, 3D geometry).
 
 ## Extending to your own types
 
@@ -55,16 +70,28 @@ file static class PositionAssertions
 }
 ```
 
+## Failure diagnostics
+
+On a failed assertion, the exception message renders the actual `Vector3` against the expected and the supplied tolerance:
+
+```text
+Expected:
+  to be approximately equal to <1, 2, 99> component-wise within tolerance 0.001
+
+Actual:
+  <1, 2, 3>
+```
+
+[Full failure-diagnostics examples, design notes, stability intent, and roadmap on GitHub.](https://github.com/JohnVerheij/MathAssertions.TUnit#failure-diagnostics)
+
 ## Family
+
+Part of an assertion family for TUnit:
 
 - [LogAssertions.TUnit](https://github.com/JohnVerheij/LogAssertions.TUnit)
 - [SnapshotAssertions.TUnit](https://github.com/JohnVerheij/SnapshotAssertions.TUnit)
 - [TimeAssertions.TUnit](https://github.com/JohnVerheij/TimeAssertions.TUnit)
 
-## Documentation
-
-[github.com/JohnVerheij/MathAssertions.TUnit](https://github.com/JohnVerheij/MathAssertions.TUnit) for the full README, design notes, and roadmap.
-
 ## License
 
-[MIT](https://github.com/JohnVerheij/MathAssertions.TUnit/blob/main/LICENSE)
+[MIT](https://github.com/JohnVerheij/MathAssertions.TUnit/blob/main/LICENSE). Copyright (c) 2026 John Verheij.
