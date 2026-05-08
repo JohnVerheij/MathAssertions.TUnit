@@ -35,10 +35,23 @@ For larger ideas (new entry points, breaking changes, cross-cutting refactors), 
 
 ## Tests
 
-- Tests live in `tests/MathAssertions.TUnit.Tests/`.
+- Tests live in `tests/MathAssertions.TUnit.Tests/` (main behavior), `tests/MathAssertions.Tests/` (framework-agnostic core, no TUnit reference), and `tests/MathAssertions.TUnit.SnapshotTests/` (public API surface pin via `MatchesSnapshot()`).
 - Each public method on the assertion classes should have at least one test covering its happy path and at least one covering an invalid-input path.
 - Tests use TUnit's `[Test]` and the project's own assertion style (we eat our own dog food where possible).
 - Add `[Category("Smoke")]` to tests that should run in the pre-commit / fast feedback loop.
+
+## Snapshot files (when contributing tests)
+
+Tests that use `MatchesSnapshot()` produce two file types:
+
+- `*.expected.txt`. The committed baseline. Diffed against actual output on every run.
+- `*.actual.txt`. The transient diff output, written when actual diverges from expected. Gitignored; never commit.
+
+To accept a snapshot change:
+
+1. Locally, use your IDE's diff-and-merge view, or `cp Snapshots/Foo.actual.txt Snapshots/Foo.expected.txt`.
+2. Or run `SNAPSHOT_ACCEPT=1 dotnet test` to bulk-accept all changes.
+3. CI never sets `SNAPSHOT_ACCEPT`; mismatches fail the build.
 
 ## Releases
 

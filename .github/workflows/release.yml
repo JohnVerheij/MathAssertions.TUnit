@@ -161,13 +161,13 @@ jobs:
         # Explicit filenames (not globs) because (a) sbom-path is single-file only, and (b)
         # `MathAssertions.*.nupkg` would also match `MathAssertions.TUnit.<ver>.nupkg`, creating
         # ambiguity about which package gets attested.
-        uses: actions/attest-sbom@bd218ad0dbcb3e146bd073d1d9c6d78e08aa8a0b # v2
+        uses: actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e # v4.1.0
         with:
           subject-path: ./artifacts/MathAssertions.${{ env.TAG_VERSION }}.nupkg
           sbom-path: ./artifacts/MathAssertions.${{ env.TAG_VERSION }}.cdx.json
 
       - name: Attest CycloneDX SBOM for MathAssertions.TUnit (Sigstore-signed)
-        uses: actions/attest-sbom@bd218ad0dbcb3e146bd073d1d9c6d78e08aa8a0b # v2
+        uses: actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e # v4.1.0
         with:
           subject-path: ./artifacts/MathAssertions.TUnit.${{ env.TAG_VERSION }}.nupkg
           sbom-path: ./artifacts/MathAssertions.TUnit.${{ env.TAG_VERSION }}.cdx.json
