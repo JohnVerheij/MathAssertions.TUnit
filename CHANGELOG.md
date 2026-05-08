@@ -48,7 +48,7 @@ The wider surface lands at 0.1.0 alongside the load-bearing review fixes M-1 thr
 - Five Roslyn analyzer packs at full strength (Meziantou, SonarAnalyzer, Roslynator, Microsoft.VisualStudio.Threading, DotNetProjectFile.Analyzers).
 - `Microsoft.CodeAnalysis.BannedApiAnalyzers` enforces no-reflection at build time.
 - ApiCompat strict mode wired; `PackageValidationBaselineVersion` will pin to 0.0.1 starting from 0.0.2.
-- 90% line / 80% branch coverage CI gates.
+- 90% line / 90% branch coverage CI gates.
 - Public API surface pinned via snapshot tests using `SnapshotAssertions.TUnit` plus `PublicApiGenerator`; cross-package dogfooding against the family.
 - External-consumer smoke test (deliberately different namespace, deliberately different package-resolution path) plus AOT-publish gate on `linux-x64`.
 - Trusted Publishing (OIDC) to nuget.org; no long-lived secrets.
