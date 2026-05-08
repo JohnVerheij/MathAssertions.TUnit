@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (`MathAssertions`, framework-agnostic core) — 0.1.0 Cluster 5: linear-algebra invariants
+
+New static class `MathAssertions.LinearAlgebra` covering `Matrix4x4` invariants and `Vector3` pair / span properties:
+
+- `LinearAlgebra.IsSymmetric(Matrix4x4, double)`: every off-diagonal pair is mirror-equal within tolerance.
+- `LinearAlgebra.IsOrthogonal(Matrix4x4, double)`: `M * M^T ~ I` within tolerance. Translation matrices are not orthogonal (translation column breaks the product); pure rotations are. Non-uniform scaling is not (the diagonal of `M * M^T` picks up the squared scale).
+- `LinearAlgebra.IsIdentity(Matrix4x4, double)`: convenience wrapper over `MathTolerance.IsApproximatelyEqual` against `Matrix4x4.Identity`.
+- `LinearAlgebra.HasDeterminantApproximately(Matrix4x4, double, double)`: tolerance-aware determinant check via `Matrix4x4.GetDeterminant`.
+- `LinearAlgebra.HasTraceApproximately(Matrix4x4, double, double)`: tolerance-aware trace check (sum of diagonal elements, widened to `double` before summing).
+- `LinearAlgebra.IsInvertible(Matrix4x4, double)`: `|det(M)| > tolerance`. The threshold expresses how far from singular the matrix must be to invert numerically; choose a tolerance that reflects the expected condition number.
+- `LinearAlgebra.AreOrthogonal(Vector3, Vector3, double)`: dot product within tolerance of zero.
+- `LinearAlgebra.AreParallel(Vector3, Vector3, double)`: cross-product magnitude within tolerance of zero. The zero vector is treated as parallel to every other vector by this definition (`0 x v = 0`).
+- `LinearAlgebra.AreLinearlyIndependent(ReadOnlySpan<Vector3>, double)`: triple-product test for sets of up to three vectors in `R^3`. Spans of four or more vectors are always dependent and return `false`. Empty spans are vacuously independent. The length-1 case compares vector length directly against tolerance rather than length-squared against tolerance-squared, so the verdict is well-defined for extreme tolerance magnitudes (where squaring would underflow or overflow).
+
+All tolerance-taking methods validate the bound up front, including the
+`AreLinearlyIndependent` empty-span vacuous-true path. Same family-wide
+validation-order pattern that `Sequences.ConvergesTo`, `Sequences.IsBounded`, and
+`Statistics.HasMeanApproximately` enforce.
+
 ### Added (`MathAssertions`, framework-agnostic core) — 0.1.0 Cluster 4: statistical-property checks
 
 New static class `MathAssertions.Statistics`:
