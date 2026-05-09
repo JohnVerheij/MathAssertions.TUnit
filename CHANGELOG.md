@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Package descriptions, tags, and README taglines reframed from "tolerance-aware numeric assertions" / "math-assertion DSL" to "math assertion library" to match the package's actual surface (tolerance comparisons, sequences, statistics, linear algebra, number theory, 3D geometry) and long-term scope. Affects `<Description>` and `<PackageTags>` in both csprojs (so the nuget.org listing reflects the broader scope), the H1 tagline in the root `README.md`, and the H1 taglines in `src/MathAssertions.TUnit/README.md` and `src/MathAssertions/README.md`. No API surface change.
+- Package descriptions, tags, and README taglines reframed from "tolerance-aware numeric assertions" / "math-assertion DSL" to "math assertion library" to match the package's actual surface (tolerance comparisons, sequences, statistics, linear algebra, number theory, 3D geometry) and long-term scope. Affects `<Description>` and `<PackageTags>` in both csprojs (so the nuget.org listing reflects the broader scope), the tagline in the root `README.md`, and the taglines in `src/MathAssertions.TUnit/README.md` and `src/MathAssertions/README.md`. No API surface change.
 
 ### Documentation
 
