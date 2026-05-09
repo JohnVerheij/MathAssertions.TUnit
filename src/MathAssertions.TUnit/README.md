@@ -11,9 +11,9 @@ TUnit-native fluent math-assertion DSL for `System.Numerics` compound types and 
 
 > **Full documentation, "Why component-wise rather than Euclidean", cookbook, design notes, and roadmap:** [github.com/JohnVerheij/MathAssertions.TUnit](https://github.com/JohnVerheij/MathAssertions.TUnit)
 
-## Status: v0.0.1 (initial preview)
+## Status: v0.1.0 (the wider catalog)
 
-This first release is a deliberately narrow skeleton. v0.0.1 ships a single fluent entry point: `Vector3.IsApproximatelyEqualTo(expected, tolerance)`. The wider System.Numerics catalog plus statistics, linear-algebra invariants, number theory, and 3D-geometry surface land at v0.1.0.
+The whole 0.1.0 mathematical-assertion surface is now exposed as fluent extensions over TUnit's `Assert.That(value).Method(...)`. ~85 fluent entry points across twelve adapter classes covering scalar tolerance comparisons, the `System.Numerics` compound types (vector / quaternion / matrix / plane / complex), `double[]` / `float[]` element-wise comparison with null-array guards, sequence properties, descriptive statistics, linear-algebra invariants, integer number theory, and a complete 3D-geometry primitive surface (containment / closest-point distance / intersection / pointcloud aggregates).
 
 ## Install
 
@@ -44,13 +44,26 @@ public async Task ComputedPositionIsApproximatelyAtTarget(CancellationToken ct)
 }
 ```
 
-## Entry points (v0.0.1)
+## Entry points (v0.1.0)
 
-| Method | Purpose |
+The fluent surface, organized by adapter class:
+
+| Class | Coverage |
 |---|---|
-| `IsApproximatelyEqualTo(Vector3 expected, double tolerance)` | Component-wise tolerance check; components widen to `double` for precision; NaN-aware, infinity-aware (matches TUnit's primitive `IsCloseTo` semantics). |
+| `ScalarAssertions` | `IsApproximatelyEqualTo`, `IsCloseInUlpsTo`, `IsRelativelyAndAbsolutelyCloseTo`, `IsNonNegativeFinite`, `IsProbability`, `IsPercentage`, `HasRoundtripIdentity` for `double`/`float`. |
+| `VectorAssertions` | `IsApproximatelyEqualTo` for `Vector2`/`Vector3`/`Vector4`; `Vector3.HasMagnitudeApproximately`, `IsNormalized`. |
+| `QuaternionAssertions` | `IsApproximatelyEqualTo`, `IsRotationallyEquivalentTo` (SO(3) double-cover), `IsIdentity`, `IsNormalized`. |
+| `MatrixAssertions` | `Matrix4x4.IsApproximatelyEqualTo` plus the full invariant surface: `IsSymmetric`, `IsOrthogonal`, `IsIdentity`, `HasDeterminantApproximately`, `HasTraceApproximately`, `IsInvertible`. |
+| `PlaneAssertions` | `IsApproximatelyEqualTo`, `IsGeometricallyEquivalentTo` (sign-flip equivalence). |
+| `ComplexAssertions` | `IsApproximatelyEqualTo`. |
+| `ArrayAssertions` | `double[]` / `float[]` element-wise `IsApproximatelyEqualTo` with `ArgumentNullException` on null arrays. |
+| `SequencesAssertions` | Monotonicity, `IsBounded`, `IsArithmeticProgression`, `IsGeometricProgression`, `ConvergesTo`, `IsCauchyConvergent`, generic `HasLength`, `HasMinLength` over `T[]`. |
+| `StatisticsAssertions` | `HasMean/Variance/StdDev/Sum/Median/PercentileApproximately`, `IsWithinSigmasOfMean`, `AreAllWithinSigmasOfMean`. |
+| `LinearAlgebraAssertions` | `Vector3.IsOrthogonalTo`, `IsParallelTo`; `Vector3[].AreLinearlyIndependent`. |
+| `NumberTheoryAssertions` | `long`-integer predicates: `IsDivisibleBy`, `IsPrime`, `IsCoprimeWith`, `IsPowerOf`, `IsPerfectSquare`, `IsCongruentTo`. |
+| `Geometry3DAssertions` | Triangle / point-set property predicates, containment (point/box/sphere/OBB/convex hull), predicate-style `HasDistanceFromPlane/Segment/Triangle`, ray-plane/sphere/triangle/AABB intersection, pointcloud aggregates. |
 
-The wider catalog (Vector2/4, Quaternion + rotational equivalence, Matrix4x4, Plane + geometric equivalence, Complex, double[]/float[], spans) lands at v0.1.0 alongside additional method families (statistics, linear-algebra invariants, number theory, 3D geometry).
+`IsFinite()` for `double`/`float` is provided by TUnit's built-in `DoubleAssertionExtensions`/`SingleAssertionExtensions`; this package does not duplicate it.
 
 ## Extending to your own types
 

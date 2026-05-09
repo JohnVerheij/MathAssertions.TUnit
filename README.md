@@ -14,19 +14,23 @@ A TUnit-native fluent math-assertion DSL for `System.Numerics` compound types an
 
 ---
 
-## Status: v0.0.1 (initial preview)
+## Status: v0.1.0 (the wider catalog)
 
-This first release is a deliberately narrow skeleton that establishes the repository, the package identifiers on nuget.org, the quality bar, and the API style. The wider System.Numerics catalog plus statistics, linear-algebra invariants, number theory, and 3D-geometry surface land at v0.1.0. Consumers needing the full v0.1.0 surface today can install v0.0.1 to lock the dependency relationship and watch the CHANGELOG.
+The framework-agnostic core is feature-complete across seven topical clusters and the TUnit adapter exposes the full surface as fluent extensions over `Assert.That(value).Method(...)`. ~85 assertion-shaped methods total. Every fluent entry point is generated via TUnit's `[GenerateAssertion]` source generator and integrates directly into the existing `Assert.That(...)` pipeline.
 
-| Shipped now (v0.0.1) | Planned for v0.1.0 |
+| Domain | Coverage |
 |---|---|
-| `MathTolerance.IsApproximatelyEqual(double, double, double)` | Vector2 / Vector4 component-wise |
-| `MathTolerance.IsApproximatelyEqual(float, float, float)` | Quaternion component-wise + rotational equivalence |
-| `MathTolerance.IsApproximatelyEqual(Vector3, Vector3, double)` | Matrix4x4, Plane, Complex, double[] / float[], spans |
-| `Vector3.IsApproximatelyEqualTo(expected, tolerance)` (TUnit fluent) | Statistics: mean, median, variance, stddev, percentile, sigma bounds |
-|  | Linear algebra invariants: symmetric, orthogonal, identity, determinant |
-|  | Number theory: divisibility, primality, GCD/LCM, congruence |
-|  | Geometry3D: Sphere, AABB, OBB, Ray, Triangle plus intersection / containment / pointcloud |
+| Tolerance primitives | Scalar / vector / quaternion / matrix / plane / complex / span / tensor `IsApproximatelyEqual`; ULP-distance equality; combined relative + absolute tolerance; finiteness, probability, percentage predicates; invertible-transformation roundtrip-identity |
+| `System.Numerics` compounds | `Vector2`/`Vector3`/`Vector4` component-wise; `Quaternion` component-wise plus rotational equivalence (SO(3) double-cover); `Matrix4x4` element-wise; `Plane` component-wise plus geometric equivalence; `Complex`; `ReadOnlySpan<double>`/`<float>`; generic `ReadOnlyTensorSpan<T>` |
+| Sequences | Monotonicity (strict and non-strict), sortedness, boundedness with NaN-aware element check, arithmetic / geometric progressions, single-step Cauchy convergence, generic length predicates |
+| Statistics | Welford's mean + variance, median, percentile (overflow-safe), standard deviation, sum, sigma-bound checks |
+| Linear algebra | `Matrix4x4` invariants (symmetric, orthogonal, identity, determinant, trace, invertible); `Vector3` pair properties (orthogonality, parallelism, linear independence) |
+| Number theory | `long` predicates: divisibility, primality (overflow-safe), coprimality, GCD/LCM (`long.MinValue`-aware, `OverflowException`-on-LCM-overflow), powers of base, perfect square (overflow-safe successor check), modular congruence (canonical-residue form) |
+| Geometry3D | Eight primitive `record struct` types (`Sphere`, `AxisAlignedBox`, `OrientedBox`, `Ray3D`, `LineSegment3D`, `Triangle3D`, `Capsule`, `Cylinder`); property predicates (`IsDegenerate`, `IsCollinear`, `AreCoplanar`); containment (point/box/sphere/OBB/convex hull); closest-point distance (point→plane/segment/triangle, citing Ericson, *Real-Time Collision Detection* §§5.1.2, 5.1.5); intersection (sphere-sphere, AABB-AABB, ray-plane/sphere/triangle/AABB, citing Akenine-Möller, Haines, Hoffman, *Real-Time Rendering* 4th ed. §§22.6, 22.7, 22.8); pointcloud aggregates (boundedness, centroid, on-plane, on-sphere) |
+
+`MathAssertions.TUnit` ships ~85 fluent extensions across twelve adapter classes; `MathAssertions` (the framework-agnostic core) ships the underlying static helpers. See the per-package READMEs and CHANGELOG for the exhaustive method listings.
+
+`ReadOnlyTensorSpan<T>` is exposed only at the static `MathTolerance` level, not as a fluent assertion: TUnit's `[GenerateAssertion]` assertion-builder cannot capture ref-struct values across an `await`. Tensor-fluent integration is candidate work for a later release.
 
 ---
 
@@ -82,8 +86,8 @@ This repo ships **two** NuGet packages:
 
 | Package | Purpose | Depends on |
 |---|---|---|
-| [`MathAssertions`](https://www.nuget.org/packages/MathAssertions/) | Framework-agnostic core: `MathTolerance` helpers (NaN-aware, infinity-aware tolerance comparison on double/float/Vector3 in v0.0.1; wider System.Numerics catalog at v0.1.0) | BCL only |
-| [`MathAssertions.TUnit`](https://www.nuget.org/packages/MathAssertions.TUnit/) | TUnit-specific entry points: `Vector3.IsApproximatelyEqualTo(expected, tolerance)` in v0.0.1; wider fluent surface at v0.1.0 | `MathAssertions` + `TUnit.Assertions` + `TUnit.Core` |
+| [`MathAssertions`](https://www.nuget.org/packages/MathAssertions/) | Framework-agnostic core: `MathTolerance`, `Sequences`, `Statistics`, `LinearAlgebra`, `NumberTheory`, and the `Geometry3D` namespace (~85 static methods plus eight primitive `record struct` types) | BCL + `System.Numerics.Tensors` |
+| [`MathAssertions.TUnit`](https://www.nuget.org/packages/MathAssertions.TUnit/) | TUnit-specific fluent entry points generated via `[GenerateAssertion]`: ~85 `Assert.That(value).Method(...)` extensions covering the whole core surface | `MathAssertions` + `TUnit.Assertions` + `TUnit.Core` |
 
 You install `MathAssertions.TUnit`; `MathAssertions` comes transitively. Adapters for other test frameworks (NUnit, xUnit, MSTest) are *not* shipped today; they would reuse the `MathAssertions` core. Open a feature request if you need one.
 
@@ -154,7 +158,7 @@ This precision-preserving cast is locked behavior. Tests pin it; v0.1.0 additive
 
 ## Entry points
 
-v0.0.1 ships a single fluent entry point. v0.1.0 expands the catalog along the same DSL.
+v0.1.0 ships ~85 fluent entry points across twelve adapter classes covering scalar, `System.Numerics` compounds, `double[]`/`float[]`, sequences, statistics, linear algebra, integer number theory, and a complete 3D-geometry surface. The exhaustive method listing lives in the [package README](src/MathAssertions.TUnit/README.md#entry-points-v010); the examples below are representative.
 
 ### Vector3 component-wise
 
@@ -167,6 +171,36 @@ var a = new Vector3(1, 2, 3);
 var b = new Vector3(1.0001f, 2.0001f, 3.0001f);
 
 await Assert.That(a).IsApproximatelyEqualTo(b, tolerance: 1e-3);
+```
+
+### Quaternion rotational equivalence
+
+```csharp
+var rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI / 2);
+var negated = new Quaternion(-rotation.X, -rotation.Y, -rotation.Z, -rotation.W);
+
+// q and -q encode the same rotation; component-wise IsApproximatelyEqualTo would fail.
+await Assert.That(rotation).IsRotationallyEquivalentTo(negated, tolerance: 1e-6);
+```
+
+### Statistics on a sample
+
+```csharp
+double[] sample = [1.0, 2.0, 3.0, 4.0, 5.0];
+
+await Assert.That(sample).HasMeanApproximately(3.0, tolerance: 1e-9);
+await Assert.That(sample).HasStdDevApproximately(Math.Sqrt(2.5), tolerance: 1e-9);
+await Assert.That(sample).HasPercentileApproximately(50.0, expected: 3.0, tolerance: 1e-9);
+```
+
+### 3D-geometry containment / intersection
+
+```csharp
+var sphere = new Sphere(Vector3.Zero, 1f);
+await Assert.That(sphere).ContainsPoint(new Vector3(0.3f, 0.3f, 0.3f));
+
+var ray = new Ray3D(new Vector3(-3, 0, 0), Vector3.UnitX);
+await Assert.That(ray).IntersectsSphere(sphere);
 ```
 
 ---
@@ -241,7 +275,7 @@ using (Assert.Multiple())
 }
 ```
 
-Both axes report; the failure message names the failing one explicitly. v0.1.0 plans a built-in per-axis-difference renderer that brings this granularity into the single `IsApproximatelyEqualTo` call.
+Both axes report; the failure message names the failing one explicitly. A built-in per-axis-difference renderer that brings this granularity into the single `IsApproximatelyEqualTo` call is candidate work for a later release.
 
 ---
 
@@ -289,29 +323,29 @@ For the Vector3 overload, every component pair is evaluated against this table; 
 
 This is a 0.x release and the public API may evolve. Specifically:
 
-- **Additive changes** (new entry points, new tolerance overloads, additional `System.Numerics` types) ship in any patch / minor without breaking ApiCompat. The Vector3 entry point shipped in v0.0.1 will still be present, with the same signature, in every subsequent release that targets the same TFM.
+- **Additive changes** (new entry points, new tolerance overloads, additional `System.Numerics` types) ship in any patch / minor without breaking ApiCompat. Entry points shipped in v0.0.1 / v0.1.0 will still be present, with the same signatures, in every subsequent release that targets the same TFM.
 - **Breaking changes** to existing signatures bump the minor version (0.X.0) and are called out in the [CHANGELOG](CHANGELOG.md).
-- **`PackageValidationBaselineVersion`** pins to v0.0.1 starting from v0.0.2 onward, so ApiCompat breakage is caught at pack time.
+- **`PackageValidationBaselineVersion`** pins to the previous shipped version (v0.0.1 as of v0.1.0), so ApiCompat breakage is caught at pack time. Strict-mode baseline validation captures additive changes as accepted entries in `CompatibilitySuppressions.xml`.
 
 The 1.0 milestone signals API stability; see [Limitations and future work](#limitations-and-future-work) for what's still being designed.
 
 ## Limitations and future work
 
-### Planned for v0.1.0
+### Shipped at v0.1.0
 
-The wider catalog lands at v0.1.0. The full surface plus the four review fixes (M-1 through M-4 from the foundational design plan: precision-preserving casts, quaternion normalization for rotational equivalence, plane geometric-equivalence, array-shape null validation):
+The catalog above is feature-complete for v0.1.0. Highlights:
 
-- **System.Numerics compounds:** Vector2, Vector4, Quaternion (component-wise + rotational equivalence handling the `q` and `-q` double-cover), Matrix4x4 element-wise, Plane component-wise + geometric-equivalence, Complex
-- **Span overloads:** `ReadOnlySpan<double>` / `ReadOnlySpan<float>` element-wise
-- **Array-shaped adapters:** `double[]` / `float[]` with `ArgumentNullException` on null
-- **Statistics:** mean, median, variance, standard deviation, sum, sigma bounds, percentile (linear interpolation)
-- **Linear algebra invariants:** symmetric, orthogonal, identity, determinant, trace, invertible, parallel / orthogonal vector pairs
-- **Number theory:** divisibility, primality, GCD, LCM, coprimality, congruence, perfect-square, power-of-base
-- **Geometry3D primitives** (Sphere, AxisAlignedBox, OrientedBox, Ray3D, LineSegment3D, Triangle3D, Capsule, Cylinder) plus containment, intersection (Moller-Trumbore, slab test), point-distance closed forms, coplanarity / collinearity, basic pointcloud assertions
+- **System.Numerics compounds:** Vector2/3/4, Quaternion (component-wise + rotational equivalence handling the `q` / `-q` double-cover), Matrix4x4 element-wise, Plane component-wise + geometric-equivalence, Complex
+- **Span / tensor overloads:** `ReadOnlySpan<double>` / `ReadOnlySpan<float>` element-wise; generic `ReadOnlyTensorSpan<T>` for the static `MathTolerance` surface
+- **Array-shaped adapters:** `double[]` / `float[]` fluent extensions with `ArgumentNullException` on null
+- **Statistics:** Welford's mean + variance, median, percentile (overflow-safe), standard deviation, sum, sigma bounds
+- **Linear algebra invariants:** symmetric, orthogonal, identity, determinant, trace, invertible, parallel / orthogonal vector pairs, linear independence
+- **Number theory:** divisibility, primality, GCD, LCM, coprimality, congruence, perfect-square, power-of-base — all with overflow-safe inner loops and `long.MinValue`-aware contracts
+- **Geometry3D primitives** (Sphere, AxisAlignedBox, OrientedBox, Ray3D, LineSegment3D, Triangle3D, Capsule, Cylinder) plus containment, intersection (Möller-Trumbore, slab test), point-distance closed forms (Ericson barycentric Voronoi-region classification), coplanarity / collinearity, pointcloud aggregates
 
 ### Planned for v0.2.0
 
-- **`System.Numerics.Tensors.Tensor<T>` and `ReadOnlyTensorSpan<T>`** support: element-wise tolerance comparison plus shape assertions. Anchors both the geometry-test use case and ML inference output testing.
+- **`ReadOnlyTensorSpan<T>` fluent adapter:** the static `MathTolerance.IsApproximatelyEqual(ReadOnlyTensorSpan<T>, ...)` overload exists today; the fluent `await Assert.That(span).IsApproximatelyEqualTo(...)` form is blocked on TUnit's assertion-builder being unable to capture ref-struct values across an `await` and is candidate work for a later release
 - **Geometry3D depth:** OrientedBox SAT intersection, Triangle-Triangle, Hausdorff distance, RANSAC inlier-ratio
 - **Statistics depth:** distribution support (normal, Student-t, chi-squared), correlation, full percentile-method enum
 

@@ -11,10 +11,10 @@
     <IsPackable>true</IsPackable>
     <PackageId>MathAssertions</PackageId>
     <ProductName>MathAssertions</ProductName>
-    <Version>0.0.1</Version>
+    <Version>0.1.0</Version>
     <Authors>John Verheij</Authors>
     <Copyright>Copyright (c) 2026 John Verheij</Copyright>
-    <Description>Framework-agnostic core for tolerance-aware numeric assertions on System.Numerics types and BCL primitives. NaN-aware, infinity-aware, AOT-compatible. v0.0.1 ships MathTolerance helpers for double, float, and Vector3. The wider catalog (Vector2/4, Quaternion + rotational equivalence, Matrix4x4, Plane + geometric equivalence, Complex, ReadOnlySpan and ReadOnlyTensorSpan overloads, ULP-distance equality, combined relative+absolute tolerance, statistics, linear-algebra invariants, number theory, 3D geometry) lands at 0.1.0. Test-framework-specific entry points live in adapter packages, starting with MathAssertions.TUnit.</Description>
+    <Description>Framework-agnostic core for tolerance-aware numeric assertions on System.Numerics types and BCL primitives. NaN-aware, infinity-aware, AOT-compatible. Covers MathTolerance (scalar / Vector2-4 / Quaternion + rotational equivalence / Matrix4x4 / Plane + geometric equivalence / Complex / ReadOnlySpan and ReadOnlyTensorSpan / ULP-distance / relative+absolute combined), Sequences (monotonicity / boundedness / progressions / convergence), Statistics (Welford's mean+variance / median / percentile / sigma bounds), LinearAlgebra (matrix invariants and vector pair properties), NumberTheory (long-integer predicates), and Geometry3D (eight primitive types with property predicates / containment / closest-point distance / intersection / pointcloud aggregates). Test-framework-specific entry points live in adapter packages, starting with MathAssertions.TUnit.</Description>
     <PackageTags>assertions;math;tolerance;numerics;geometry;statistics;aot</PackageTags>
     <PackageProjectUrl>https://github.com/JohnVerheij/MathAssertions.TUnit</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -23,17 +23,14 @@
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
 
     <!-- Pre-1.0 suppressions:
-         Proj0212/Proj0213: PackageIcon and PackageIconUrl omitted; will be added by 1.0.0.
-         Proj0241 (PackageValidationBaselineVersion missing) is suppressed for 0.0.1 only,
-         since there is no prior shipped version to baseline against. Once 0.0.1 ships, set
-         PackageValidationBaselineVersion to the previous version below and remove Proj0241
-         from this NoWarn list. -->
-    <NoWarn>$(NoWarn);Proj0212;Proj0213;Proj0241</NoWarn>
+         Proj0212/Proj0213: PackageIcon and PackageIconUrl omitted; will be added by 1.0.0. -->
+    <NoWarn>$(NoWarn);Proj0212;Proj0213</NoWarn>
 
     <!-- Symbol package + API compat (strict mode quad per dpfa Proj0249/0250/0251/0252) -->
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <EnablePackageValidation>true</EnablePackageValidation>
+    <PackageValidationBaselineVersion>0.0.1</PackageValidationBaselineVersion>
     <EnableStrictModeForCompatibleFrameworksInPackage>true</EnableStrictModeForCompatibleFrameworksInPackage>
     <EnableStrictModeForBaselineValidation>true</EnableStrictModeForBaselineValidation>
     <ApiCompatGenerateSuppressionFile>true</ApiCompatGenerateSuppressionFile>

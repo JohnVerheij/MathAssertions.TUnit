@@ -11,10 +11,10 @@
     <IsPackable>true</IsPackable>
     <PackageId>MathAssertions.TUnit</PackageId>
     <ProductName>MathAssertions.TUnit</ProductName>
-    <Version>0.0.1</Version>
+    <Version>0.1.0</Version>
     <Authors>John Verheij</Authors>
     <Copyright>Copyright (c) 2026 John Verheij</Copyright>
-    <Description>TUnit-native tolerance-aware numeric assertions over the MathAssertions core. v0.0.1 ships a single fluent entry point: .IsApproximatelyEqualTo(expected, tolerance) on Vector3, generated via TUnit's [GenerateAssertion]. The wider System.Numerics catalog (Vector2/4, Quaternion rotational equivalence, Matrix4x4, Plane, Complex, double[]/float[]) lands at 0.1.0. Extensible: consumers add tolerance assertions for their own domain types via [GenerateAssertion] extensions calling MathTolerance helpers. AOT-compatible, trimmable, no reflection.</Description>
+    <Description>TUnit-native tolerance-aware numeric assertions over the MathAssertions core. Fluent .Method(...) entry points (generated via TUnit's [GenerateAssertion]) for scalar, vector, quaternion, matrix, plane, complex, double[]/float[], double-array sequences and statistics, Vector3 linear algebra, long-integer number theory, and the Geometry3D primitive surface (containment, distance, intersection, pointcloud aggregates). Extensible: consumers add tolerance assertions for their own domain types via [GenerateAssertion] extensions calling MathTolerance helpers. AOT-compatible, trimmable, no reflection.</Description>
     <PackageTags>assertions;math;tunit;tolerance;aot</PackageTags>
     <PackageProjectUrl>https://github.com/JohnVerheij/MathAssertions.TUnit</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -23,17 +23,14 @@
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
 
     <!-- Pre-1.0 suppressions:
-         Proj0212/Proj0213: PackageIcon and PackageIconUrl omitted; will be added by 1.0.0.
-         Proj0241 (PackageValidationBaselineVersion missing) is suppressed for 0.0.1 only,
-         since there is no prior shipped version to baseline against. Once 0.0.1 ships, set
-         PackageValidationBaselineVersion to the previous version below and remove Proj0241
-         from this NoWarn list. -->
-    <NoWarn>$(NoWarn);Proj0212;Proj0213;Proj0241</NoWarn>
+         Proj0212/Proj0213: PackageIcon and PackageIconUrl omitted; will be added by 1.0.0. -->
+    <NoWarn>$(NoWarn);Proj0212;Proj0213</NoWarn>
 
     <!-- Symbol package + API compat (strict mode quad per dpfa Proj0249/0250/0251/0252) -->
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <EnablePackageValidation>true</EnablePackageValidation>
+    <PackageValidationBaselineVersion>0.0.1</PackageValidationBaselineVersion>
     <EnableStrictModeForCompatibleFrameworksInPackage>true</EnableStrictModeForCompatibleFrameworksInPackage>
     <EnableStrictModeForBaselineValidation>true</EnableStrictModeForBaselineValidation>
     <ApiCompatGenerateSuppressionFile>true</ApiCompatGenerateSuppressionFile>
