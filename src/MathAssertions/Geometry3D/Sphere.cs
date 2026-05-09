@@ -4,9 +4,11 @@ using System.Runtime.InteropServices;
 namespace MathAssertions.Geometry3D;
 
 /// <summary>
-/// Sphere defined by center and radius. The radius is intended to be non-negative; a
-/// negative radius produces signed volume and signed surface area (the formulas remain
-/// well-defined as polynomials in the radius) and is left to the caller to validate.
+/// Sphere defined by center and radius. The radius is intended to be non-negative; the
+/// computed properties remain well-defined as polynomials in the radius for negative
+/// values, but the verdict is signed for <see cref="Volume"/> (the cubic in the radius
+/// flips sign) and unsigned for <see cref="SurfaceArea"/> (the quadratic in the radius
+/// is always non-negative). Validation of the radius is left to the caller.
 /// </summary>
 /// <param name="Center">Center of the sphere in 3-space.</param>
 /// <param name="Radius">Radius of the sphere.</param>

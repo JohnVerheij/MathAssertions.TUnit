@@ -31,11 +31,21 @@ public static class Properties
     /// also collinear.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Picks the first non-trivial direction in the sequence (the first point distinct
-    /// from <c>points[0]</c> within tolerance) and tests cross-product magnitude against
+    /// from <c>points[0]</c> within tolerance) and tests perpendicular distance from
     /// that direction for every point. Handling the leading-coincident-points case
     /// explicitly avoids the false-true result a naive implementation that locks in
     /// <c>points[1] - points[0]</c> would produce when those first two points coincide.
+    /// </para>
+    /// <para>
+    /// The perpendicular-distance check is computed as
+    /// <c>|direction × (p - p0)| / |direction|</c>: the cross-product magnitude alone is
+    /// scaled by <c>|direction|</c>, so comparing it directly to a length-dimensioned
+    /// tolerance would let a longer baseline silently widen the apparent tolerance.
+    /// Dividing by the direction magnitude restores the dimensionally correct
+    /// perpendicular distance from the point to the line through <c>p0</c>.
+    /// </para>
     /// </remarks>
     /// <param name="points">Points to test.</param>
     /// <param name="tolerance">Maximum allowed perpendicular displacement from the line.
@@ -65,10 +75,13 @@ public static class Properties
         if (!foundDirection)
             return true;
 
+        // foundDirection guarantees |direction| > tolerance >= 0, so the divisor is non-zero.
+        var dirLength = (double)direction.Length();
         for (var i = 1; i < points.Length; i++)
         {
             var cross = Vector3.Cross(direction, points[i] - p0);
-            if ((double)cross.Length() > tolerance)
+            var perpendicularDistance = (double)cross.Length() / dirLength;
+            if (perpendicularDistance > tolerance)
                 return false;
         }
         return true;

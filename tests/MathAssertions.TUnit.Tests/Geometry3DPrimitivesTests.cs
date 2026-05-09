@@ -310,6 +310,25 @@ internal sealed class Geometry3DPrimitivesTests
             .Throws<ArgumentOutOfRangeException>();
     }
 
+    [Test]
+    public async Task IsCollinear_LongBaselineSmallPerpendicular_True(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // Pins the dimensionally-correct cross-product-over-direction-length check. The
+        // baseline from p0 to p1 is length 1000; p2 deviates by only 0.001 perpendicular
+        // to that baseline, well below tolerance 0.01. A naive impl that compares
+        // |direction × delta| to tolerance directly would reject this (the cross-product
+        // magnitude is |direction|·perpDist = 1000·0.001 = 1.0, which appears far above
+        // 0.01) even though the true perpendicular distance is in tolerance.
+        ReadOnlySpan<Vector3> points =
+        [
+            Vector3.Zero,
+            new(1000, 0, 0),
+            new(500, 0.001f, 0),
+        ];
+        await Assert.That(Properties.IsCollinear(points, 0.01)).IsTrue();
+    }
+
     // ----- Properties.AreCoplanar -----
 
     [Test]
