@@ -8,7 +8,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4.svg)](https://dotnet.microsoft.com/download/dotnet/10.0)
 
-A TUnit-native fluent math-assertion DSL for `System.Numerics` compound types and BCL floating-point primitives. Built using TUnit's `[GenerateAssertion]` source generator, so the assertion entry points integrate directly into TUnit's `Assert.That(...)` pipeline. NaN-aware, infinity-aware, AOT-compatible, no runtime reflection in the assertion path.
+TUnit-native math assertion library for .NET. Covers tolerance comparisons (scalar, `System.Numerics` compounds, spans, tensors), sequences, statistics, linear algebra, number theory, and 3D geometry. Source-generated entry points integrate with TUnit's `Assert.That(...)` pipeline. NaN-aware, infinity-aware, AOT-compatible, reflection-free in the assertion path.
 
 > **Scope:** Test projects only. Not intended for production code.
 
