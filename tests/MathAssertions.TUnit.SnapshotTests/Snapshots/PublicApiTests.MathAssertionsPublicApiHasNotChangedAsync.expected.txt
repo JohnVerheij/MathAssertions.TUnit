@@ -2,6 +2,78 @@
 [assembly: System.Reflection.AssemblyMetadata("IsTrimmable", "True")]
 [assembly: System.Reflection.AssemblyMetadata("RepositoryUrl", "https://github.com/JohnVerheij/MathAssertions.TUnit")]
 [assembly: System.Runtime.Versioning.TargetFramework(".NETCoreApp,Version=v10.0", FrameworkDisplayName=".NET 10.0")]
+namespace MathAssertions.Geometry3D
+{
+    public readonly struct AxisAlignedBox : System.IEquatable<MathAssertions.Geometry3D.AxisAlignedBox>
+    {
+        public AxisAlignedBox(System.Numerics.Vector3 Min, System.Numerics.Vector3 Max) { }
+        public System.Numerics.Vector3 Center { get; }
+        public System.Numerics.Vector3 HalfExtents { get; }
+        public System.Numerics.Vector3 Max { get; init; }
+        public System.Numerics.Vector3 Min { get; init; }
+        public System.Numerics.Vector3 Size { get; }
+        public float Volume { get; }
+    }
+    public readonly struct Capsule : System.IEquatable<MathAssertions.Geometry3D.Capsule>
+    {
+        public Capsule(System.Numerics.Vector3 Start, System.Numerics.Vector3 End, float Radius) { }
+        public System.Numerics.Vector3 End { get; init; }
+        public float Radius { get; init; }
+        public System.Numerics.Vector3 Start { get; init; }
+    }
+    public readonly struct Cylinder : System.IEquatable<MathAssertions.Geometry3D.Cylinder>
+    {
+        public Cylinder(System.Numerics.Vector3 Start, System.Numerics.Vector3 End, float Radius) { }
+        public System.Numerics.Vector3 End { get; init; }
+        public float Radius { get; init; }
+        public System.Numerics.Vector3 Start { get; init; }
+    }
+    public readonly struct LineSegment3D : System.IEquatable<MathAssertions.Geometry3D.LineSegment3D>
+    {
+        public LineSegment3D(System.Numerics.Vector3 Start, System.Numerics.Vector3 End) { }
+        public System.Numerics.Vector3 Direction { get; }
+        public System.Numerics.Vector3 End { get; init; }
+        public float Length { get; }
+        public System.Numerics.Vector3 Start { get; init; }
+    }
+    public readonly struct OrientedBox : System.IEquatable<MathAssertions.Geometry3D.OrientedBox>
+    {
+        public OrientedBox(System.Numerics.Vector3 Center, System.Numerics.Vector3 HalfExtents, System.Numerics.Quaternion Orientation) { }
+        public System.Numerics.Vector3 Center { get; init; }
+        public System.Numerics.Vector3 HalfExtents { get; init; }
+        public System.Numerics.Quaternion Orientation { get; init; }
+    }
+    public static class Properties
+    {
+        public static bool AreCoplanar(System.ReadOnlySpan<System.Numerics.Vector3> points, double tolerance) { }
+        public static bool IsCollinear(System.ReadOnlySpan<System.Numerics.Vector3> points, double tolerance) { }
+        public static bool IsDegenerate(this MathAssertions.Geometry3D.Triangle3D t, double tolerance) { }
+    }
+    public readonly struct Ray3D : System.IEquatable<MathAssertions.Geometry3D.Ray3D>
+    {
+        public Ray3D(System.Numerics.Vector3 Origin, System.Numerics.Vector3 Direction) { }
+        public System.Numerics.Vector3 Direction { get; init; }
+        public System.Numerics.Vector3 Origin { get; init; }
+    }
+    public readonly struct Sphere : System.IEquatable<MathAssertions.Geometry3D.Sphere>
+    {
+        public Sphere(System.Numerics.Vector3 Center, float Radius) { }
+        public System.Numerics.Vector3 Center { get; init; }
+        public float Radius { get; init; }
+        public float SurfaceArea { get; }
+        public float Volume { get; }
+    }
+    public readonly struct Triangle3D : System.IEquatable<MathAssertions.Geometry3D.Triangle3D>
+    {
+        public Triangle3D(System.Numerics.Vector3 A, System.Numerics.Vector3 B, System.Numerics.Vector3 C) { }
+        public System.Numerics.Vector3 A { get; init; }
+        public float Area { get; }
+        public System.Numerics.Vector3 B { get; init; }
+        public System.Numerics.Vector3 C { get; init; }
+        public System.Numerics.Vector3 Centroid { get; }
+        public System.Numerics.Vector3 Normal { get; }
+    }
+}
 namespace MathAssertions
 {
     public static class LinearAlgebra

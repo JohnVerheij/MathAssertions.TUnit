@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (`MathAssertions`, framework-agnostic core) — 0.1.0 Cluster 7a: 3D-geometry primitives + property predicates
+
+New namespace `MathAssertions.Geometry3D` with eight primitive record-structs and a property-predicate static class. The cluster is split into 7a (primitives + properties), 7b (containment + distance), and 7c (intersection + pointcloud) so each lands as a focused PR; 7a is the foundation the other two build on.
+
+Primitive types (each `public readonly record struct`, `[StructLayout(LayoutKind.Auto)]`):
+
+- `Geometry3D.Sphere(Center, Radius)` with computed `Volume` and `SurfaceArea`.
+- `Geometry3D.AxisAlignedBox(Min, Max)` with computed `Center`, `Size`, `HalfExtents`, and `Volume`.
+- `Geometry3D.OrientedBox(Center, HalfExtents, Orientation)`.
+- `Geometry3D.Ray3D(Origin, Direction)`.
+- `Geometry3D.LineSegment3D(Start, End)` with computed `Direction` (unnormalized) and `Length`.
+- `Geometry3D.Triangle3D(A, B, C)` with computed `Normal` (right-hand-rule unit normal; NaN for degenerate triangles, with `IsDegenerate` documented as the precondition guard), `Centroid`, and `Area`.
+- `Geometry3D.Capsule(Start, End, Radius)`.
+- `Geometry3D.Cylinder(Start, End, Radius)` (distinct from `Capsule` — flat caps).
+
+Property predicates (`MathAssertions.Geometry3D.Properties`):
+
+- `Properties.IsDegenerate(Triangle3D, double)`: triangle area is at most tolerance.
+- `Properties.IsCollinear(ReadOnlySpan<Vector3>, double)`: every point lies on a single line within tolerance. Sequences with fewer than three points are vacuously collinear; coincident-point sequences are also collinear. Implementation scans for the first non-trivial direction so leading-coincident points do not lock in a degenerate zero direction.
+- `Properties.AreCoplanar(ReadOnlySpan<Vector3>, double)`: every point lies on a single plane within tolerance. Sequences with fewer than four points are vacuously coplanar; entirely-collinear sequences are also coplanar (every line lies on infinitely many planes). Implementation scans for a non-collinear triple to seed the plane normal so leading-collinear triples do not produce a NaN normal that vacuously passes every dot-product check.
+
 ### Added (`MathAssertions`, framework-agnostic core) — 0.1.0 Cluster 6: number-theory predicates
 
 New static class `MathAssertions.NumberTheory` for exact integer-arithmetic checks over `long`. No floating-point tolerance involved; the methods throw `ArgumentOutOfRangeException` for the inputs where the underlying mathematical operation is undefined (zero divisor, base <= 1, modulus <= 0, `long.MinValue` for GCD/LCM).
