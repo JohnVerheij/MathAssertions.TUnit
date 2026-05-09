@@ -63,9 +63,12 @@ public static class Distance
     /// </summary>
     /// <remarks>
     /// Reference: Ericson, <i>Real-Time Collision Detection</i>, §5.1.5. The barycentric
-    /// classification is the standard one; for degenerate triangles the result is
-    /// <see cref="float.NaN"/> via the underlying division by zero in the interior path.
-    /// Callers can guard with <see cref="Properties.IsDegenerate(Triangle3D, double)"/>.
+    /// classification is the standard one; for degenerate triangles the result may be
+    /// <see cref="float.NaN"/> when the projection lands in the interior path (the
+    /// underlying division by zero produces NaN), but degenerate inputs that exit
+    /// through the vertex or edge branches return a finite distance. Callers needing a
+    /// well-defined verdict on degenerate geometry should guard with
+    /// <see cref="Properties.IsDegenerate(Triangle3D, double)"/>.
     /// </remarks>
     /// <param name="point">Point to measure from.</param>
     /// <param name="triangle">Triangle to measure to.</param>

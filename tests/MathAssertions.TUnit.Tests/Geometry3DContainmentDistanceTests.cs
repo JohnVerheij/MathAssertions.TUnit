@@ -214,6 +214,62 @@ internal sealed class Geometry3DContainmentDistanceTests
             .Throws<ArgumentOutOfRangeException>();
     }
 
+    [Test]
+    public async Task ConvexHullContains_DegenerateFaceTriangleSkipped_True(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // The valid tetrahedron faces classify (0.1, 0.1, 0.1) as inside. We add a
+        // degenerate (collinear-vertex) "face" whose unnormalized cross product is zero.
+        // Without the explicit skip, the normalized signed-distance computation would
+        // divide by zero and produce NaN; the skip branch keeps the rest of the test
+        // running normally.
+        Vector3[] hull =
+        [
+            // Bottom face (-Z out)
+            new(0, 0, 0), new(0, 1, 0), new(1, 0, 0),
+            // -Y face
+            new(0, 0, 0), new(1, 0, 0), new(0, 0, 1),
+            // -X face
+            new(0, 0, 0), new(0, 0, 1), new(0, 1, 0),
+            // Slanted face
+            new(1, 0, 0), new(0, 1, 0), new(0, 0, 1),
+            // Degenerate triangle: three collinear vertices.
+            new(0, 0, 0), new(1, 0, 0), new(2, 0, 0),
+        ];
+        await Assert.That(Containment.ConvexHullContains(hull, new Vector3(0.1f, 0.1f, 0.1f), Tol)).IsTrue();
+    }
+
+    [Test]
+    public async Task ConvexHullContains_LargeFace_PerpendicularDistanceWithinTolerance_True(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // Pins the dimensionally-correct face-plane test. The hull is a 100x-scaled
+        // tetrahedron, so the slanted face's outward-normal magnitude (twice the face
+        // area) is sqrt(3) * 10000 ~= 17320. A test point 0.001 perpendicular OUTSIDE
+        // the slanted face — well within tolerance 0.01 — produces a raw signed-dot
+        // value around 17.32 (= 0.001 * 17320), which would falsely exceed the
+        // tolerance if compared directly. Dividing by the normal length recovers the
+        // true 0.001 perpendicular distance, which is correctly within tolerance.
+        const float scale = 100f;
+        var sx = new Vector3(scale, 0, 0);
+        var sy = new Vector3(0, scale, 0);
+        var sz = new Vector3(0, 0, scale);
+
+        Vector3[] hull =
+        [
+            Vector3.Zero, sy, sx,
+            Vector3.Zero, sx, sz,
+            Vector3.Zero, sz, sy,
+            sx, sy, sz,
+        ];
+
+        var centroidOfSlantedFace = (sx + sy + sz) / 3f;
+        var outwardUnit = Vector3.Normalize(new Vector3(1, 1, 1));
+        var pointJustOutside = centroidOfSlantedFace + (0.001f * outwardUnit);
+
+        await Assert.That(Containment.ConvexHullContains(hull, pointJustOutside, 0.01)).IsTrue();
+    }
+
     // ----- Distance: point-to-Plane -----
 
     [Test]
