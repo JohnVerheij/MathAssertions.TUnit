@@ -340,7 +340,7 @@ The catalog above is feature-complete for v0.1.0. Highlights:
 - **Array-shaped adapters:** `double[]` / `float[]` fluent extensions with `ArgumentNullException` on null
 - **Statistics:** Welford's mean + variance, median, percentile (overflow-safe), standard deviation, sum, sigma bounds
 - **Linear algebra invariants:** symmetric, orthogonal, identity, determinant, trace, invertible, parallel / orthogonal vector pairs, linear independence
-- **Number theory:** divisibility, primality, GCD, LCM, coprimality, congruence, perfect-square, power-of-base — all with overflow-safe inner loops and `long.MinValue`-aware contracts
+- **Number theory:** divisibility, primality, GCD, LCM, coprimality, congruence, perfect-square, power-of-base, all with overflow-safe inner loops and `long.MinValue`-aware contracts
 - **Geometry3D primitives** (Sphere, AxisAlignedBox, OrientedBox, Ray3D, LineSegment3D, Triangle3D, Capsule, Cylinder) plus containment, intersection (Möller-Trumbore, slab test), point-distance closed forms (Ericson barycentric Voronoi-region classification), coplanarity / collinearity, pointcloud aggregates
 
 ### Planned for v0.2.0

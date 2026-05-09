@@ -13,46 +13,46 @@ The wider catalog. 0.1.0 expands the framework-agnostic core from a 3-method ske
 
 ### Added (`MathAssertions`, framework-agnostic core)
 
-#### Cluster 1 — `MathTolerance` tolerance primitives
+#### Cluster 1: `MathTolerance` tolerance primitives
 
 - ULP-distance equality (`IsCloseInUlps` for `double`/`float`); positive and negative zero compare equal regardless of distance, opposite-sign operands never within finite ULPs, NaN handling matches the absolute-tolerance overloads.
 - Combined relative + absolute tolerance (`IsRelativelyAndAbsolutelyClose`) per Knuth, *TAOCP Vol. 2*; absolute term is the floor near zero, relative term scales with magnitude.
 - `IsFinite(double)` / `IsFinite(float)`, `IsNonNegativeFinite(double)`, `IsProbability(double)` (`[0, 1]`), `IsPercentage(double)` (`[0, 100]`) domain predicates.
 - `HasRoundtripIdentity(double, Func<double,double>, Func<double,double>, double)`: invertible-transformation check; double-only on purpose, consumers compose their own predicate for other types.
 
-#### Cluster 2 — `System.Numerics` compounds
+#### Cluster 2: `System.Numerics` compounds
 
 - Component-wise `MathTolerance.IsApproximatelyEqual` for `Vector2`, `Vector4` (alongside the existing `Vector3` overload), `Quaternion`, `Matrix4x4`, `Plane`, `Complex`. Components widen to `double` before comparison so a tight `double` tolerance is honored at full precision (M-1 fix from the 0.1.0 plan).
-- `IsRotationallyEquivalent(Quaternion, Quaternion, double)`: SO(3) double-cover view treating `q` and `-q` as the same rotation. Normalizes inputs internally so non-unit operands produce the correct verdict (Hanson, *Visualizing Quaternions*, §4.6 — M-2 fix).
+- `IsRotationallyEquivalent(Quaternion, Quaternion, double)`: SO(3) double-cover view treating `q` and `-q` as the same rotation. Normalizes inputs internally so non-unit operands produce the correct verdict (Hanson, *Visualizing Quaternions*, §4.6; M-2 fix).
 - `IsGeometricallyEquivalent(Plane, Plane, double)`: plane equivalence under the `(n, d) ≡ (-n, -d)` sign flip (M-3 fix).
 - `IsApproximatelyEqual(ReadOnlySpan<double>, ...)` and `(ReadOnlySpan<float>, ...)` for element-wise comparison; length mismatch returns `false` rather than throwing.
 - Generic `IsApproximatelyEqual<T>(ReadOnlyTensorSpan<T>, ReadOnlyTensorSpan<T>, T) where T : INumber<T>`: element-wise tolerance comparison for `System.Numerics.Tensors.ReadOnlyTensorSpan<T>`. Shape mismatch returns `false`. NaN handling matches the floating-point scalar overloads. Iteration uses the tensor span's enumerator so strided shapes from slicing work correctly.
 
-#### Cluster 3 — `Sequences` over `ReadOnlySpan<double>`
+#### Cluster 3: `Sequences` over `ReadOnlySpan<double>`
 
 - Monotonicity (strict and non-strict, increasing and decreasing), `IsSorted`, `IsBounded` with NaN-aware element check, arithmetic and geometric progressions with tolerance, `ConvergesTo` (last value within tolerance of a limit), `IsCauchyConvergent` (single-step proxy of the Cauchy criterion), and generic `HasLength<T>` / `HasMinLength<T>` length predicates over any `ReadOnlySpan<T>`. The geometric-progression zero check uses a bit-magnitude mask so both `+0` and `-0` are caught without tripping the operator-`==` floating-point analyzer flag.
 
-#### Cluster 4 — `Statistics` over `ReadOnlySpan<double>`
+#### Cluster 4: `Statistics` over `ReadOnlySpan<double>`
 
 - `MeanAndVariance`: numerically stable single-pass mean + unbiased sample variance via Welford's online algorithm (Knuth, *TAOCP Vol. 2*, §4.2.2).
 - `HasMeanApproximately`, `HasVarianceApproximately`, `HasStdDevApproximately`, `HasSumApproximately`, `HasMedianApproximately`.
 - `HasPercentileApproximately`: linear interpolation between adjacent ranks per the NIST/SEMATECH e-Handbook of Statistical Methods §1.3.5.6. Validates the percentile is in `[0, 100]` and not NaN.
-- `IsWithinSigmasOfMean(value, sample, sigmas)` and `AreAllWithinSigmasOfMean(values, sigmas)` — the latter computes mean and standard deviation once and reuses them across all element checks (O(N), not the O(N²) shape that per-element delegation would produce).
+- `IsWithinSigmasOfMean(value, sample, sigmas)` and `AreAllWithinSigmasOfMean(values, sigmas)`. The latter computes mean and standard deviation once and reuses them across all element checks (O(N), not the O(N²) shape that per-element delegation would produce).
 - Median uses `a/2 + b/2` and percentile uses the convex-combination lerp `a*(1-f) + b*f` so very-large finite operands do not overflow to infinity.
 - `AreAllWithinSigmasOfMean` uses the `!(<= )` idiom so NaN-poisoned thresholds short-circuit to false rather than the `>` form's vacuous true.
 
-#### Cluster 5 — `LinearAlgebra` invariants
+#### Cluster 5: `LinearAlgebra` invariants
 
 - `Matrix4x4`: `IsSymmetric`, `IsOrthogonal` (`M*M^T ≈ I`), `IsIdentity`, `HasDeterminantApproximately`, `HasTraceApproximately`, `IsInvertible`.
 - `Vector3` pair: `AreOrthogonal`, `AreParallel` (zero vector treated as parallel to every other vector), `AreLinearlyIndependent` over `ReadOnlySpan<Vector3>` (triple-product test for sets of up to three vectors in `R^3`).
 
-#### Cluster 6 — `NumberTheory` exact integer predicates over `long`
+#### Cluster 6: `NumberTheory` exact integer predicates over `long`
 
 - `IsDivisibleBy`, `IsPrime` (wheel-of-six trial division with overflow-safe loop bound `i <= value / i`), `AreCoprime`, `GreatestCommonDivisor`, `LeastCommonMultiple` (validated `long.MinValue` rejection at entry; multiply runs in `checked()` so overflow throws `OverflowException` rather than wrapping), `IsPowerOf`, `IsPerfectSquare` (with a successor check skipped when `(sqrt+1)²` would overflow), `IsCongruent` (canonical-residue form so signed-range straddling inputs do not overflow the subtraction).
 
-#### Cluster 7 — `Geometry3D` 3D primitives + property predicates + containment + distance + intersection + pointcloud
+#### Cluster 7: `Geometry3D` 3D primitives + property predicates + containment + distance + intersection + pointcloud
 
-- Eight primitive `record struct` types under `MathAssertions.Geometry3D`: `Sphere` (with `Volume` / `SurfaceArea`), `AxisAlignedBox` (with `Center`, `Size`, `HalfExtents`, `Volume`), `OrientedBox`, `Ray3D`, `LineSegment3D` (with `Direction`, `Length`), `Triangle3D` (with `Normal` (right-hand-rule unit normal — NaN for degenerate triangles, with `IsDegenerate` documented as the precondition guard), `Centroid`, `Area`), `Capsule`, `Cylinder` (distinct from `Capsule` — flat caps).
+- Eight primitive `record struct` types under `MathAssertions.Geometry3D`: `Sphere` (with `Volume` / `SurfaceArea`), `AxisAlignedBox` (with `Center`, `Size`, `HalfExtents`, `Volume`), `OrientedBox`, `Ray3D`, `LineSegment3D` (with `Direction`, `Length`), `Triangle3D` (with `Normal` (right-hand-rule unit normal; NaN for degenerate triangles, where `IsDegenerate` is the precondition guard), `Centroid`, `Area`), `Capsule`, `Cylinder` (distinct from `Capsule`; flat caps).
 - `Geometry3D.Properties`: `IsDegenerate(Triangle3D)`, `IsCollinear(span)` and `AreCoplanar(span)` over `ReadOnlySpan<Vector3>`. Both `IsCollinear` and `AreCoplanar` scan for the first non-trivial direction or a non-collinear triple respectively, so leading-coincident points do not lock in a degenerate zero direction. `IsCollinear`'s perpendicular-distance test divides by the direction magnitude so the verdict is dimensionally invariant under baseline-length scaling.
 - `Geometry3D.Containment`: `Contains(box, point/AABB/sphere)`, `Contains(sphere, point)`, `Contains(OBB, point)` (via inverse-orientation rotation into the box's local frame), `ConvexHullContains(hullVertices, point, tolerance)` over flat triples-of-three CCW-outward face triangles. The face-plane half-space test divides the signed dot value by the normal length so the verdict is invariant to face-area scaling.
 - `Geometry3D.Distance`: `point.DistanceFrom(plane/segment/triangle)` per Ericson, *Real-Time Collision Detection*, §§5.1.2 and 5.1.5. Degenerate segments where both endpoints coincide are handled via a bit-magnitude zero check on `|ab|^2` and fall through to a point-to-point distance.
@@ -87,7 +87,7 @@ The adapter exposes the entire 0.1.0 core surface as fluent extensions; consumer
 
 ### Deferred from 0.1.0
 
-- `ReadOnlyTensorSpan<T>` fluent adapter — TUnit's assertion-builder cannot capture ref-struct values across an `await`. Consumers call `MathTolerance.IsApproximatelyEqual(ReadOnlyTensorSpan<T>, ReadOnlyTensorSpan<T>, T)` directly from `MathAssertions` for now.
+- `ReadOnlyTensorSpan<T>` fluent adapter. TUnit's assertion-builder cannot capture ref-struct values across an `await`. Consumers call `MathTolerance.IsApproximatelyEqual(ReadOnlyTensorSpan<T>, ReadOnlyTensorSpan<T>, T)` directly from `MathAssertions` for now.
 - `NumberTheory.GreatestCommonDivisor` / `LeastCommonMultiple` (non-predicate `long`-returning helpers) are not exposed as fluent assertions; consumers can call them statically and apply `ScalarAssertions` predicates on the result.
 
 ## [0.0.1] - Initial preview: skeleton release establishing repository, package identifiers, and quality bar

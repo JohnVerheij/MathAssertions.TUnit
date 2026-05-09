@@ -9,10 +9,11 @@ namespace MathAssertions.TUnit.Tests;
 
 /// <summary>
 /// Pins the NaN-aware, infinity-aware semantics and argument validation of
-/// <see cref="MathTolerance"/>. Covers every public overload of the v0.0.1 surface
-/// (scalar double, scalar float, <see cref="Vector3"/>) on the happy path, the boundary
-/// cases (NaN, infinity, zero tolerance), and the validation failures (NaN tolerance,
-/// negative tolerance).
+/// <see cref="MathTolerance"/>. Covers every public entry point (scalar
+/// double / float, the <see cref="System.Numerics"/> compounds, span and
+/// tensor overloads) on the happy path, the boundary cases (NaN, infinity,
+/// zero tolerance), and the validation failures (NaN tolerance, negative
+/// tolerance).
 /// </summary>
 [Category("Smoke")]
 [Timeout(5_000)]
@@ -598,7 +599,7 @@ internal sealed class MathToleranceTests
             .Throws<ArgumentOutOfRangeException>();
     }
 
-    // ===== Cluster 2 — System.Numerics compounds =====
+    // ===== Cluster 2: System.Numerics compounds =====
 
     // ----- Vector2 -----
 
@@ -725,7 +726,7 @@ internal sealed class MathToleranceTests
     public async Task IsApproximatelyEqual_Quaternion_DistinguishesQFromMinusQ(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
-        // q and -q encode the same rotation but are component-wise NOT equal — that's what
+        // q and -q encode the same rotation but are component-wise NOT equal; that's what
         // IsRotationallyEquivalent is for. Pin the distinction.
         var a = new Quaternion(0.1f, 0.2f, 0.3f, 0.9f);
         var negA = new Quaternion(-0.1f, -0.2f, -0.3f, -0.9f);

@@ -8,7 +8,7 @@
 
 Framework-agnostic core for the MathAssertions package family. The actual TUnit fluent assertions ship in the framework-specific adapter package (currently `MathAssertions.TUnit`).
 
-> **Most users want [`MathAssertions.TUnit`](https://www.nuget.org/packages/MathAssertions.TUnit/), not this package directly.** This package only ships the shared `MathTolerance` helpers; the adapter package adds the assertion entry points your test framework expects.
+> **Most users want [`MathAssertions.TUnit`](https://www.nuget.org/packages/MathAssertions.TUnit/), not this package directly.** This package ships the framework-agnostic helper classes (`MathTolerance`, `Sequences`, `Statistics`, `LinearAlgebra`, `NumberTheory`, plus the `Geometry3D` namespace); the adapter package adds the fluent `Assert.That(value).Method(...)` entry points your test framework expects.
 
 ---
 
@@ -16,12 +16,12 @@ Framework-agnostic core for the MathAssertions package family. The actual TUnit 
 
 Pure, NaN-aware, infinity-aware mathematical-assertion helpers. Six static classes plus the `Geometry3D` namespace cover ~85 methods:
 
-- **`MathTolerance`** — scalar `IsApproximatelyEqual` for `double`/`float` plus the `System.Numerics` compounds (`Vector2`/`Vector3`/`Vector4`, `Quaternion` with `IsRotationallyEquivalent`, `Matrix4x4`, `Plane` with `IsGeometricallyEquivalent`, `Complex`), span / tensor overloads (`ReadOnlySpan<double>`/`<float>`, generic `ReadOnlyTensorSpan<T>`), ULP-distance equality (`IsCloseInUlps`), combined relative+absolute tolerance, finiteness/probability/percentage predicates, and `HasRoundtripIdentity` for invertible-transformation checks.
-- **`Sequences`** — monotonicity (strict + non-strict), boundedness, arithmetic and geometric progressions, `ConvergesTo`, single-step `IsCauchyConvergent`, generic length predicates over `ReadOnlySpan<T>`.
-- **`Statistics`** — Welford's `MeanAndVariance`, `HasMean/Variance/StdDev/Sum/Median/PercentileApproximately`, `IsWithinSigmasOfMean`, `AreAllWithinSigmasOfMean`. Median and percentile use overflow-safe forms.
-- **`LinearAlgebra`** — `Matrix4x4` invariants (`IsSymmetric`, `IsOrthogonal`, `IsIdentity`, `HasDeterminantApproximately`, `HasTraceApproximately`, `IsInvertible`) plus `Vector3` pair properties (`AreOrthogonal`, `AreParallel`, `AreLinearlyIndependent`).
-- **`NumberTheory`** — exact integer predicates over `long`: `IsDivisibleBy`, `IsPrime`, `AreCoprime`, `GreatestCommonDivisor`, `LeastCommonMultiple`, `IsPowerOf`, `IsPerfectSquare`, `IsCongruent`. Overflow-safe and `long.MinValue`-aware.
-- **`Geometry3D`** — eight primitive `record struct` types (`Sphere`, `AxisAlignedBox`, `OrientedBox`, `Ray3D`, `LineSegment3D`, `Triangle3D`, `Capsule`, `Cylinder`) and five static classes: `Properties` (degeneracy, collinearity, coplanarity), `Containment` (point/box/sphere/OBB/convex hull), `Distance` (point-to-plane/segment/triangle), `Intersection` (sphere-sphere, AABB-AABB, ray-plane/sphere/triangle/AABB with citations to *Real-Time Rendering* §§22.6–22.8), `Pointcloud` (boundedness, centroid, on-plane / on-sphere). Algorithm citations preserved per *Real-Time Collision Detection* and *Real-Time Rendering*.
+- `MathTolerance`: scalar `IsApproximatelyEqual` for `double`/`float` plus the `System.Numerics` compounds (`Vector2`/`Vector3`/`Vector4`, `Quaternion` with `IsRotationallyEquivalent`, `Matrix4x4`, `Plane` with `IsGeometricallyEquivalent`, `Complex`), span / tensor overloads (`ReadOnlySpan<double>`/`<float>`, generic `ReadOnlyTensorSpan<T>`), ULP-distance equality (`IsCloseInUlps`), combined relative+absolute tolerance, finiteness/probability/percentage predicates, and `HasRoundtripIdentity` for invertible-transformation checks.
+- `Sequences`: monotonicity (strict + non-strict), boundedness, arithmetic and geometric progressions, `ConvergesTo`, single-step `IsCauchyConvergent`, generic length predicates over `ReadOnlySpan<T>`.
+- `Statistics`: Welford's `MeanAndVariance`, `HasMean/Variance/StdDev/Sum/Median/PercentileApproximately`, `IsWithinSigmasOfMean`, `AreAllWithinSigmasOfMean`. Median and percentile use overflow-safe forms.
+- `LinearAlgebra`: `Matrix4x4` invariants (`IsSymmetric`, `IsOrthogonal`, `IsIdentity`, `HasDeterminantApproximately`, `HasTraceApproximately`, `IsInvertible`) plus `Vector3` pair properties (`AreOrthogonal`, `AreParallel`, `AreLinearlyIndependent`).
+- `NumberTheory`: exact integer predicates over `long`: `IsDivisibleBy`, `IsPrime`, `AreCoprime`, `GreatestCommonDivisor`, `LeastCommonMultiple`, `IsPowerOf`, `IsPerfectSquare`, `IsCongruent`. Overflow-safe and `long.MinValue`-aware.
+- `Geometry3D`: eight primitive `record struct` types (`Sphere`, `AxisAlignedBox`, `OrientedBox`, `Ray3D`, `LineSegment3D`, `Triangle3D`, `Capsule`, `Cylinder`) and five static classes: `Properties` (degeneracy, collinearity, coplanarity), `Containment` (point/box/sphere/OBB/convex hull), `Distance` (point-to-plane/segment/triangle), `Intersection` (sphere-sphere, AABB-AABB, ray-plane/sphere/triangle/AABB with citations to *Real-Time Rendering* §§22.6, 22.7, 22.8), `Pointcloud` (boundedness, centroid, on-plane / on-sphere). Algorithm citations preserved per *Real-Time Collision Detection* and *Real-Time Rendering*.
 
 All tolerance- and sigma-taking methods validate the bound up front; invalid input throws `ArgumentOutOfRangeException` even on early-return paths.
 
