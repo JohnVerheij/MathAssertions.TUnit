@@ -65,6 +65,79 @@ The fluent surface, organized by adapter class:
 
 `IsFinite()` for `double`/`float` is provided by TUnit's built-in `DoubleAssertionExtensions`/`SingleAssertionExtensions`; this package does not duplicate it.
 
+## Cookbook
+
+### Pattern: comparing quaternions
+
+`IsApproximatelyEqualTo` is component-wise. Two unit quaternions `q` and `-q` represent the same physical rotation but fail component-wise comparison. If the production code may emit either sign of a unit quaternion (calibration outputs, slerp interpolation, normalization that picks a sign), use `IsRotationallyEquivalentTo`:
+
+```csharp
+[Test]
+public async Task RotationOutputMatchesExpected(CancellationToken ct)
+{
+    Quaternion expected = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI / 4);
+    Quaternion actual = SolveOrientation(input);  // may emit ±expected
+
+    // Component-wise: fails if SolveOrientation returned -expected
+    // await Assert.That(actual).IsApproximatelyEqualTo(expected, tolerance: 1e-6);
+
+    // Rotational: treats q and -q as the same rotation
+    await Assert.That(actual).IsRotationallyEquivalentTo(expected, tolerance: 1e-6);
+}
+```
+
+Use `IsApproximatelyEqualTo` when component identity matters (serialization roundtrips, exact storage formats). Use `IsRotationallyEquivalentTo` when geometric meaning matters (physical orientations, rotations applied to vectors).
+
+### Pattern: comparing planes
+
+`IsApproximatelyEqualTo` is component-wise on the plane equation `(n.X, n.Y, n.Z, d)`. The same geometric plane has two valid representations: `(n, d)` and `(-n, -d)`. If the production code constructs planes via different paths (three-point, normal-and-distance, normal-and-point), the sign of the normal may differ between expected and actual without changing the plane. Use `IsGeometricallyEquivalentTo`:
+
+```csharp
+[Test]
+public async Task GroundPlaneMatchesExpected(CancellationToken ct)
+{
+    Plane expected = new(Vector3.UnitY, -1.0f);  // y = 1
+    Plane actual = ComputeGroundPlane(input);    // could be (UnitY, -1) or (-UnitY, 1)
+
+    await Assert.That(actual).IsGeometricallyEquivalentTo(expected, tolerance: 1e-6);
+}
+```
+
+Use `IsApproximatelyEqualTo` when normal direction is observable in the consumer (winding-aware shading, half-space convention). Use `IsGeometricallyEquivalentTo` when only the plane's geometry is observable.
+
+### Pattern: detecting an unpopulated zero quaternion
+
+A zero-valued quaternion (all four components zero, length zero) is a valid in-memory state but not a valid rotation. Common cases: a protobuf default for an unpopulated `Quaternion` field, an in-construction calibration output that has not yet been written, an explicit "no rotation set" sentinel.
+
+The BCL exposes `Quaternion.Zero`. The existing component-wise comparison handles the assertion without a specialized API:
+
+```csharp
+[Test]
+public async Task UnpopulatedRotationIsZeroSentinel(CancellationToken ct)
+{
+    Quaternion actual = ReadRotationFromMessage(message);
+
+    await Assert.That(actual).IsApproximatelyEqualTo(Quaternion.Zero, tolerance: 1e-9);
+}
+```
+
+This reads as "the quaternion is approximately the zero quaternion" and fails for any rotation including the identity rotation `Quaternion.Identity` (which has `W = 1`).
+
+## NaN and infinity semantics
+
+The fluent extensions match the underlying `MathTolerance` semantics, which match TUnit's `IsCloseTo` primitive:
+
+| Both | Comparison | Result |
+|---|---|---|
+| NaN | NaN | `true` (under any tolerance) |
+| One NaN, other not | (anything) | `false` |
+| Same-sign infinity | (anything) | `true` |
+| Opposite-sign infinity | (anything) | `false` |
+| Finite | `Math.Abs(a - b) <= tolerance` | as expected |
+| Tolerance is NaN or negative | (anything) | `ArgumentOutOfRangeException` at call time |
+
+For compound types (`Vector2`/`Vector3`/`Vector4`, `Quaternion`, `Matrix4x4`, `Plane`, `Complex`), every component pair is evaluated against this table; the assertion passes iff every pair passes.
+
 ## Extending to your own types
 
 Add tolerance assertions for your own domain types via a one-line `[GenerateAssertion]` extension calling `MathTolerance.IsApproximatelyEqual` on each component. The package never sees your private types.

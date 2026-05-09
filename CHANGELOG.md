@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+
+- Cookbook entries on `IsApproximatelyEqualTo` (component-wise) vs `IsRotationallyEquivalentTo` for `Quaternion` (the SO(3) `q` vs `-q` double-cover) and vs `IsGeometricallyEquivalentTo` for `Plane` (the `(n, d)` vs `(-n, -d)` sign flip). Worked examples included for both. Added to the root `README.md` and to `src/MathAssertions.TUnit/README.md` (which ships in the `.nupkg` and shows on nuget.org).
+- Cookbook entry on asserting a quaternion is the zero-valued sentinel (e.g. an unpopulated protobuf field) using `IsApproximatelyEqualTo(Quaternion.Zero, tolerance)`. Reuses the existing component-wise comparison; no new public API.
+- New "NaN and infinity semantics" section in `src/MathAssertions.TUnit/README.md` mirroring the table already in the root README, so consumers see the edge-case behaviour without clicking through to GitHub.
+
 ## [0.1.0] - 2026-05-09
 
 The wider catalog. 0.1.0 expands the framework-agnostic core from a 3-method skeleton (scalar, Vector3) into a ~85-method tolerance-aware mathematical-assertion library across seven clusters, and brings the `MathAssertions.TUnit` adapter to parity so consumers can write `await Assert.That(value).Method(...)` for the entire core surface. Both packages remain AOT-compatible, trimmable, and reflection-free in the assertion path.

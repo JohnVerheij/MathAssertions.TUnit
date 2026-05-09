@@ -277,6 +277,62 @@ using (Assert.Multiple())
 
 Both axes report; the failure message names the failing one explicitly. A built-in per-axis-difference renderer that brings this granularity into the single `IsApproximatelyEqualTo` call is candidate work for a later release.
 
+### Pattern: comparing quaternions
+
+`IsApproximatelyEqualTo` is component-wise. Two unit quaternions `q` and `-q` represent the same physical rotation (the SO(3) double-cover) but fail component-wise comparison. If the production code may emit either sign of a unit quaternion (calibration outputs, slerp interpolation, normalization that picks a sign), use `IsRotationallyEquivalentTo`:
+
+```csharp
+[Test]
+public async Task RotationOutputMatchesExpected(CancellationToken ct)
+{
+    Quaternion expected = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI / 4);
+    Quaternion actual = SolveOrientation(input);  // may emit ±expected
+
+    // Component-wise: fails if SolveOrientation returned -expected
+    // await Assert.That(actual).IsApproximatelyEqualTo(expected, tolerance: 1e-6);
+
+    // Rotational: treats q and -q as the same rotation
+    await Assert.That(actual).IsRotationallyEquivalentTo(expected, tolerance: 1e-6);
+}
+```
+
+Use `IsApproximatelyEqualTo` when component identity matters (serialization roundtrips, exact storage formats). Use `IsRotationallyEquivalentTo` when geometric meaning matters (physical orientations, rotations applied to vectors). The implementation normalizes both inputs internally, so non-unit operands produce the correct rotational verdict.
+
+### Pattern: comparing planes
+
+`IsApproximatelyEqualTo` is component-wise on the plane equation `(n.X, n.Y, n.Z, d)`. The same geometric plane has two valid representations: `(n, d)` and `(-n, -d)`. If the production code constructs planes via different paths (three-point, normal-and-distance, normal-and-point), the sign of the normal may differ between expected and actual without changing the plane. Use `IsGeometricallyEquivalentTo`:
+
+```csharp
+[Test]
+public async Task GroundPlaneMatchesExpected(CancellationToken ct)
+{
+    Plane expected = new(Vector3.UnitY, -1.0f);  // y = 1
+    Plane actual = ComputeGroundPlane(input);    // could be (UnitY, -1) or (-UnitY, 1)
+
+    await Assert.That(actual).IsGeometricallyEquivalentTo(expected, tolerance: 1e-6);
+}
+```
+
+Use `IsApproximatelyEqualTo` when normal direction is observable in the consumer (winding-aware shading, half-space convention). Use `IsGeometricallyEquivalentTo` when only the plane's geometry is observable.
+
+### Pattern: detecting an unpopulated zero quaternion
+
+A zero-valued quaternion (all four components zero, length zero) is a valid in-memory state but not a valid rotation. Common cases: a protobuf default for an unpopulated `Quaternion` field, an in-construction calibration output that has not yet been written, an explicit "no rotation set" sentinel.
+
+The BCL exposes `Quaternion.Zero`. The existing component-wise comparison handles the assertion without a specialized API:
+
+```csharp
+[Test]
+public async Task UnpopulatedRotationIsZeroSentinel(CancellationToken ct)
+{
+    Quaternion actual = ReadRotationFromMessage(message);
+
+    await Assert.That(actual).IsApproximatelyEqualTo(Quaternion.Zero, tolerance: 1e-9);
+}
+```
+
+This reads as "the quaternion is approximately the zero quaternion" and fails for any rotation including the identity rotation `Quaternion.Identity` (which has `W = 1`). No specialized `IsZeroQuaternion` extension is needed; the BCL constant plus the existing component-wise comparison cover the case.
+
 ---
 
 ## Modern .NET 10+ practices on display
