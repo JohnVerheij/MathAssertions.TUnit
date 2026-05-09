@@ -4,23 +4,831 @@
 [assembly: System.Runtime.Versioning.TargetFramework(".NETCoreApp,Version=v10.0", FrameworkDisplayName=".NET 10.0")]
 namespace MathAssertions.TUnit
 {
-    public static class VectorAssertions
+    public static class ArrayAssertions
+    {
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be approximately equal to {expected} element-wise within tolerance {tolerance}", InlineMethodBody=false)]
+        public static bool IsApproximatelyEqualTo(this double[] value, double[] expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be approximately equal to {expected} element-wise within tolerance {tolerance}", InlineMethodBody=false)]
+        public static bool IsApproximatelyEqualTo(this float[] value, float[] expected, float tolerance) { }
+    }
+    public static class ComplexAssertions
     {
         [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be approximately equal to {expected} component-wise within tolerance {toleranc" +
             "e}", InlineMethodBody=true)]
+        public static bool IsApproximatelyEqualTo(this System.Numerics.Complex value, System.Numerics.Complex expected, double tolerance) { }
+    }
+    public static class Geometry3DAssertions
+    {
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be coplanar within tolerance {tolerance}", InlineMethodBody=false)]
+        public static bool AreCoplanar(this System.Numerics.Vector3[] value, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to contain box {inner}", InlineMethodBody=true)]
+        public static bool ContainsBox(this MathAssertions.Geometry3D.AxisAlignedBox value, MathAssertions.Geometry3D.AxisAlignedBox inner) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to contain point {point}", InlineMethodBody=true)]
+        public static bool ContainsPoint(this MathAssertions.Geometry3D.AxisAlignedBox value, System.Numerics.Vector3 point) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to contain point {point}", InlineMethodBody=true)]
+        public static bool ContainsPoint(this MathAssertions.Geometry3D.OrientedBox value, System.Numerics.Vector3 point) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to contain point {point}", InlineMethodBody=true)]
+        public static bool ContainsPoint(this MathAssertions.Geometry3D.Sphere value, System.Numerics.Vector3 point) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to contain sphere {sphere}", InlineMethodBody=true)]
+        public static bool ContainsSphere(this MathAssertions.Geometry3D.AxisAlignedBox value, MathAssertions.Geometry3D.Sphere sphere) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to contain point {point} within tolerance {tolerance}", InlineMethodBody=false)]
+        public static bool ConvexHullContainsPoint(this System.Numerics.Vector3[] value, System.Numerics.Vector3 point, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to have centroid approximately {expected} within tolerance {tolerance}", InlineMethodBody=false)]
+        public static bool HasCentroidAt(this System.Numerics.Vector3[] value, System.Numerics.Vector3 expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be at distance {expected} from {plane} within tolerance {tolerance}", InlineMethodBody=true)]
+        public static bool HasDistanceFromPlane(this System.Numerics.Vector3 value, System.Numerics.Plane plane, double expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be at distance {expected} from {segment} within tolerance {tolerance}", InlineMethodBody=true)]
+        public static bool HasDistanceFromSegment(this System.Numerics.Vector3 value, MathAssertions.Geometry3D.LineSegment3D segment, double expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be at distance {expected} from {triangle} within tolerance {tolerance}", InlineMethodBody=true)]
+        public static bool HasDistanceFromTriangle(this System.Numerics.Vector3 value, MathAssertions.Geometry3D.Triangle3D triangle, double expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to intersect box {other}", InlineMethodBody=true)]
+        public static bool IntersectsBox(this MathAssertions.Geometry3D.AxisAlignedBox value, MathAssertions.Geometry3D.AxisAlignedBox other) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to intersect box {box}", InlineMethodBody=true)]
+        public static bool IntersectsBox(this MathAssertions.Geometry3D.Ray3D value, MathAssertions.Geometry3D.AxisAlignedBox box) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to intersect plane {plane}", InlineMethodBody=true)]
+        public static bool IntersectsPlane(this MathAssertions.Geometry3D.Ray3D value, System.Numerics.Plane plane) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to intersect sphere {sphere}", InlineMethodBody=true)]
+        public static bool IntersectsSphere(this MathAssertions.Geometry3D.Ray3D value, MathAssertions.Geometry3D.Sphere sphere) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to intersect sphere {other}", InlineMethodBody=true)]
+        public static bool IntersectsSphere(this MathAssertions.Geometry3D.Sphere value, MathAssertions.Geometry3D.Sphere other) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to intersect triangle {triangle}", InlineMethodBody=true)]
+        public static bool IntersectsTriangle(this MathAssertions.Geometry3D.Ray3D value, MathAssertions.Geometry3D.Triangle3D triangle) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to lie approximately on plane {plane} within residual {maxResidual}", InlineMethodBody=false)]
+        public static bool IsApproximatelyOnPlane(this System.Numerics.Vector3[] value, System.Numerics.Plane plane, double maxResidual) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to lie approximately on a sphere centered at {center} with radius {radius} within" +
+            " residual {maxResidual}", InlineMethodBody=false)]
+        public static bool IsApproximatelyOnSphere(this System.Numerics.Vector3[] value, System.Numerics.Vector3 center, float radius, double maxResidual) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be bounded by box {box}", InlineMethodBody=false)]
+        public static bool IsBoundedByBox(this System.Numerics.Vector3[] value, MathAssertions.Geometry3D.AxisAlignedBox box) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be bounded by sphere {sphere}", InlineMethodBody=false)]
+        public static bool IsBoundedBySphere(this System.Numerics.Vector3[] value, MathAssertions.Geometry3D.Sphere sphere) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be collinear within tolerance {tolerance}", InlineMethodBody=false)]
+        public static bool IsCollinear(this System.Numerics.Vector3[] value, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be a degenerate triangle within tolerance {tolerance}", InlineMethodBody=true)]
+        public static bool IsDegenerate(this MathAssertions.Geometry3D.Triangle3D value, double tolerance) { }
+    }
+    public static class LinearAlgebraAssertions
+    {
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be linearly independent within tolerance {tolerance}", InlineMethodBody=false)]
+        public static bool AreLinearlyIndependent(this System.Numerics.Vector3[] value, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be orthogonal to {other} within tolerance {tolerance}", InlineMethodBody=true)]
+        public static bool IsOrthogonalTo(this System.Numerics.Vector3 value, System.Numerics.Vector3 other, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be parallel to {other} within tolerance {tolerance}", InlineMethodBody=true)]
+        public static bool IsParallelTo(this System.Numerics.Vector3 value, System.Numerics.Vector3 other, double tolerance) { }
+    }
+    public static class MatrixAssertions
+    {
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to have determinant approximately {expected} within tolerance {tolerance}", InlineMethodBody=true)]
+        public static bool HasDeterminantApproximately(this System.Numerics.Matrix4x4 value, double expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to have trace approximately {expected} within tolerance {tolerance}", InlineMethodBody=true)]
+        public static bool HasTraceApproximately(this System.Numerics.Matrix4x4 value, double expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be approximately equal to {expected} element-wise within tolerance {tolerance}", InlineMethodBody=true)]
+        public static bool IsApproximatelyEqualTo(this System.Numerics.Matrix4x4 value, System.Numerics.Matrix4x4 expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be the identity matrix within tolerance {tolerance}", InlineMethodBody=true)]
+        public static bool IsIdentity(this System.Numerics.Matrix4x4 value, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be invertible (|det| > tolerance {tolerance})", InlineMethodBody=true)]
+        public static bool IsInvertible(this System.Numerics.Matrix4x4 value, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be orthogonal within tolerance {tolerance}", InlineMethodBody=true)]
+        public static bool IsOrthogonal(this System.Numerics.Matrix4x4 value, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be symmetric within tolerance {tolerance}", InlineMethodBody=true)]
+        public static bool IsSymmetric(this System.Numerics.Matrix4x4 value, double tolerance) { }
+    }
+    public static class NumberTheoryAssertions
+    {
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be congruent to {other} modulo {modulus}", InlineMethodBody=true)]
+        public static bool IsCongruentTo(this long value, long other, long modulus) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be coprime with {other}", InlineMethodBody=true)]
+        public static bool IsCoprimeWith(this long value, long other) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be divisible by {divisor}", InlineMethodBody=true)]
+        public static bool IsDivisibleBy(this long value, long divisor) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be a perfect square", InlineMethodBody=true)]
+        public static bool IsPerfectSquare(this long value) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be a power of {baseValue}", InlineMethodBody=true)]
+        public static bool IsPowerOf(this long value, long baseValue) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be prime", InlineMethodBody=true)]
+        public static bool IsPrime(this long value) { }
+    }
+    public static class PlaneAssertions
+    {
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be approximately equal to {expected} component-wise within tolerance {toleranc" +
+            "e}", InlineMethodBody=true)]
+        public static bool IsApproximatelyEqualTo(this System.Numerics.Plane value, System.Numerics.Plane expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be the same plane as {expected} (allowing sign-flip equivalence) within tolera" +
+            "nce {tolerance}", InlineMethodBody=true)]
+        public static bool IsGeometricallyEquivalentTo(this System.Numerics.Plane value, System.Numerics.Plane expected, double tolerance) { }
+    }
+    public static class QuaternionAssertions
+    {
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be approximately equal to {expected} component-wise within tolerance {toleranc" +
+            "e}", InlineMethodBody=true)]
+        public static bool IsApproximatelyEqualTo(this System.Numerics.Quaternion value, System.Numerics.Quaternion expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be the identity quaternion within tolerance {tolerance}", InlineMethodBody=true)]
+        public static bool IsIdentity(this System.Numerics.Quaternion value, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be a unit quaternion within tolerance {tolerance}", InlineMethodBody=true)]
+        public static bool IsNormalized(this System.Numerics.Quaternion value, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be rotationally equivalent to {expected} within tolerance {tolerance}", InlineMethodBody=true)]
+        public static bool IsRotationallyEquivalentTo(this System.Numerics.Quaternion value, System.Numerics.Quaternion expected, double tolerance) { }
+    }
+    public static class ScalarAssertions
+    {
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to roundtrip through forward/inverse within tolerance {tolerance}", InlineMethodBody=true)]
+        public static bool HasRoundtripIdentity(this double value, System.Func<double, double> forward, System.Func<double, double> inverse, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be approximately equal to {expected} within tolerance {tolerance}", InlineMethodBody=true)]
+        public static bool IsApproximatelyEqualTo(this double value, double expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be approximately equal to {expected} within tolerance {tolerance}", InlineMethodBody=true)]
+        public static bool IsApproximatelyEqualTo(this float value, float expected, float tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be within {ulpDistance} ULPs of {expected}", InlineMethodBody=true)]
+        public static bool IsCloseInUlpsTo(this double value, double expected, long ulpDistance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be within {ulpDistance} ULPs of {expected}", InlineMethodBody=true)]
+        public static bool IsCloseInUlpsTo(this float value, float expected, int ulpDistance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be a finite non-negative value", InlineMethodBody=true)]
+        public static bool IsNonNegativeFinite(this double value) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be a percentage (finite, in [0, 100])", InlineMethodBody=true)]
+        public static bool IsPercentage(this double value) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be a probability (finite, in [0, 1])", InlineMethodBody=true)]
+        public static bool IsProbability(this double value) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be within relative tolerance {relativeTolerance} or absolute tolerance {absolu" +
+            "teTolerance} of {expected}", InlineMethodBody=true)]
+        public static bool IsRelativelyAndAbsolutelyCloseTo(this double value, double expected, double relativeTolerance, double absoluteTolerance) { }
+    }
+    public static class SequencesAssertions
+    {
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to converge to {limit} within tolerance {tolerance}", InlineMethodBody=false)]
+        public static bool ConvergesTo(this double[] value, double limit, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to have length {expected}", InlineMethodBody=false)]
+        public static bool HasLength<T>(this T[] value, int expected) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to have at least {expected} elements", InlineMethodBody=false)]
+        public static bool HasMinLength<T>(this T[] value, int expected) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be an arithmetic progression within tolerance {tolerance}", InlineMethodBody=false)]
+        public static bool IsArithmeticProgression(this double[] value, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be bounded by [{min}, {max}]", InlineMethodBody=false)]
+        public static bool IsBounded(this double[] value, double min, double max) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be Cauchy convergent within tolerance {tolerance}", InlineMethodBody=false)]
+        public static bool IsCauchyConvergent(this double[] value, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be a geometric progression within tolerance {tolerance}", InlineMethodBody=false)]
+        public static bool IsGeometricProgression(this double[] value, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be monotonically decreasing", InlineMethodBody=false)]
+        public static bool IsMonotonicallyDecreasing(this double[] value) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be monotonically increasing", InlineMethodBody=false)]
+        public static bool IsMonotonicallyIncreasing(this double[] value) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be sorted ascending", InlineMethodBody=false)]
+        public static bool IsSorted(this double[] value) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be strictly monotonically decreasing", InlineMethodBody=false)]
+        public static bool IsStrictlyMonotonicallyDecreasing(this double[] value) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be strictly monotonically increasing", InlineMethodBody=false)]
+        public static bool IsStrictlyMonotonicallyIncreasing(this double[] value) { }
+    }
+    public static class StatisticsAssertions
+    {
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to have every element within {sigmas} sigmas of its own mean", InlineMethodBody=false)]
+        public static bool AreAllWithinSigmasOfMean(this double[] value, double sigmas) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to have mean approximately {expected} within tolerance {tolerance}", InlineMethodBody=false)]
+        public static bool HasMeanApproximately(this double[] value, double expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to have median approximately {expected} within tolerance {tolerance}", InlineMethodBody=false)]
+        public static bool HasMedianApproximately(this double[] value, double expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to have {percentile}-percentile approximately {expected} within tolerance {tolera" +
+            "nce}", InlineMethodBody=false)]
+        public static bool HasPercentileApproximately(this double[] value, double percentile, double expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to have standard deviation approximately {expected} within tolerance {tolerance}", InlineMethodBody=false)]
+        public static bool HasStdDevApproximately(this double[] value, double expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to have sum approximately {expected} within tolerance {tolerance}", InlineMethodBody=false)]
+        public static bool HasSumApproximately(this double[] value, double expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to have variance approximately {expected} within tolerance {tolerance}", InlineMethodBody=false)]
+        public static bool HasVarianceApproximately(this double[] value, double expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to lie within {sigmas} sigmas of the sample mean", InlineMethodBody=false)]
+        public static bool IsWithinSigmasOfMean(this double value, double[] sample, double sigmas) { }
+    }
+    public static class VectorAssertions
+    {
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to have magnitude approximately {expected} within tolerance {tolerance}", InlineMethodBody=true)]
+        public static bool HasMagnitudeApproximately(this System.Numerics.Vector3 value, double expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be approximately equal to {expected} component-wise within tolerance {toleranc" +
+            "e}", InlineMethodBody=true)]
+        public static bool IsApproximatelyEqualTo(this System.Numerics.Vector2 value, System.Numerics.Vector2 expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be approximately equal to {expected} component-wise within tolerance {toleranc" +
+            "e}", InlineMethodBody=true)]
         public static bool IsApproximatelyEqualTo(this System.Numerics.Vector3 value, System.Numerics.Vector3 expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be approximately equal to {expected} component-wise within tolerance {toleranc" +
+            "e}", InlineMethodBody=true)]
+        public static bool IsApproximatelyEqualTo(this System.Numerics.Vector4 value, System.Numerics.Vector4 expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be a unit (normalized) vector within tolerance {tolerance}", InlineMethodBody=true)]
+        public static bool IsNormalized(this System.Numerics.Vector3 value, double tolerance) { }
     }
 }
 namespace TUnit.Assertions.Extensions
 {
+    public static class ArrayAssertions
+    {
+        public static TUnit.Assertions.Extensions.DoubleArray_IsApproximatelyEqualTo_DoubleArray_Double_Assertion IsApproximatelyEqualTo(this TUnit.Assertions.Core.IAssertionSource<double[]> source, double[] expected, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.FloatArray_IsApproximatelyEqualTo_FloatArray_Float_Assertion IsApproximatelyEqualTo(this TUnit.Assertions.Core.IAssertionSource<float[]> source, float[] expected, float tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+    }
+    public sealed class AxisAlignedBox_ContainsBox_AxisAlignedBox_Assertion : TUnit.Assertions.Core.Assertion<MathAssertions.Geometry3D.AxisAlignedBox>
+    {
+        public AxisAlignedBox_ContainsBox_AxisAlignedBox_Assertion(TUnit.Assertions.Core.AssertionContext<MathAssertions.Geometry3D.AxisAlignedBox> context, MathAssertions.Geometry3D.AxisAlignedBox inner) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<MathAssertions.Geometry3D.AxisAlignedBox> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class AxisAlignedBox_ContainsPoint_Vector3_Assertion : TUnit.Assertions.Core.Assertion<MathAssertions.Geometry3D.AxisAlignedBox>
+    {
+        public AxisAlignedBox_ContainsPoint_Vector3_Assertion(TUnit.Assertions.Core.AssertionContext<MathAssertions.Geometry3D.AxisAlignedBox> context, System.Numerics.Vector3 point) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<MathAssertions.Geometry3D.AxisAlignedBox> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class AxisAlignedBox_ContainsSphere_Sphere_Assertion : TUnit.Assertions.Core.Assertion<MathAssertions.Geometry3D.AxisAlignedBox>
+    {
+        public AxisAlignedBox_ContainsSphere_Sphere_Assertion(TUnit.Assertions.Core.AssertionContext<MathAssertions.Geometry3D.AxisAlignedBox> context, MathAssertions.Geometry3D.Sphere sphere) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<MathAssertions.Geometry3D.AxisAlignedBox> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class AxisAlignedBox_IntersectsBox_AxisAlignedBox_Assertion : TUnit.Assertions.Core.Assertion<MathAssertions.Geometry3D.AxisAlignedBox>
+    {
+        public AxisAlignedBox_IntersectsBox_AxisAlignedBox_Assertion(TUnit.Assertions.Core.AssertionContext<MathAssertions.Geometry3D.AxisAlignedBox> context, MathAssertions.Geometry3D.AxisAlignedBox other) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<MathAssertions.Geometry3D.AxisAlignedBox> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public static class ComplexAssertions
+    {
+        public static TUnit.Assertions.Extensions.Complex_IsApproximatelyEqualTo_Complex_Double_Assertion IsApproximatelyEqualTo(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Complex> source, System.Numerics.Complex expected, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+    }
+    public sealed class Complex_IsApproximatelyEqualTo_Complex_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Complex>
+    {
+        public Complex_IsApproximatelyEqualTo_Complex_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Complex> context, System.Numerics.Complex expected, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Complex> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class DoubleArray_AreAllWithinSigmasOfMean_Double_Assertion : TUnit.Assertions.Core.Assertion<double[]>
+    {
+        public DoubleArray_AreAllWithinSigmasOfMean_Double_Assertion(TUnit.Assertions.Core.AssertionContext<double[]> context, double sigmas) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<double[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class DoubleArray_ConvergesTo_Double_Double_Assertion : TUnit.Assertions.Core.Assertion<double[]>
+    {
+        public DoubleArray_ConvergesTo_Double_Double_Assertion(TUnit.Assertions.Core.AssertionContext<double[]> context, double limit, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<double[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class DoubleArray_HasMeanApproximately_Double_Double_Assertion : TUnit.Assertions.Core.Assertion<double[]>
+    {
+        public DoubleArray_HasMeanApproximately_Double_Double_Assertion(TUnit.Assertions.Core.AssertionContext<double[]> context, double expected, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<double[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class DoubleArray_HasMedianApproximately_Double_Double_Assertion : TUnit.Assertions.Core.Assertion<double[]>
+    {
+        public DoubleArray_HasMedianApproximately_Double_Double_Assertion(TUnit.Assertions.Core.AssertionContext<double[]> context, double expected, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<double[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class DoubleArray_HasPercentileApproximately_Double_Double_Double_Assertion : TUnit.Assertions.Core.Assertion<double[]>
+    {
+        public DoubleArray_HasPercentileApproximately_Double_Double_Double_Assertion(TUnit.Assertions.Core.AssertionContext<double[]> context, double percentile, double expected, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<double[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class DoubleArray_HasStdDevApproximately_Double_Double_Assertion : TUnit.Assertions.Core.Assertion<double[]>
+    {
+        public DoubleArray_HasStdDevApproximately_Double_Double_Assertion(TUnit.Assertions.Core.AssertionContext<double[]> context, double expected, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<double[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class DoubleArray_HasSumApproximately_Double_Double_Assertion : TUnit.Assertions.Core.Assertion<double[]>
+    {
+        public DoubleArray_HasSumApproximately_Double_Double_Assertion(TUnit.Assertions.Core.AssertionContext<double[]> context, double expected, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<double[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class DoubleArray_HasVarianceApproximately_Double_Double_Assertion : TUnit.Assertions.Core.Assertion<double[]>
+    {
+        public DoubleArray_HasVarianceApproximately_Double_Double_Assertion(TUnit.Assertions.Core.AssertionContext<double[]> context, double expected, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<double[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class DoubleArray_IsApproximatelyEqualTo_DoubleArray_Double_Assertion : TUnit.Assertions.Core.Assertion<double[]>
+    {
+        public DoubleArray_IsApproximatelyEqualTo_DoubleArray_Double_Assertion(TUnit.Assertions.Core.AssertionContext<double[]> context, double[] expected, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<double[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class DoubleArray_IsArithmeticProgression_Double_Assertion : TUnit.Assertions.Core.Assertion<double[]>
+    {
+        public DoubleArray_IsArithmeticProgression_Double_Assertion(TUnit.Assertions.Core.AssertionContext<double[]> context, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<double[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class DoubleArray_IsBounded_Double_Double_Assertion : TUnit.Assertions.Core.Assertion<double[]>
+    {
+        public DoubleArray_IsBounded_Double_Double_Assertion(TUnit.Assertions.Core.AssertionContext<double[]> context, double min, double max) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<double[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class DoubleArray_IsCauchyConvergent_Double_Assertion : TUnit.Assertions.Core.Assertion<double[]>
+    {
+        public DoubleArray_IsCauchyConvergent_Double_Assertion(TUnit.Assertions.Core.AssertionContext<double[]> context, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<double[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class DoubleArray_IsGeometricProgression_Double_Assertion : TUnit.Assertions.Core.Assertion<double[]>
+    {
+        public DoubleArray_IsGeometricProgression_Double_Assertion(TUnit.Assertions.Core.AssertionContext<double[]> context, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<double[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class DoubleArray_IsMonotonicallyDecreasing_Assertion : TUnit.Assertions.Core.Assertion<double[]>
+    {
+        public DoubleArray_IsMonotonicallyDecreasing_Assertion(TUnit.Assertions.Core.AssertionContext<double[]> context) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<double[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class DoubleArray_IsMonotonicallyIncreasing_Assertion : TUnit.Assertions.Core.Assertion<double[]>
+    {
+        public DoubleArray_IsMonotonicallyIncreasing_Assertion(TUnit.Assertions.Core.AssertionContext<double[]> context) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<double[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class DoubleArray_IsSorted_Assertion : TUnit.Assertions.Core.Assertion<double[]>
+    {
+        public DoubleArray_IsSorted_Assertion(TUnit.Assertions.Core.AssertionContext<double[]> context) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<double[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class DoubleArray_IsStrictlyMonotonicallyDecreasing_Assertion : TUnit.Assertions.Core.Assertion<double[]>
+    {
+        public DoubleArray_IsStrictlyMonotonicallyDecreasing_Assertion(TUnit.Assertions.Core.AssertionContext<double[]> context) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<double[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class DoubleArray_IsStrictlyMonotonicallyIncreasing_Assertion : TUnit.Assertions.Core.Assertion<double[]>
+    {
+        public DoubleArray_IsStrictlyMonotonicallyIncreasing_Assertion(TUnit.Assertions.Core.AssertionContext<double[]> context) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<double[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Double_HasRoundtripIdentity_FuncDoubleDouble_FuncDoubleDouble_Double_Assertion : TUnit.Assertions.Core.Assertion<double>
+    {
+        public Double_HasRoundtripIdentity_FuncDoubleDouble_FuncDoubleDouble_Double_Assertion(TUnit.Assertions.Core.AssertionContext<double> context, System.Func<double, double> forward, System.Func<double, double> inverse, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<double> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Double_IsApproximatelyEqualTo_Double_Double_Assertion : TUnit.Assertions.Core.Assertion<double>
+    {
+        public Double_IsApproximatelyEqualTo_Double_Double_Assertion(TUnit.Assertions.Core.AssertionContext<double> context, double expected, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<double> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Double_IsCloseInUlpsTo_Double_Long_Assertion : TUnit.Assertions.Core.Assertion<double>
+    {
+        public Double_IsCloseInUlpsTo_Double_Long_Assertion(TUnit.Assertions.Core.AssertionContext<double> context, double expected, long ulpDistance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<double> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Double_IsNonNegativeFinite_Assertion : TUnit.Assertions.Core.Assertion<double>
+    {
+        public Double_IsNonNegativeFinite_Assertion(TUnit.Assertions.Core.AssertionContext<double> context) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<double> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Double_IsPercentage_Assertion : TUnit.Assertions.Core.Assertion<double>
+    {
+        public Double_IsPercentage_Assertion(TUnit.Assertions.Core.AssertionContext<double> context) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<double> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Double_IsProbability_Assertion : TUnit.Assertions.Core.Assertion<double>
+    {
+        public Double_IsProbability_Assertion(TUnit.Assertions.Core.AssertionContext<double> context) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<double> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Double_IsRelativelyAndAbsolutelyCloseTo_Double_Double_Double_Assertion : TUnit.Assertions.Core.Assertion<double>
+    {
+        public Double_IsRelativelyAndAbsolutelyCloseTo_Double_Double_Double_Assertion(TUnit.Assertions.Core.AssertionContext<double> context, double expected, double relativeTolerance, double absoluteTolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<double> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Double_IsWithinSigmasOfMean_DoubleArray_Double_Assertion : TUnit.Assertions.Core.Assertion<double>
+    {
+        public Double_IsWithinSigmasOfMean_DoubleArray_Double_Assertion(TUnit.Assertions.Core.AssertionContext<double> context, double[] sample, double sigmas) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<double> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class FloatArray_IsApproximatelyEqualTo_FloatArray_Float_Assertion : TUnit.Assertions.Core.Assertion<float[]>
+    {
+        public FloatArray_IsApproximatelyEqualTo_FloatArray_Float_Assertion(TUnit.Assertions.Core.AssertionContext<float[]> context, float[] expected, float tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<float[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Float_IsApproximatelyEqualTo_Float_Float_Assertion : TUnit.Assertions.Core.Assertion<float>
+    {
+        public Float_IsApproximatelyEqualTo_Float_Float_Assertion(TUnit.Assertions.Core.AssertionContext<float> context, float expected, float tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<float> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Float_IsCloseInUlpsTo_Float_Int_Assertion : TUnit.Assertions.Core.Assertion<float>
+    {
+        public Float_IsCloseInUlpsTo_Float_Int_Assertion(TUnit.Assertions.Core.AssertionContext<float> context, float expected, int ulpDistance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<float> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public static class Geometry3DAssertions
+    {
+        public static TUnit.Assertions.Extensions.Vector3Array_AreCoplanar_Double_Assertion AreCoplanar(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Vector3[]> source, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.AxisAlignedBox_ContainsBox_AxisAlignedBox_Assertion ContainsBox(this TUnit.Assertions.Core.IAssertionSource<MathAssertions.Geometry3D.AxisAlignedBox> source, MathAssertions.Geometry3D.AxisAlignedBox inner, [System.Runtime.CompilerServices.CallerArgumentExpression("inner")] string? innerExpression = null) { }
+        public static TUnit.Assertions.Extensions.AxisAlignedBox_ContainsPoint_Vector3_Assertion ContainsPoint(this TUnit.Assertions.Core.IAssertionSource<MathAssertions.Geometry3D.AxisAlignedBox> source, System.Numerics.Vector3 point, [System.Runtime.CompilerServices.CallerArgumentExpression("point")] string? pointExpression = null) { }
+        public static TUnit.Assertions.Extensions.OrientedBox_ContainsPoint_Vector3_Assertion ContainsPoint(this TUnit.Assertions.Core.IAssertionSource<MathAssertions.Geometry3D.OrientedBox> source, System.Numerics.Vector3 point, [System.Runtime.CompilerServices.CallerArgumentExpression("point")] string? pointExpression = null) { }
+        public static TUnit.Assertions.Extensions.Sphere_ContainsPoint_Vector3_Assertion ContainsPoint(this TUnit.Assertions.Core.IAssertionSource<MathAssertions.Geometry3D.Sphere> source, System.Numerics.Vector3 point, [System.Runtime.CompilerServices.CallerArgumentExpression("point")] string? pointExpression = null) { }
+        public static TUnit.Assertions.Extensions.AxisAlignedBox_ContainsSphere_Sphere_Assertion ContainsSphere(this TUnit.Assertions.Core.IAssertionSource<MathAssertions.Geometry3D.AxisAlignedBox> source, MathAssertions.Geometry3D.Sphere sphere, [System.Runtime.CompilerServices.CallerArgumentExpression("sphere")] string? sphereExpression = null) { }
+        public static TUnit.Assertions.Extensions.Vector3Array_ConvexHullContainsPoint_Vector3_Double_Assertion ConvexHullContainsPoint(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Vector3[]> source, System.Numerics.Vector3 point, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("point")] string? pointExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Vector3Array_HasCentroidAt_Vector3_Double_Assertion HasCentroidAt(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Vector3[]> source, System.Numerics.Vector3 expected, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Vector3_HasDistanceFromPlane_Plane_Double_Double_Assertion HasDistanceFromPlane(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Vector3> source, System.Numerics.Plane plane, double expected, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("plane")] string? planeExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Vector3_HasDistanceFromSegment_LineSegment3D_Double_Double_Assertion HasDistanceFromSegment(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Vector3> source, MathAssertions.Geometry3D.LineSegment3D segment, double expected, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("segment")] string? segmentExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Vector3_HasDistanceFromTriangle_Triangle3D_Double_Double_Assertion HasDistanceFromTriangle(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Vector3> source, MathAssertions.Geometry3D.Triangle3D triangle, double expected, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("triangle")] string? triangleExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.AxisAlignedBox_IntersectsBox_AxisAlignedBox_Assertion IntersectsBox(this TUnit.Assertions.Core.IAssertionSource<MathAssertions.Geometry3D.AxisAlignedBox> source, MathAssertions.Geometry3D.AxisAlignedBox other, [System.Runtime.CompilerServices.CallerArgumentExpression("other")] string? otherExpression = null) { }
+        public static TUnit.Assertions.Extensions.Ray3D_IntersectsBox_AxisAlignedBox_Assertion IntersectsBox(this TUnit.Assertions.Core.IAssertionSource<MathAssertions.Geometry3D.Ray3D> source, MathAssertions.Geometry3D.AxisAlignedBox box, [System.Runtime.CompilerServices.CallerArgumentExpression("box")] string? boxExpression = null) { }
+        public static TUnit.Assertions.Extensions.Ray3D_IntersectsPlane_Plane_Assertion IntersectsPlane(this TUnit.Assertions.Core.IAssertionSource<MathAssertions.Geometry3D.Ray3D> source, System.Numerics.Plane plane, [System.Runtime.CompilerServices.CallerArgumentExpression("plane")] string? planeExpression = null) { }
+        public static TUnit.Assertions.Extensions.Ray3D_IntersectsSphere_Sphere_Assertion IntersectsSphere(this TUnit.Assertions.Core.IAssertionSource<MathAssertions.Geometry3D.Ray3D> source, MathAssertions.Geometry3D.Sphere sphere, [System.Runtime.CompilerServices.CallerArgumentExpression("sphere")] string? sphereExpression = null) { }
+        public static TUnit.Assertions.Extensions.Sphere_IntersectsSphere_Sphere_Assertion IntersectsSphere(this TUnit.Assertions.Core.IAssertionSource<MathAssertions.Geometry3D.Sphere> source, MathAssertions.Geometry3D.Sphere other, [System.Runtime.CompilerServices.CallerArgumentExpression("other")] string? otherExpression = null) { }
+        public static TUnit.Assertions.Extensions.Ray3D_IntersectsTriangle_Triangle3D_Assertion IntersectsTriangle(this TUnit.Assertions.Core.IAssertionSource<MathAssertions.Geometry3D.Ray3D> source, MathAssertions.Geometry3D.Triangle3D triangle, [System.Runtime.CompilerServices.CallerArgumentExpression("triangle")] string? triangleExpression = null) { }
+        public static TUnit.Assertions.Extensions.Vector3Array_IsApproximatelyOnPlane_Plane_Double_Assertion IsApproximatelyOnPlane(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Vector3[]> source, System.Numerics.Plane plane, double maxResidual, [System.Runtime.CompilerServices.CallerArgumentExpression("plane")] string? planeExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("maxResidual")] string? maxResidualExpression = null) { }
+        public static TUnit.Assertions.Extensions.Vector3Array_IsApproximatelyOnSphere_Vector3_Float_Double_Assertion IsApproximatelyOnSphere(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Vector3[]> source, System.Numerics.Vector3 center, float radius, double maxResidual, [System.Runtime.CompilerServices.CallerArgumentExpression("center")] string? centerExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("radius")] string? radiusExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("maxResidual")] string? maxResidualExpression = null) { }
+        public static TUnit.Assertions.Extensions.Vector3Array_IsBoundedByBox_AxisAlignedBox_Assertion IsBoundedByBox(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Vector3[]> source, MathAssertions.Geometry3D.AxisAlignedBox box, [System.Runtime.CompilerServices.CallerArgumentExpression("box")] string? boxExpression = null) { }
+        public static TUnit.Assertions.Extensions.Vector3Array_IsBoundedBySphere_Sphere_Assertion IsBoundedBySphere(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Vector3[]> source, MathAssertions.Geometry3D.Sphere sphere, [System.Runtime.CompilerServices.CallerArgumentExpression("sphere")] string? sphereExpression = null) { }
+        public static TUnit.Assertions.Extensions.Vector3Array_IsCollinear_Double_Assertion IsCollinear(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Vector3[]> source, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Triangle3D_IsDegenerate_Double_Assertion IsDegenerate(this TUnit.Assertions.Core.IAssertionSource<MathAssertions.Geometry3D.Triangle3D> source, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+    }
+    public static class LinearAlgebraAssertions
+    {
+        public static TUnit.Assertions.Extensions.Vector3Array_AreLinearlyIndependent_Double_Assertion AreLinearlyIndependent(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Vector3[]> source, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Vector3_IsOrthogonalTo_Vector3_Double_Assertion IsOrthogonalTo(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Vector3> source, System.Numerics.Vector3 other, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("other")] string? otherExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Vector3_IsParallelTo_Vector3_Double_Assertion IsParallelTo(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Vector3> source, System.Numerics.Vector3 other, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("other")] string? otherExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+    }
+    public sealed class Long_IsCongruentTo_Long_Long_Assertion : TUnit.Assertions.Core.Assertion<long>
+    {
+        public Long_IsCongruentTo_Long_Long_Assertion(TUnit.Assertions.Core.AssertionContext<long> context, long other, long modulus) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<long> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Long_IsCoprimeWith_Long_Assertion : TUnit.Assertions.Core.Assertion<long>
+    {
+        public Long_IsCoprimeWith_Long_Assertion(TUnit.Assertions.Core.AssertionContext<long> context, long other) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<long> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Long_IsDivisibleBy_Long_Assertion : TUnit.Assertions.Core.Assertion<long>
+    {
+        public Long_IsDivisibleBy_Long_Assertion(TUnit.Assertions.Core.AssertionContext<long> context, long divisor) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<long> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Long_IsPerfectSquare_Assertion : TUnit.Assertions.Core.Assertion<long>
+    {
+        public Long_IsPerfectSquare_Assertion(TUnit.Assertions.Core.AssertionContext<long> context) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<long> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Long_IsPowerOf_Long_Assertion : TUnit.Assertions.Core.Assertion<long>
+    {
+        public Long_IsPowerOf_Long_Assertion(TUnit.Assertions.Core.AssertionContext<long> context, long baseValue) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<long> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Long_IsPrime_Assertion : TUnit.Assertions.Core.Assertion<long>
+    {
+        public Long_IsPrime_Assertion(TUnit.Assertions.Core.AssertionContext<long> context) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<long> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Matrix4x4_HasDeterminantApproximately_Double_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Matrix4x4>
+    {
+        public Matrix4x4_HasDeterminantApproximately_Double_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Matrix4x4> context, double expected, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Matrix4x4> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Matrix4x4_HasTraceApproximately_Double_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Matrix4x4>
+    {
+        public Matrix4x4_HasTraceApproximately_Double_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Matrix4x4> context, double expected, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Matrix4x4> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Matrix4x4_IsApproximatelyEqualTo_Matrix4x4_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Matrix4x4>
+    {
+        public Matrix4x4_IsApproximatelyEqualTo_Matrix4x4_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Matrix4x4> context, System.Numerics.Matrix4x4 expected, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Matrix4x4> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Matrix4x4_IsIdentity_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Matrix4x4>
+    {
+        public Matrix4x4_IsIdentity_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Matrix4x4> context, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Matrix4x4> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Matrix4x4_IsInvertible_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Matrix4x4>
+    {
+        public Matrix4x4_IsInvertible_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Matrix4x4> context, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Matrix4x4> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Matrix4x4_IsOrthogonal_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Matrix4x4>
+    {
+        public Matrix4x4_IsOrthogonal_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Matrix4x4> context, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Matrix4x4> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Matrix4x4_IsSymmetric_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Matrix4x4>
+    {
+        public Matrix4x4_IsSymmetric_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Matrix4x4> context, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Matrix4x4> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public static class MatrixAssertions
+    {
+        public static TUnit.Assertions.Extensions.Matrix4x4_HasDeterminantApproximately_Double_Double_Assertion HasDeterminantApproximately(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Matrix4x4> source, double expected, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Matrix4x4_HasTraceApproximately_Double_Double_Assertion HasTraceApproximately(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Matrix4x4> source, double expected, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Matrix4x4_IsApproximatelyEqualTo_Matrix4x4_Double_Assertion IsApproximatelyEqualTo(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Matrix4x4> source, System.Numerics.Matrix4x4 expected, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Matrix4x4_IsIdentity_Double_Assertion IsIdentity(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Matrix4x4> source, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Matrix4x4_IsInvertible_Double_Assertion IsInvertible(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Matrix4x4> source, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Matrix4x4_IsOrthogonal_Double_Assertion IsOrthogonal(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Matrix4x4> source, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Matrix4x4_IsSymmetric_Double_Assertion IsSymmetric(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Matrix4x4> source, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+    }
+    public static class NumberTheoryAssertions
+    {
+        public static TUnit.Assertions.Extensions.Long_IsCongruentTo_Long_Long_Assertion IsCongruentTo(this TUnit.Assertions.Core.IAssertionSource<long> source, long other, long modulus, [System.Runtime.CompilerServices.CallerArgumentExpression("other")] string? otherExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("modulus")] string? modulusExpression = null) { }
+        public static TUnit.Assertions.Extensions.Long_IsCoprimeWith_Long_Assertion IsCoprimeWith(this TUnit.Assertions.Core.IAssertionSource<long> source, long other, [System.Runtime.CompilerServices.CallerArgumentExpression("other")] string? otherExpression = null) { }
+        public static TUnit.Assertions.Extensions.Long_IsDivisibleBy_Long_Assertion IsDivisibleBy(this TUnit.Assertions.Core.IAssertionSource<long> source, long divisor, [System.Runtime.CompilerServices.CallerArgumentExpression("divisor")] string? divisorExpression = null) { }
+        public static TUnit.Assertions.Extensions.Long_IsPerfectSquare_Assertion IsPerfectSquare(this TUnit.Assertions.Core.IAssertionSource<long> source) { }
+        public static TUnit.Assertions.Extensions.Long_IsPowerOf_Long_Assertion IsPowerOf(this TUnit.Assertions.Core.IAssertionSource<long> source, long baseValue, [System.Runtime.CompilerServices.CallerArgumentExpression("baseValue")] string? baseValueExpression = null) { }
+        public static TUnit.Assertions.Extensions.Long_IsPrime_Assertion IsPrime(this TUnit.Assertions.Core.IAssertionSource<long> source) { }
+    }
+    public sealed class OrientedBox_ContainsPoint_Vector3_Assertion : TUnit.Assertions.Core.Assertion<MathAssertions.Geometry3D.OrientedBox>
+    {
+        public OrientedBox_ContainsPoint_Vector3_Assertion(TUnit.Assertions.Core.AssertionContext<MathAssertions.Geometry3D.OrientedBox> context, System.Numerics.Vector3 point) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<MathAssertions.Geometry3D.OrientedBox> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public static class PlaneAssertions
+    {
+        public static TUnit.Assertions.Extensions.Plane_IsApproximatelyEqualTo_Plane_Double_Assertion IsApproximatelyEqualTo(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Plane> source, System.Numerics.Plane expected, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Plane_IsGeometricallyEquivalentTo_Plane_Double_Assertion IsGeometricallyEquivalentTo(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Plane> source, System.Numerics.Plane expected, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+    }
+    public sealed class Plane_IsApproximatelyEqualTo_Plane_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Plane>
+    {
+        public Plane_IsApproximatelyEqualTo_Plane_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Plane> context, System.Numerics.Plane expected, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Plane> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Plane_IsGeometricallyEquivalentTo_Plane_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Plane>
+    {
+        public Plane_IsGeometricallyEquivalentTo_Plane_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Plane> context, System.Numerics.Plane expected, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Plane> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public static class QuaternionAssertions
+    {
+        public static TUnit.Assertions.Extensions.Quaternion_IsApproximatelyEqualTo_Quaternion_Double_Assertion IsApproximatelyEqualTo(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Quaternion> source, System.Numerics.Quaternion expected, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Quaternion_IsIdentity_Double_Assertion IsIdentity(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Quaternion> source, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Quaternion_IsNormalized_Double_Assertion IsNormalized(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Quaternion> source, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Quaternion_IsRotationallyEquivalentTo_Quaternion_Double_Assertion IsRotationallyEquivalentTo(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Quaternion> source, System.Numerics.Quaternion expected, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+    }
+    public sealed class Quaternion_IsApproximatelyEqualTo_Quaternion_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Quaternion>
+    {
+        public Quaternion_IsApproximatelyEqualTo_Quaternion_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Quaternion> context, System.Numerics.Quaternion expected, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Quaternion> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Quaternion_IsIdentity_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Quaternion>
+    {
+        public Quaternion_IsIdentity_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Quaternion> context, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Quaternion> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Quaternion_IsNormalized_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Quaternion>
+    {
+        public Quaternion_IsNormalized_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Quaternion> context, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Quaternion> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Quaternion_IsRotationallyEquivalentTo_Quaternion_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Quaternion>
+    {
+        public Quaternion_IsRotationallyEquivalentTo_Quaternion_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Quaternion> context, System.Numerics.Quaternion expected, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Quaternion> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Ray3D_IntersectsBox_AxisAlignedBox_Assertion : TUnit.Assertions.Core.Assertion<MathAssertions.Geometry3D.Ray3D>
+    {
+        public Ray3D_IntersectsBox_AxisAlignedBox_Assertion(TUnit.Assertions.Core.AssertionContext<MathAssertions.Geometry3D.Ray3D> context, MathAssertions.Geometry3D.AxisAlignedBox box) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<MathAssertions.Geometry3D.Ray3D> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Ray3D_IntersectsPlane_Plane_Assertion : TUnit.Assertions.Core.Assertion<MathAssertions.Geometry3D.Ray3D>
+    {
+        public Ray3D_IntersectsPlane_Plane_Assertion(TUnit.Assertions.Core.AssertionContext<MathAssertions.Geometry3D.Ray3D> context, System.Numerics.Plane plane) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<MathAssertions.Geometry3D.Ray3D> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Ray3D_IntersectsSphere_Sphere_Assertion : TUnit.Assertions.Core.Assertion<MathAssertions.Geometry3D.Ray3D>
+    {
+        public Ray3D_IntersectsSphere_Sphere_Assertion(TUnit.Assertions.Core.AssertionContext<MathAssertions.Geometry3D.Ray3D> context, MathAssertions.Geometry3D.Sphere sphere) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<MathAssertions.Geometry3D.Ray3D> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Ray3D_IntersectsTriangle_Triangle3D_Assertion : TUnit.Assertions.Core.Assertion<MathAssertions.Geometry3D.Ray3D>
+    {
+        public Ray3D_IntersectsTriangle_Triangle3D_Assertion(TUnit.Assertions.Core.AssertionContext<MathAssertions.Geometry3D.Ray3D> context, MathAssertions.Geometry3D.Triangle3D triangle) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<MathAssertions.Geometry3D.Ray3D> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public static class ScalarAssertions
+    {
+        public static TUnit.Assertions.Extensions.Double_HasRoundtripIdentity_FuncDoubleDouble_FuncDoubleDouble_Double_Assertion HasRoundtripIdentity(this TUnit.Assertions.Core.IAssertionSource<double> source, System.Func<double, double> forward, System.Func<double, double> inverse, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("forward")] string? forwardExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("inverse")] string? inverseExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Double_IsApproximatelyEqualTo_Double_Double_Assertion IsApproximatelyEqualTo(this TUnit.Assertions.Core.IAssertionSource<double> source, double expected, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Float_IsApproximatelyEqualTo_Float_Float_Assertion IsApproximatelyEqualTo(this TUnit.Assertions.Core.IAssertionSource<float> source, float expected, float tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Double_IsCloseInUlpsTo_Double_Long_Assertion IsCloseInUlpsTo(this TUnit.Assertions.Core.IAssertionSource<double> source, double expected, long ulpDistance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("ulpDistance")] string? ulpDistanceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Float_IsCloseInUlpsTo_Float_Int_Assertion IsCloseInUlpsTo(this TUnit.Assertions.Core.IAssertionSource<float> source, float expected, int ulpDistance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("ulpDistance")] string? ulpDistanceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Double_IsNonNegativeFinite_Assertion IsNonNegativeFinite(this TUnit.Assertions.Core.IAssertionSource<double> source) { }
+        public static TUnit.Assertions.Extensions.Double_IsPercentage_Assertion IsPercentage(this TUnit.Assertions.Core.IAssertionSource<double> source) { }
+        public static TUnit.Assertions.Extensions.Double_IsProbability_Assertion IsProbability(this TUnit.Assertions.Core.IAssertionSource<double> source) { }
+        public static TUnit.Assertions.Extensions.Double_IsRelativelyAndAbsolutelyCloseTo_Double_Double_Double_Assertion IsRelativelyAndAbsolutelyCloseTo(this TUnit.Assertions.Core.IAssertionSource<double> source, double expected, double relativeTolerance, double absoluteTolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("relativeTolerance")] string? relativeToleranceExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("absoluteTolerance")] string? absoluteToleranceExpression = null) { }
+    }
+    public static class SequencesAssertions
+    {
+        public static TUnit.Assertions.Extensions.DoubleArray_ConvergesTo_Double_Double_Assertion ConvergesTo(this TUnit.Assertions.Core.IAssertionSource<double[]> source, double limit, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("limit")] string? limitExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2091", Justification="Generic type parameter is only used for property access, not instantiation")]
+        public static TUnit.Assertions.Extensions.TArray_HasLength_Int_Assertion<T> HasLength<T>(this TUnit.Assertions.Core.IAssertionSource<T[]> source, int expected, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null) { }
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2091", Justification="Generic type parameter is only used for property access, not instantiation")]
+        public static TUnit.Assertions.Extensions.TArray_HasMinLength_Int_Assertion<T> HasMinLength<T>(this TUnit.Assertions.Core.IAssertionSource<T[]> source, int expected, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null) { }
+        public static TUnit.Assertions.Extensions.DoubleArray_IsArithmeticProgression_Double_Assertion IsArithmeticProgression(this TUnit.Assertions.Core.IAssertionSource<double[]> source, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.DoubleArray_IsBounded_Double_Double_Assertion IsBounded(this TUnit.Assertions.Core.IAssertionSource<double[]> source, double min, double max, [System.Runtime.CompilerServices.CallerArgumentExpression("min")] string? minExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("max")] string? maxExpression = null) { }
+        public static TUnit.Assertions.Extensions.DoubleArray_IsCauchyConvergent_Double_Assertion IsCauchyConvergent(this TUnit.Assertions.Core.IAssertionSource<double[]> source, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.DoubleArray_IsGeometricProgression_Double_Assertion IsGeometricProgression(this TUnit.Assertions.Core.IAssertionSource<double[]> source, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.DoubleArray_IsMonotonicallyDecreasing_Assertion IsMonotonicallyDecreasing(this TUnit.Assertions.Core.IAssertionSource<double[]> source) { }
+        public static TUnit.Assertions.Extensions.DoubleArray_IsMonotonicallyIncreasing_Assertion IsMonotonicallyIncreasing(this TUnit.Assertions.Core.IAssertionSource<double[]> source) { }
+        public static TUnit.Assertions.Extensions.DoubleArray_IsSorted_Assertion IsSorted(this TUnit.Assertions.Core.IAssertionSource<double[]> source) { }
+        public static TUnit.Assertions.Extensions.DoubleArray_IsStrictlyMonotonicallyDecreasing_Assertion IsStrictlyMonotonicallyDecreasing(this TUnit.Assertions.Core.IAssertionSource<double[]> source) { }
+        public static TUnit.Assertions.Extensions.DoubleArray_IsStrictlyMonotonicallyIncreasing_Assertion IsStrictlyMonotonicallyIncreasing(this TUnit.Assertions.Core.IAssertionSource<double[]> source) { }
+    }
+    public sealed class Sphere_ContainsPoint_Vector3_Assertion : TUnit.Assertions.Core.Assertion<MathAssertions.Geometry3D.Sphere>
+    {
+        public Sphere_ContainsPoint_Vector3_Assertion(TUnit.Assertions.Core.AssertionContext<MathAssertions.Geometry3D.Sphere> context, System.Numerics.Vector3 point) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<MathAssertions.Geometry3D.Sphere> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Sphere_IntersectsSphere_Sphere_Assertion : TUnit.Assertions.Core.Assertion<MathAssertions.Geometry3D.Sphere>
+    {
+        public Sphere_IntersectsSphere_Sphere_Assertion(TUnit.Assertions.Core.AssertionContext<MathAssertions.Geometry3D.Sphere> context, MathAssertions.Geometry3D.Sphere other) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<MathAssertions.Geometry3D.Sphere> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public static class StatisticsAssertions
+    {
+        public static TUnit.Assertions.Extensions.DoubleArray_AreAllWithinSigmasOfMean_Double_Assertion AreAllWithinSigmasOfMean(this TUnit.Assertions.Core.IAssertionSource<double[]> source, double sigmas, [System.Runtime.CompilerServices.CallerArgumentExpression("sigmas")] string? sigmasExpression = null) { }
+        public static TUnit.Assertions.Extensions.DoubleArray_HasMeanApproximately_Double_Double_Assertion HasMeanApproximately(this TUnit.Assertions.Core.IAssertionSource<double[]> source, double expected, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.DoubleArray_HasMedianApproximately_Double_Double_Assertion HasMedianApproximately(this TUnit.Assertions.Core.IAssertionSource<double[]> source, double expected, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.DoubleArray_HasPercentileApproximately_Double_Double_Double_Assertion HasPercentileApproximately(this TUnit.Assertions.Core.IAssertionSource<double[]> source, double percentile, double expected, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("percentile")] string? percentileExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.DoubleArray_HasStdDevApproximately_Double_Double_Assertion HasStdDevApproximately(this TUnit.Assertions.Core.IAssertionSource<double[]> source, double expected, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.DoubleArray_HasSumApproximately_Double_Double_Assertion HasSumApproximately(this TUnit.Assertions.Core.IAssertionSource<double[]> source, double expected, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.DoubleArray_HasVarianceApproximately_Double_Double_Assertion HasVarianceApproximately(this TUnit.Assertions.Core.IAssertionSource<double[]> source, double expected, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Double_IsWithinSigmasOfMean_DoubleArray_Double_Assertion IsWithinSigmasOfMean(this TUnit.Assertions.Core.IAssertionSource<double> source, double[] sample, double sigmas, [System.Runtime.CompilerServices.CallerArgumentExpression("sample")] string? sampleExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("sigmas")] string? sigmasExpression = null) { }
+    }
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2091", Justification="Generic type parameter is only used for property access, not instantiation")]
+    public sealed class TArray_HasLength_Int_Assertion<T> : TUnit.Assertions.Core.Assertion<T[]>
+    {
+        public TArray_HasLength_Int_Assertion(TUnit.Assertions.Core.AssertionContext<T[]> context, int expected) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<T[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2091", Justification="Generic type parameter is only used for property access, not instantiation")]
+    public sealed class TArray_HasMinLength_Int_Assertion<T> : TUnit.Assertions.Core.Assertion<T[]>
+    {
+        public TArray_HasMinLength_Int_Assertion(TUnit.Assertions.Core.AssertionContext<T[]> context, int expected) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<T[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Triangle3D_IsDegenerate_Double_Assertion : TUnit.Assertions.Core.Assertion<MathAssertions.Geometry3D.Triangle3D>
+    {
+        public Triangle3D_IsDegenerate_Double_Assertion(TUnit.Assertions.Core.AssertionContext<MathAssertions.Geometry3D.Triangle3D> context, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<MathAssertions.Geometry3D.Triangle3D> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Vector2_IsApproximatelyEqualTo_Vector2_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Vector2>
+    {
+        public Vector2_IsApproximatelyEqualTo_Vector2_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Vector2> context, System.Numerics.Vector2 expected, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Vector2> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Vector3Array_AreCoplanar_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Vector3[]>
+    {
+        public Vector3Array_AreCoplanar_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Vector3[]> context, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Vector3[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Vector3Array_AreLinearlyIndependent_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Vector3[]>
+    {
+        public Vector3Array_AreLinearlyIndependent_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Vector3[]> context, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Vector3[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Vector3Array_ConvexHullContainsPoint_Vector3_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Vector3[]>
+    {
+        public Vector3Array_ConvexHullContainsPoint_Vector3_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Vector3[]> context, System.Numerics.Vector3 point, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Vector3[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Vector3Array_HasCentroidAt_Vector3_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Vector3[]>
+    {
+        public Vector3Array_HasCentroidAt_Vector3_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Vector3[]> context, System.Numerics.Vector3 expected, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Vector3[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Vector3Array_IsApproximatelyOnPlane_Plane_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Vector3[]>
+    {
+        public Vector3Array_IsApproximatelyOnPlane_Plane_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Vector3[]> context, System.Numerics.Plane plane, double maxResidual) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Vector3[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Vector3Array_IsApproximatelyOnSphere_Vector3_Float_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Vector3[]>
+    {
+        public Vector3Array_IsApproximatelyOnSphere_Vector3_Float_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Vector3[]> context, System.Numerics.Vector3 center, float radius, double maxResidual) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Vector3[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Vector3Array_IsBoundedByBox_AxisAlignedBox_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Vector3[]>
+    {
+        public Vector3Array_IsBoundedByBox_AxisAlignedBox_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Vector3[]> context, MathAssertions.Geometry3D.AxisAlignedBox box) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Vector3[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Vector3Array_IsBoundedBySphere_Sphere_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Vector3[]>
+    {
+        public Vector3Array_IsBoundedBySphere_Sphere_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Vector3[]> context, MathAssertions.Geometry3D.Sphere sphere) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Vector3[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Vector3Array_IsCollinear_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Vector3[]>
+    {
+        public Vector3Array_IsCollinear_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Vector3[]> context, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Vector3[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Vector3_HasDistanceFromPlane_Plane_Double_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Vector3>
+    {
+        public Vector3_HasDistanceFromPlane_Plane_Double_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Vector3> context, System.Numerics.Plane plane, double expected, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Vector3> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Vector3_HasDistanceFromSegment_LineSegment3D_Double_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Vector3>
+    {
+        public Vector3_HasDistanceFromSegment_LineSegment3D_Double_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Vector3> context, MathAssertions.Geometry3D.LineSegment3D segment, double expected, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Vector3> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Vector3_HasDistanceFromTriangle_Triangle3D_Double_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Vector3>
+    {
+        public Vector3_HasDistanceFromTriangle_Triangle3D_Double_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Vector3> context, MathAssertions.Geometry3D.Triangle3D triangle, double expected, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Vector3> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Vector3_HasMagnitudeApproximately_Double_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Vector3>
+    {
+        public Vector3_HasMagnitudeApproximately_Double_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Vector3> context, double expected, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Vector3> metadata) { }
+        protected override string GetExpectation() { }
+    }
     public sealed class Vector3_IsApproximatelyEqualTo_Vector3_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Vector3>
     {
         public Vector3_IsApproximatelyEqualTo_Vector3_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Vector3> context, System.Numerics.Vector3 expected, double tolerance) { }
         protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Vector3> metadata) { }
         protected override string GetExpectation() { }
     }
+    public sealed class Vector3_IsNormalized_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Vector3>
+    {
+        public Vector3_IsNormalized_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Vector3> context, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Vector3> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Vector3_IsOrthogonalTo_Vector3_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Vector3>
+    {
+        public Vector3_IsOrthogonalTo_Vector3_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Vector3> context, System.Numerics.Vector3 other, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Vector3> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Vector3_IsParallelTo_Vector3_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Vector3>
+    {
+        public Vector3_IsParallelTo_Vector3_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Vector3> context, System.Numerics.Vector3 other, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Vector3> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Vector4_IsApproximatelyEqualTo_Vector4_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Vector4>
+    {
+        public Vector4_IsApproximatelyEqualTo_Vector4_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Vector4> context, System.Numerics.Vector4 expected, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Vector4> metadata) { }
+        protected override string GetExpectation() { }
+    }
     public static class VectorAssertions
     {
+        public static TUnit.Assertions.Extensions.Vector3_HasMagnitudeApproximately_Double_Double_Assertion HasMagnitudeApproximately(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Vector3> source, double expected, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Vector2_IsApproximatelyEqualTo_Vector2_Double_Assertion IsApproximatelyEqualTo(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Vector2> source, System.Numerics.Vector2 expected, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
         public static TUnit.Assertions.Extensions.Vector3_IsApproximatelyEqualTo_Vector3_Double_Assertion IsApproximatelyEqualTo(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Vector3> source, System.Numerics.Vector3 expected, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Vector4_IsApproximatelyEqualTo_Vector4_Double_Assertion IsApproximatelyEqualTo(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Vector4> source, System.Numerics.Vector4 expected, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Vector3_IsNormalized_Double_Assertion IsNormalized(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Vector3> source, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
     }
 }

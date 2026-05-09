@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (`MathAssertions.TUnit`, TUnit adapter) — 0.1.0 fluent-assertion expansion
+
+The `MathAssertions.TUnit` adapter now exposes the entire 0.1.0 core surface as fluent
+extensions. Consumers write `await Assert.That(value).Method(...)` and TUnit's
+`[GenerateAssertion]` source generator emits the assertion-builder plumbing. New files:
+
+- `ScalarAssertions`: `IsApproximatelyEqualTo` / `IsCloseInUlpsTo` / `IsRelativelyAndAbsolutelyCloseTo` / `IsNonNegativeFinite` / `IsProbability` / `IsPercentage` / `HasRoundtripIdentity` for `double` and `float`. `IsFinite` is left to TUnit's built-in `DoubleAssertionExtensions.IsFinite` and `SingleAssertionExtensions.IsFinite` — adding our own would collide.
+- `VectorAssertions`: extended to cover `Vector2` / `Vector4` (alongside the existing `Vector3` overload) and adds `Vector3.HasMagnitudeApproximately` / `IsNormalized`.
+- `QuaternionAssertions`: `IsApproximatelyEqualTo`, `IsRotationallyEquivalentTo`, `IsIdentity`, `IsNormalized`.
+- `MatrixAssertions` (PascalCase per Sonar S101, covers `Matrix4x4`): `IsApproximatelyEqualTo` plus the full `LinearAlgebra` matrix-invariant surface (`IsSymmetric`, `IsOrthogonal`, `IsIdentity`, `HasDeterminantApproximately`, `HasTraceApproximately`, `IsInvertible`).
+- `PlaneAssertions`: component-wise `IsApproximatelyEqualTo` and `IsGeometricallyEquivalentTo` (sign-flip equivalence).
+- `ComplexAssertions`: `IsApproximatelyEqualTo`.
+- `ArrayAssertions`: fluent `double[]` and `float[]` element-wise comparison with the M-4 null-array guard at entry. The adapter operates on arrays rather than `ReadOnlySpan<T>` because TUnit's assertion-builder infrastructure cannot capture ref-struct values across an `await`.
+- `SequencesAssertions`: `double[]` array-based wrappers for the entire `Sequences` surface (monotonicity, sortedness, boundedness, arithmetic / geometric progression, convergence checks) plus generic `T[]` length predicates.
+- `StatisticsAssertions`: `double[]` array-based wrappers for the moment / percentile / sigma-bound surface.
+- `LinearAlgebraAssertions`: Vector3 pair `IsOrthogonalTo` / `IsParallelTo` and Vector3-array `AreLinearlyIndependent`.
+- `NumberTheoryAssertions`: predicate methods on `long` (`IsDivisibleBy`, `IsPrime`, `IsCoprimeWith`, `IsPowerOf`, `IsPerfectSquare`, `IsCongruentTo`).
+- `Geometry3DAssertions`: triangle / point-set property predicates, containment, predicate-style `HasDistanceFrom*`, intersection, and pointcloud aggregates over the `Geometry3D` primitives. The distance-from helpers use the static `Distance.DistanceFrom` form rather than the extension form because TUnit's `[GenerateAssertion]` inlines expression bodies into a generated assertion class without copying the `using` directives that would resolve the extension call.
+
+### Deferred
+
+- Tensor (`ReadOnlyTensorSpan<T>`) adapter — TUnit's assertion-builder cannot capture ref-struct values across an `await`. Consumers call `MathTolerance.IsApproximatelyEqual(ReadOnlyTensorSpan<T>, ReadOnlyTensorSpan<T>, T)` directly from `MathAssertions` for now.
+- `NumberTheory.GreatestCommonDivisor` / `LeastCommonMultiple` (non-predicate `long`-returning helpers) are not exposed as fluent assertions in 0.1.0; consumers can call them statically and apply `ScalarAssertions` predicates on the result.
+
 ### Added (`MathAssertions`, framework-agnostic core) — 0.1.0 Cluster 7c: 3D-geometry intersection + pointcloud aggregates
 
 Builds on Clusters 7a (primitives + properties) and 7b (containment + distance). Closes the Cluster 7 surface for 0.1.0.
