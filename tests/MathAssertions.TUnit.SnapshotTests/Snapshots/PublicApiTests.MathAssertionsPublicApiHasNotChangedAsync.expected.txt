@@ -43,6 +43,17 @@ namespace MathAssertions.Geometry3D
         public static double DistanceFrom(this System.Numerics.Vector3 point, MathAssertions.Geometry3D.Triangle3D triangle) { }
         public static double DistanceFrom(this System.Numerics.Vector3 point, System.Numerics.Plane plane) { }
     }
+    public static class Intersection
+    {
+        public static bool Intersects(MathAssertions.Geometry3D.AxisAlignedBox a, MathAssertions.Geometry3D.AxisAlignedBox b) { }
+        public static bool Intersects(MathAssertions.Geometry3D.Ray3D ray, MathAssertions.Geometry3D.AxisAlignedBox box) { }
+        public static bool Intersects(MathAssertions.Geometry3D.Ray3D ray, MathAssertions.Geometry3D.Sphere sphere) { }
+        public static bool Intersects(MathAssertions.Geometry3D.Ray3D ray, MathAssertions.Geometry3D.Triangle3D triangle) { }
+        public static bool Intersects(MathAssertions.Geometry3D.Ray3D ray, System.Numerics.Plane plane) { }
+        public static bool Intersects(MathAssertions.Geometry3D.Sphere a, MathAssertions.Geometry3D.Sphere b) { }
+        public static bool Intersects(MathAssertions.Geometry3D.Ray3D ray, MathAssertions.Geometry3D.Triangle3D triangle, out float t) { }
+        public static bool Intersects(MathAssertions.Geometry3D.Ray3D ray, System.Numerics.Plane plane, out float t) { }
+    }
     public readonly struct LineSegment3D : System.IEquatable<MathAssertions.Geometry3D.LineSegment3D>
     {
         public LineSegment3D(System.Numerics.Vector3 Start, System.Numerics.Vector3 End) { }
@@ -57,6 +68,14 @@ namespace MathAssertions.Geometry3D
         public System.Numerics.Vector3 Center { get; init; }
         public System.Numerics.Vector3 HalfExtents { get; init; }
         public System.Numerics.Quaternion Orientation { get; init; }
+    }
+    public static class Pointcloud
+    {
+        public static bool HasCentroidAt(this System.ReadOnlySpan<System.Numerics.Vector3> cloud, System.Numerics.Vector3 expected, double tolerance) { }
+        public static bool IsApproximatelyOnPlane(this System.ReadOnlySpan<System.Numerics.Vector3> cloud, System.Numerics.Plane plane, double maxResidual) { }
+        public static bool IsApproximatelyOnSphere(this System.ReadOnlySpan<System.Numerics.Vector3> cloud, System.Numerics.Vector3 center, float radius, double maxResidual) { }
+        public static bool IsBoundedBy(this System.ReadOnlySpan<System.Numerics.Vector3> cloud, MathAssertions.Geometry3D.AxisAlignedBox box) { }
+        public static bool IsBoundedBy(this System.ReadOnlySpan<System.Numerics.Vector3> cloud, MathAssertions.Geometry3D.Sphere sphere) { }
     }
     public static class Properties
     {
