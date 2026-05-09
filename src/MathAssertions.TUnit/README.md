@@ -7,7 +7,7 @@
 
 > **Scope:** Test projects only. Not intended for production code.
 
-TUnit-native fluent math-assertion DSL for `System.Numerics` compound types and BCL floating-point primitives. NaN-aware, infinity-aware, AOT-compatible, no runtime reflection in the assertion path.
+TUnit-native math assertion library for .NET. Covers tolerance comparisons, sequences, statistics, linear algebra, number theory, and 3D geometry. NaN-aware, infinity-aware, AOT-compatible, no runtime reflection in the assertion path.
 
 > **Full documentation, "Why component-wise rather than Euclidean", cookbook, design notes, and roadmap:** [github.com/JohnVerheij/MathAssertions.TUnit](https://github.com/JohnVerheij/MathAssertions.TUnit)
 

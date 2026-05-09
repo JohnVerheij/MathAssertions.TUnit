@@ -14,8 +14,8 @@
     <Version>0.1.0</Version>
     <Authors>John Verheij</Authors>
     <Copyright>Copyright (c) 2026 John Verheij</Copyright>
-    <Description>TUnit-native tolerance-aware numeric assertions over the MathAssertions core. Fluent .Method(...) entry points (generated via TUnit's [GenerateAssertion]) for scalar, vector, quaternion, matrix, plane, complex, double[]/float[], double-array sequences and statistics, Vector3 linear algebra, long-integer number theory, and the Geometry3D primitive surface (containment, distance, intersection, pointcloud aggregates). Extensible: consumers add tolerance assertions for their own domain types via [GenerateAssertion] extensions calling MathTolerance helpers. AOT-compatible, trimmable, no reflection.</Description>
-    <PackageTags>assertions;math;tunit;tolerance;aot</PackageTags>
+    <Description>TUnit-native math assertions for .NET tests. Fluent .Method(...) entry points (generated via TUnit's [GenerateAssertion]) covering tolerance comparisons (scalar, vector, quaternion, matrix, plane, complex, double[]/float[]), sequences, statistics, Vector3 linear algebra, long-integer number theory, and the Geometry3D primitive surface (containment, distance, intersection, pointcloud aggregates). Extensible: consumers add tolerance assertions for their own domain types via [GenerateAssertion] extensions calling MathTolerance helpers. AOT-compatible, trimmable, no reflection.</Description>
+    <PackageTags>assertions;math;tunit;numerics;geometry;statistics;tolerance;aot</PackageTags>
     <PackageProjectUrl>https://github.com/JohnVerheij/MathAssertions.TUnit</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>

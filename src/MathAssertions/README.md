@@ -6,7 +6,7 @@
 
 > **Scope:** Test projects only. Not intended for production code.
 
-Framework-agnostic core for the MathAssertions package family. The actual TUnit fluent assertions ship in the framework-specific adapter package (currently `MathAssertions.TUnit`).
+Framework-agnostic core of the MathAssertions package family. Math assertion helpers for .NET tests, spanning tolerance comparisons, sequences, statistics, linear algebra, number theory, and 3D geometry. Test-framework-specific entry points ship in adapter packages (currently `MathAssertions.TUnit` for TUnit).
 
 > **Most users want [`MathAssertions.TUnit`](https://www.nuget.org/packages/MathAssertions.TUnit/), not this package directly.** This package ships the framework-agnostic helper classes (`MathTolerance`, `Sequences`, `Statistics`, `LinearAlgebra`, `NumberTheory`, plus the `Geometry3D` namespace); the adapter package adds the fluent `Assert.That(value).Method(...)` entry points your test framework expects.
 
