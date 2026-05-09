@@ -190,7 +190,7 @@ public static class LinearAlgebra
     /// Length-2: equivalent to <see cref="AreParallel(Vector3, Vector3, double)"/>
     /// returning <see langword="false"/>.
     /// Length-3: triple-product test
-    /// <c>|v1 . (v2 x v3)| &gt; tolerance</c> — the absolute scalar triple product is the
+    /// <c>|v1 . (v2 x v3)| &gt; tolerance</c>. The absolute scalar triple product is the
     /// volume of the parallelepiped spanned by the three vectors and is non-zero iff the
     /// three are linearly independent.
     /// </para>

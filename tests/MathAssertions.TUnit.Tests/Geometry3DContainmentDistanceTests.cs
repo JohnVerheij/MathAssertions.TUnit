@@ -246,7 +246,7 @@ internal sealed class Geometry3DContainmentDistanceTests
         // Pins the dimensionally-correct face-plane test. The hull is a 100x-scaled
         // tetrahedron, so the slanted face's outward-normal magnitude (twice the face
         // area) is sqrt(3) * 10000 ~= 17320. A test point 0.001 perpendicular OUTSIDE
-        // the slanted face — well within tolerance 0.01 — produces a raw signed-dot
+        // the slanted face (well within tolerance 0.01) produces a raw signed-dot
         // value around 17.32 (= 0.001 * 17320), which would falsely exceed the
         // tolerance if compared directly. Dividing by the normal length recovers the
         // true 0.001 perpendicular distance, which is correctly within tolerance.
