@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (`MathAssertions`, framework-agnostic core) — 0.1.0 Cluster 7c: 3D-geometry intersection + pointcloud aggregates
+
+Builds on Clusters 7a (primitives + properties) and 7b (containment + distance). Closes the Cluster 7 surface for 0.1.0.
+
+`Geometry3D.Intersection`:
+
+- `Intersects(Sphere, Sphere)`: squared-distance comparison; boundary contact counts.
+- `Intersects(AxisAlignedBox, AxisAlignedBox)`: per-axis overlap; boundary contact counts.
+- `Intersects(Ray3D, Plane)` and `Intersects(Ray3D, Plane, out float t)`: dot-product solution. Parallel rays return `false` with `t == 0`.
+- `Intersects(Ray3D, Sphere)`: geometric solution per Akenine-Möller, Haines, Hoffman, *Real-Time Rendering* 4th ed., §22.6.
+- `Intersects(Ray3D, Triangle3D)` and `Intersects(Ray3D, Triangle3D, out float t)`: Möller-Trumbore algorithm per *Real-Time Rendering* §22.8.
+- `Intersects(Ray3D, AxisAlignedBox)`: slab test per *Real-Time Rendering* §22.7. Parallel-axis case handled separately so a ray with one zero-direction component is correctly rejected when its origin is outside the corresponding slab.
+
+`Geometry3D.Pointcloud`:
+
+- `cloud.IsBoundedBy(AxisAlignedBox)`, `cloud.IsBoundedBy(Sphere)`: empty cloud is vacuously bounded.
+- `cloud.HasCentroidAt(expected, tolerance)`: arithmetic centroid check; empty cloud returns `false` (no centroid).
+- `cloud.IsApproximatelyOnPlane(plane, maxResidual)`: every point within the residual of the plane.
+- `cloud.IsApproximatelyOnSphere(center, radius, maxResidual)`: every point's radial deviation from the sphere surface within the residual.
+
+All tolerance- and residual-taking methods validate the bound up front (the family-wide validation-order pattern from earlier clusters).
+
 ### Added (`MathAssertions`, framework-agnostic core) — 0.1.0 Cluster 7b: 3D-geometry containment + closest-point distance
 
 Builds on Cluster 7a (the eight `Geometry3D` primitives plus the property predicates). Adds two static classes of extension methods:
