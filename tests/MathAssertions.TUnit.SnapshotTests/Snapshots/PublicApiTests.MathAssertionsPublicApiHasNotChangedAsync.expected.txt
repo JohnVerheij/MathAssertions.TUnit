@@ -21,12 +21,27 @@ namespace MathAssertions.Geometry3D
         public float Radius { get; init; }
         public System.Numerics.Vector3 Start { get; init; }
     }
+    public static class Containment
+    {
+        public static bool Contains(this MathAssertions.Geometry3D.AxisAlignedBox box, MathAssertions.Geometry3D.Sphere sphere) { }
+        public static bool Contains(this MathAssertions.Geometry3D.AxisAlignedBox box, System.Numerics.Vector3 point) { }
+        public static bool Contains(this MathAssertions.Geometry3D.AxisAlignedBox outer, MathAssertions.Geometry3D.AxisAlignedBox inner) { }
+        public static bool Contains(this MathAssertions.Geometry3D.OrientedBox box, System.Numerics.Vector3 point) { }
+        public static bool Contains(this MathAssertions.Geometry3D.Sphere sphere, System.Numerics.Vector3 point) { }
+        public static bool ConvexHullContains(System.ReadOnlySpan<System.Numerics.Vector3> hullVertices, System.Numerics.Vector3 point, double tolerance) { }
+    }
     public readonly struct Cylinder : System.IEquatable<MathAssertions.Geometry3D.Cylinder>
     {
         public Cylinder(System.Numerics.Vector3 Start, System.Numerics.Vector3 End, float Radius) { }
         public System.Numerics.Vector3 End { get; init; }
         public float Radius { get; init; }
         public System.Numerics.Vector3 Start { get; init; }
+    }
+    public static class Distance
+    {
+        public static double DistanceFrom(this System.Numerics.Vector3 point, MathAssertions.Geometry3D.LineSegment3D seg) { }
+        public static double DistanceFrom(this System.Numerics.Vector3 point, MathAssertions.Geometry3D.Triangle3D triangle) { }
+        public static double DistanceFrom(this System.Numerics.Vector3 point, System.Numerics.Plane plane) { }
     }
     public readonly struct LineSegment3D : System.IEquatable<MathAssertions.Geometry3D.LineSegment3D>
     {
