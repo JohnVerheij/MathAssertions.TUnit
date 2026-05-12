@@ -357,11 +357,14 @@ await Assert.That(MathTolerance.HasRoundtripIdentity(
 
 // 3. Encode / decode, with consumer-supplied delegates wrapping the under-test API.
 //    Useful for serializer roundtrips when the encode / decode operate on a numeric
-//    representation (e.g. epoch milliseconds <-> DateTimeOffset).
+//    representation (e.g. epoch milliseconds <-> DateTimeOffset). Both halves of the
+//    encode/decode round-trip are embedded inside the `forward` delegate; the `inverse`
+//    delegate is the identity cast that re-widens the long result back to the double
+//    the primitive operates on.
 await Assert.That(MathTolerance.HasRoundtripIdentity(
     epochMs,
-    ms => DateTimeOffset.FromUnixTimeMilliseconds((long)ms).ToUnixTimeMilliseconds(),
-    ms => (double)ms,
+    forward: ms => DateTimeOffset.FromUnixTimeMilliseconds((long)ms).ToUnixTimeMilliseconds(),
+    inverse: ms => (double)ms,  // identity widen; the encode/decode round-trip is in `forward`
     tolerance: 0.5)).IsTrue();
 ```
 

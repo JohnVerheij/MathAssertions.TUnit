@@ -643,29 +643,35 @@ public static class MathTolerance
 
     /// <summary>
     /// Returns <see langword="true"/> when <paramref name="value"/>, viewed as a rotation in
-    /// axis-angle form, lies within tolerance of the rotation <paramref name="expectedAngleDegrees"/>
-    /// degrees around <paramref name="expectedAxis"/>.
+    /// axis-angle form, is rotationally equivalent (within <paramref name="tolerance"/>) to the
+    /// rotation <paramref name="expectedAngleDegrees"/> degrees around <paramref name="expectedAxis"/>.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <paramref name="value"/> is normalized internally so callers do not have to. The axis is
-    /// extracted from the (x, y, z) component via <c>axis = xyz / |xyz|</c>; the angle from
-    /// <c>angleRadians = 2 * atan2(|xyz|, |w|)</c>. The expected axis is normalized before
-    /// comparison; a zero-length expected axis is rejected because the axis of rotation is
-    /// undefined.
+    /// The comparison is performed on the rotational-equivalence metric, not on axis-component
+    /// or angle-magnitude differences. The expected axis-angle pair is materialised as a
+    /// quaternion via <see cref="Quaternion.CreateFromAxisAngle(Vector3, float)"/>; that
+    /// quaternion is then compared to <paramref name="value"/> through
+    /// <see cref="IsRotationallyEquivalent(Quaternion, Quaternion, double)"/>, which evaluates
+    /// <c>|dot(unit_a, unit_b)| &gt;= 1 - tolerance</c>. Going through the dot-product metric
+    /// handles every edge case the per-component extraction would otherwise stumble on
+    /// uniformly: the SO(3) <c>q</c> vs <c>-q</c> double cover; the 180-degree boundary where
+    /// <c>(axis, +180)</c>, <c>(axis, -180)</c>, and <c>(-axis, +-180)</c> all encode the same
+    /// rotation; non-unit inputs via the internal normalization both inputs receive.
     /// </para>
     /// <para>
-    /// SO(3) double-cover handling: a quaternion <c>q</c> and its negation <c>-q</c> encode the
-    /// same rotation but extract to opposite axes and supplementary angles. If the dot product
-    /// of the extracted axis and the normalized expected axis is negative, the extracted axis
-    /// is flipped and the extracted angle is negated before comparison so the two
-    /// representations compare equivalent.
+    /// Identity-rotation edge case: when <paramref name="expectedAngleDegrees"/> is approximately
+    /// zero the expected quaternion is approximately the identity, and the comparison reduces
+    /// to <paramref name="value"/> being approximately the identity rotation. The expected
+    /// axis must still be non-degenerate so a deliberate zero-axis input is rejected.
     /// </para>
     /// <para>
-    /// Identity-rotation edge case: when <paramref name="value"/> normalizes to (or near) the
-    /// identity quaternion, <c>|xyz|</c> is zero (or near zero) and the axis is undefined; the
-    /// comparison reduces to <c>expectedAngleDegrees</c> being approximately zero within
-    /// tolerance.
+    /// Tolerance calibration: <paramref name="tolerance"/> is a dot-product tolerance. For small
+    /// dot-product tolerances <c>t</c>, the corresponding angular tolerance between the two
+    /// rotations is approximately <c>2 * arccos(1 - t)</c> radians, which for small <c>t</c>
+    /// linearises to roughly <c>2 * sqrt(2 * t)</c> radians; for example <c>t = 1e-4</c> admits
+    /// rotations that differ by up to ~1.62 degrees. Callers used to angle-difference tolerance
+    /// should pick <paramref name="tolerance"/> accordingly.
     /// </para>
     /// <para>
     /// Reference: Hanson, <i>Visualizing Quaternions</i>, §4.6.
@@ -675,10 +681,13 @@ public static class MathTolerance
     /// <param name="expectedAxis">The expected rotation axis. Normalized internally; must have
     /// finite and non-trivially-zero squared length.</param>
     /// <param name="expectedAngleDegrees">The expected rotation magnitude in degrees.</param>
-    /// <param name="tolerance">Maximum allowed absolute difference for both the axis-component
-    /// comparison and the angle comparison. Must be non-negative and not NaN.</param>
-    /// <returns><see langword="true"/> if <paramref name="value"/> matches the requested
-    /// axis-angle rotation within tolerance.</returns>
+    /// <param name="tolerance">Dot-product tolerance on the unit-quaternion forms of
+    /// <paramref name="value"/> and the materialised expected rotation: the comparison passes
+    /// when <c>|dot(unit_value, unit_expected)| &gt;= 1 - tolerance</c>. Must be non-negative
+    /// and not NaN. See the calibration note in the remarks for the relationship to an
+    /// equivalent angular tolerance.</param>
+    /// <returns><see langword="true"/> if <paramref name="value"/> is rotationally equivalent
+    /// to the requested axis-angle rotation within tolerance.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
     /// <exception cref="ArgumentException"><paramref name="expectedAxis"/> has a non-finite
     /// component, or its squared length underflows during normalization (no axis is

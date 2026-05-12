@@ -205,4 +205,167 @@ internal sealed class MathFailureMessageTests
             CultureInfo.CurrentCulture = original;
         }
     }
+
+    [Test]
+    public async Task Vector2_SingleAxisExceeded_NamesAxisAndDelta(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var actual = new Vector2(1.0f, 2.5f);
+        var expected = new Vector2(1.0f, 2.0f);
+        string message = MathFailureMessage.ApproximatelyEqual(actual, expected, tolerance: 1e-6);
+
+        await Assert.That(message).Contains("component-wise");
+        await Assert.That(message).Contains("delta:");
+        await Assert.That(message).Contains("Y (");
+        await Assert.That(message).DoesNotContain("X (");
+    }
+
+    [Test]
+    public async Task Vector4_MultiAxisExceeded_NamesAllAxes(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var actual = new Vector4(1.5f, 2.5f, 3.5f, 4.5f);
+        var expected = new Vector4(1.0f, 2.0f, 3.0f, 4.0f);
+        string message = MathFailureMessage.ApproximatelyEqual(actual, expected, tolerance: 1e-6);
+
+        await Assert.That(message).Contains("X (");
+        await Assert.That(message).Contains("Y (");
+        await Assert.That(message).Contains("Z (");
+        await Assert.That(message).Contains("W (");
+    }
+
+    [Test]
+    public async Task Complex_RealAndImaginaryDeltasShown(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var actual = new System.Numerics.Complex(1.5, 2.5);
+        var expected = new System.Numerics.Complex(1.0, 2.0);
+        string message = MathFailureMessage.ApproximatelyEqual(actual, expected, tolerance: 1e-6);
+
+        await Assert.That(message).Contains("Real=");
+        await Assert.That(message).Contains("Imaginary=");
+        await Assert.That(message).Contains("Real (");
+        await Assert.That(message).Contains("Imaginary (");
+    }
+
+    [Test]
+    public async Task FloatArray_FirstFailingIndexNamed(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        float[] actual = [1.0f, 2.0f, 3.0f, 4.5f, 5.0f];
+        float[] expected = [1.0f, 2.0f, 3.0f, 4.0f, 5.0f];
+        string message = MathFailureMessage.ApproximatelyEqual(actual, expected, tolerance: 1e-6f);
+
+        await Assert.That(message).Contains("first mismatch at index 3");
+    }
+
+    [Test]
+    public async Task FloatArray_LengthMismatch_FlaggedExplicitly(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        float[] actual = [1.0f, 2.0f, 3.0f];
+        float[] expected = [1.0f, 2.0f];
+        string message = MathFailureMessage.ApproximatelyEqual(actual, expected, tolerance: 1e-6f);
+
+        await Assert.That(message).Contains("length mismatch");
+    }
+
+    /// <summary>Pins the equal-special-value handling: a NaN component pair (NaN vs NaN) is
+    /// equal under <see cref="MathTolerance.IsApproximatelyEqual(double, double, double)"/>
+    /// and must therefore NOT appear in the rendered <c>exceeded:</c> list. The prior
+    /// implementation used a delta-only inference (<c>delta &gt; tolerance || double.IsNaN(delta)</c>)
+    /// that incorrectly flagged this case because <c>NaN - NaN</c> is <c>NaN</c>.</summary>
+    [Test]
+    public async Task Vector3_NaNVsNaN_NotFlaggedInExceeded_OnlyOtherAxis(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var actual = new Vector3(float.NaN, 1.0f, 3.5f);
+        var expected = new Vector3(float.NaN, 2.0f, 3.0f);
+        string message = MathFailureMessage.ApproximatelyEqual(actual, expected, tolerance: 1e-6);
+
+        // X is NaN/NaN -> equal under the predicate -> not in exceeded list.
+        // Y and Z are finite mismatches -> in exceeded list.
+        await Assert.That(message).Contains("Y (");
+        await Assert.That(message).Contains("Z (");
+        await Assert.That(message).DoesNotContain("X (");
+    }
+
+    /// <summary>Pins the equal-special-value handling: same-sign-infinity pair (+inf vs +inf)
+    /// is equal under the predicate and must NOT appear in the rendered <c>exceeded:</c> list.
+    /// The subtraction <c>+inf - +inf</c> is <c>NaN</c>, which the prior delta-only inference
+    /// would have flagged.</summary>
+    [Test]
+    public async Task Vector3_SameSignInfinityPair_NotFlaggedInExceeded(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var actual = new Vector3(float.PositiveInfinity, 1.0f, 3.0f);
+        var expected = new Vector3(float.PositiveInfinity, 2.0f, 3.0f);
+        string message = MathFailureMessage.ApproximatelyEqual(actual, expected, tolerance: 1e-6);
+
+        await Assert.That(message).Contains("Y (");
+        await Assert.That(message).DoesNotContain("X (");
+    }
+
+    /// <summary>Pins the equal-special-value handling at the matrix-cell level. A NaN/NaN
+    /// cell pair must NOT appear in the rendered <c>exceeded:</c> list. The matrix branch
+    /// has its own inline classification; this test guards against the two branches drifting
+    /// from <see cref="AppendExceeded"/> semantics.</summary>
+    [Test]
+    public async Task Matrix4x4_NaNCellPair_NotFlaggedAsExceeded(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        Matrix4x4 actual = Matrix4x4.Identity;
+        Matrix4x4 expected = Matrix4x4.Identity;
+        actual.M23 = float.NaN;
+        expected.M23 = float.NaN;
+        actual.M12 = 0.5f; // a real off-diagonal mismatch so the renderer still produces an exceeded entry
+        string message = MathFailureMessage.ApproximatelyEqual(actual, expected, tolerance: 1e-6);
+
+        await Assert.That(message).Contains("[0,1]");
+        await Assert.That(message).DoesNotContain("[1,2]");
+    }
+
+    [Test]
+    public async Task Matrix4x4_AllCellsEqual_RendersFallbackNoteOnExceeded(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        Matrix4x4 actual = Matrix4x4.Identity;
+        Matrix4x4 expected = Matrix4x4.Identity;
+        string message = MathFailureMessage.ApproximatelyEqual(actual, expected, tolerance: 1e-6);
+
+        await Assert.That(message).Contains("(none on individual cell;");
+    }
+
+    [Test]
+    public async Task Vector3_AllAxesEqual_RendersFallbackNoteOnExceeded(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var actual = new Vector3(1.0f, 2.0f, 3.0f);
+        var expected = new Vector3(1.0f, 2.0f, 3.0f);
+        string message = MathFailureMessage.ApproximatelyEqual(actual, expected, tolerance: 1e-6);
+
+        await Assert.That(message).Contains("(none on individual component;");
+    }
+
+    [Test]
+    public async Task DoubleArray_AllElementsEqual_RendersTraceForNanInfinityCheck(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        double[] actual = [1.0, 2.0, 3.0];
+        double[] expected = [1.0, 2.0, 3.0];
+        string message = MathFailureMessage.ApproximatelyEqual(actual, expected, tolerance: 1e-6);
+
+        await Assert.That(message).Contains("no element exceeded tolerance");
+    }
+
+    [Test]
+    public async Task FloatArray_AllElementsEqual_RendersTraceForNanInfinityCheck(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        float[] actual = [1.0f, 2.0f, 3.0f];
+        float[] expected = [1.0f, 2.0f, 3.0f];
+        string message = MathFailureMessage.ApproximatelyEqual(actual, expected, tolerance: 1e-6f);
+
+        await Assert.That(message).Contains("no element exceeded tolerance");
+    }
 }
