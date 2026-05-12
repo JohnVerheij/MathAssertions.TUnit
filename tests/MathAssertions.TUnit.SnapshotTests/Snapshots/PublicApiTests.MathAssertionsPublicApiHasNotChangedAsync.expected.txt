@@ -1,6 +1,8 @@
 [assembly: System.Reflection.AssemblyMetadata("IsAotCompatible", "True")]
 [assembly: System.Reflection.AssemblyMetadata("IsTrimmable", "True")]
 [assembly: System.Reflection.AssemblyMetadata("RepositoryUrl", "https://github.com/JohnVerheij/MathAssertions.TUnit")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("MathAssertions.TUnit")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("MathAssertions.Tests")]
 [assembly: System.Runtime.Versioning.TargetFramework(".NETCoreApp,Version=v10.0", FrameworkDisplayName=".NET 10.0")]
 namespace MathAssertions.Geometry3D
 {
@@ -124,6 +126,7 @@ namespace MathAssertions
     }
     public static class MathTolerance
     {
+        public static bool HasAxisAngleApproximately(System.Numerics.Quaternion value, System.Numerics.Vector3 expectedAxis, double expectedAngleDegrees, double tolerance) { }
         public static bool HasRoundtripIdentity(double x, System.Func<double, double> forward, System.Func<double, double> inverse, double tolerance) { }
         public static bool IsApproximatelyEqual(System.Numerics.Complex a, System.Numerics.Complex b, double tolerance) { }
         public static bool IsApproximatelyEqual(System.Numerics.Matrix4x4 a, System.Numerics.Matrix4x4 b, double tolerance) { }

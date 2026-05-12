@@ -11,9 +11,9 @@ TUnit-native math assertion library for .NET. Covers tolerance comparisons, sequ
 
 > **Full documentation, "Why component-wise rather than Euclidean", cookbook, design notes, and roadmap:** [github.com/JohnVerheij/MathAssertions.TUnit](https://github.com/JohnVerheij/MathAssertions.TUnit)
 
-## Status: v0.1.0 (the wider catalog)
+## Status: v0.2.0 (per-component diagnostics, axis-angle assertions)
 
-The whole 0.1.0 mathematical-assertion surface is now exposed as fluent extensions over TUnit's `Assert.That(value).Method(...)`. ~85 fluent entry points across twelve adapter classes covering scalar tolerance comparisons, the `System.Numerics` compound types (vector / quaternion / matrix / plane / complex), `double[]` / `float[]` element-wise comparison with null-array guards, sequence properties, descriptive statistics, linear-algebra invariants, integer number theory, and a complete 3D-geometry primitive surface (containment / closest-point distance / intersection / pointcloud aggregates).
+The mathematical-assertion surface is exposed as fluent extensions over TUnit's `Assert.That(value).Method(...)`. ~85 fluent entry points across twelve adapter classes covering scalar tolerance comparisons, the `System.Numerics` compound types (vector / quaternion / matrix / plane / complex), `double[]` / `float[]` element-wise comparison with null-array guards, sequence properties, descriptive statistics, linear-algebra invariants, integer number theory, and a complete 3D-geometry primitive surface (containment / closest-point distance / intersection / pointcloud aggregates). v0.2.0 adds rich per-component / per-cell delta rendering to every compound `IsApproximatelyEqualTo` failure message plus `HasAxisAngleApproximately` on `Quaternion`.
 
 ## Install
 
@@ -44,7 +44,7 @@ public async Task ComputedPositionIsApproximatelyAtTarget(CancellationToken ct)
 }
 ```
 
-## Entry points (v0.1.0)
+## Entry points
 
 The fluent surface, organized by adapter class:
 
@@ -52,7 +52,7 @@ The fluent surface, organized by adapter class:
 |---|---|
 | `ScalarAssertions` | `IsApproximatelyEqualTo`, `IsCloseInUlpsTo`, `IsRelativelyAndAbsolutelyCloseTo`, `IsNonNegativeFinite`, `IsProbability`, `IsPercentage`, `HasRoundtripIdentity` for `double`/`float`. |
 | `VectorAssertions` | `IsApproximatelyEqualTo` for `Vector2`/`Vector3`/`Vector4`; `Vector3.HasMagnitudeApproximately`, `IsNormalized`. |
-| `QuaternionAssertions` | `IsApproximatelyEqualTo`, `IsRotationallyEquivalentTo` (SO(3) double-cover), `IsIdentity`, `IsNormalized`. |
+| `QuaternionAssertions` | `IsApproximatelyEqualTo`, `IsRotationallyEquivalentTo` (SO(3) double-cover), `HasAxisAngleApproximately` (axis-angle form; v0.2.0+), `IsIdentity`, `IsNormalized`. |
 | `MatrixAssertions` | `Matrix4x4.IsApproximatelyEqualTo` plus the full invariant surface: `IsSymmetric`, `IsOrthogonal`, `IsIdentity`, `HasDeterminantApproximately`, `HasTraceApproximately`, `IsInvertible`. |
 | `PlaneAssertions` | `IsApproximatelyEqualTo`, `IsGeometricallyEquivalentTo` (sign-flip equivalence). |
 | `ComplexAssertions` | `IsApproximatelyEqualTo`. |
@@ -104,6 +104,25 @@ public async Task GroundPlaneMatchesExpected(CancellationToken ct)
 ```
 
 Use `IsApproximatelyEqualTo` when normal direction is observable in the consumer (winding-aware shading, half-space convention). Use `IsGeometricallyEquivalentTo` when only the plane's geometry is observable.
+
+### Verifying invertible transformations: `HasRoundtripIdentity`
+
+When a transformation is invertible, the framework-agnostic `MathTolerance.HasRoundtripIdentity(double input, Func<double,double> forward, Func<double,double> backward, double tolerance)` checks that `backward(forward(input))` lands back at `input` within tolerance. The primitive is `double`-only on purpose; consumers wrap their own typed inputs.
+
+```csharp
+// Sin / Asin compose back to the input.
+await Assert.That(MathTolerance.HasRoundtripIdentity(
+    0.42, Math.Sin, Math.Asin, tolerance: 1e-12)).IsTrue();
+
+// Degree / radian conversion.
+await Assert.That(MathTolerance.HasRoundtripIdentity(
+    45.0,
+    d => d * Math.PI / 180.0,
+    r => r * 180.0 / Math.PI,
+    tolerance: 1e-12)).IsTrue();
+```
+
+For typed inputs (vector / quaternion / serializer pair), compose `[GenerateAssertion]` on your own type rather than chaining `HasRoundtripIdentity`. The primitive is intentionally `double`-only so the family does not lock in a particular cross-type roundtrip surface.
 
 ### Pattern: detecting an unpopulated zero quaternion
 

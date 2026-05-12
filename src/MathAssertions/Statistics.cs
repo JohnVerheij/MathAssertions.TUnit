@@ -39,9 +39,9 @@ public static class Statistics
     /// <returns>A tuple of mean and unbiased sample variance.</returns>
     public static (double Mean, double Variance) MeanAndVariance(ReadOnlySpan<double> values)
     {
-        if (values.Length == 0)
+        if (values.Length is 0)
             return (double.NaN, double.NaN);
-        if (values.Length == 1)
+        if (values.Length is 1)
             return (values[0], 0.0);
 
         var mean = 0.0;
@@ -74,7 +74,7 @@ public static class Statistics
     {
         ValidateTolerance(tolerance);
 
-        if (values.Length == 0)
+        if (values.Length is 0)
             return false;
         var (mean, _) = MeanAndVariance(values);
         return MathTolerance.IsApproximatelyEqual(mean, expected, tolerance);
@@ -179,14 +179,14 @@ public static class Statistics
     {
         ValidateTolerance(tolerance);
 
-        if (values.Length == 0)
+        if (values.Length is 0)
             return false;
 
         var sorted = values.ToArray();
         Array.Sort(sorted);
 
         double median;
-        if (sorted.Length % 2 == 1)
+        if (sorted.Length % 2 is 1)
         {
             median = sorted[sorted.Length / 2];
         }
@@ -239,15 +239,15 @@ public static class Statistics
             throw new ArgumentOutOfRangeException(nameof(percentile), "percentile must be in [0, 100].");
         ValidateTolerance(tolerance);
 
-        if (values.Length == 0)
+        if (values.Length is 0)
             return false;
 
         var sorted = values.ToArray();
         Array.Sort(sorted);
 
         var rank = percentile / 100.0 * (sorted.Length - 1);
-        var lo = (int)Math.Floor(rank);
-        var hi = (int)Math.Ceiling(rank);
+        var lo = int.CreateChecked(Math.Floor(rank));
+        var hi = int.CreateChecked(Math.Ceiling(rank));
         var frac = rank - lo;
 
         var pct = lo == hi

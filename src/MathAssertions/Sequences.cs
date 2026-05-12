@@ -205,7 +205,7 @@ public static class Sequences
     {
         ValidateTolerance(tolerance);
 
-        if (values.Length == 0)
+        if (values.Length is 0)
             return false;
         return MathTolerance.IsApproximatelyEqual(values[^1], limit, tolerance);
     }
@@ -296,6 +296,6 @@ public static class Sequences
     private static bool IsZeroMagnitude(double v)
     {
         const long MagnitudeMask = 0x7FFF_FFFF_FFFF_FFFFL;
-        return (BitConverter.DoubleToInt64Bits(v) & MagnitudeMask) == 0L;
+        return (BitConverter.DoubleToInt64Bits(v) & MagnitudeMask) is 0L;
     }
 }

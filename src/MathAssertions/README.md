@@ -12,11 +12,12 @@ Framework-agnostic core of the MathAssertions package family. Math assertion hel
 
 ---
 
-## What's in this package (v0.1.0)
+## What's in this package
 
 Pure, NaN-aware, infinity-aware mathematical-assertion helpers. Six static classes plus the `Geometry3D` namespace cover ~85 methods:
 
-- `MathTolerance`: scalar `IsApproximatelyEqual` for `double`/`float` plus the `System.Numerics` compounds (`Vector2`/`Vector3`/`Vector4`, `Quaternion` with `IsRotationallyEquivalent`, `Matrix4x4`, `Plane` with `IsGeometricallyEquivalent`, `Complex`), span / tensor overloads (`ReadOnlySpan<double>`/`<float>`, generic `ReadOnlyTensorSpan<T>`), ULP-distance equality (`IsCloseInUlps`), combined relative+absolute tolerance, finiteness/probability/percentage predicates, and `HasRoundtripIdentity` for invertible-transformation checks.
+- `MathTolerance`: scalar `IsApproximatelyEqual` for `double`/`float` plus the `System.Numerics` compounds (`Vector2`/`Vector3`/`Vector4`, `Quaternion` with `IsRotationallyEquivalent` and (v0.2.0+) `HasAxisAngleApproximately`, `Matrix4x4`, `Plane` with `IsGeometricallyEquivalent`, `Complex`), span / tensor overloads (`ReadOnlySpan<double>`/`<float>`, generic `ReadOnlyTensorSpan<T>`), ULP-distance equality (`IsCloseInUlps`), combined relative+absolute tolerance, finiteness/probability/percentage predicates, and `HasRoundtripIdentity` for invertible-transformation checks.
+- *(v0.2.0+)* Adapter packages such as `MathAssertions.TUnit` use an internal per-component / per-cell / first-failing-element failure-message renderer so every compound `IsApproximatelyEqualTo` failure shows the diverging axis and its delta. The renderer is reachable across the assembly boundary via `[InternalsVisibleTo]`; consumers do not interact with it directly.
 - `Sequences`: monotonicity (strict + non-strict), boundedness, arithmetic and geometric progressions, `ConvergesTo`, single-step `IsCauchyConvergent`, generic length predicates over `ReadOnlySpan<T>`.
 - `Statistics`: Welford's `MeanAndVariance`, `HasMean/Variance/StdDev/Sum/Median/PercentileApproximately`, `IsWithinSigmasOfMean`, `AreAllWithinSigmasOfMean`. Median and percentile use overflow-safe forms.
 - `LinearAlgebra`: `Matrix4x4` invariants (`IsSymmetric`, `IsOrthogonal`, `IsIdentity`, `HasDeterminantApproximately`, `HasTraceApproximately`, `IsInvertible`) plus `Vector3` pair properties (`AreOrthogonal`, `AreParallel`, `AreLinearlyIndependent`).

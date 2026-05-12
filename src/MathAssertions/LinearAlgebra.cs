@@ -35,7 +35,7 @@ public static class LinearAlgebra
         {
             for (var col = row + 1; col < 4; col++)
             {
-                if (!MathTolerance.IsApproximatelyEqual((double)m[row, col], (double)m[col, row], tolerance))
+                if (!MathTolerance.IsApproximatelyEqual(m[row, col], m[col, row], tolerance))
                     return false;
             }
         }
@@ -101,7 +101,8 @@ public static class LinearAlgebra
     {
         ValidateTolerance(tolerance);
 
-        return MathTolerance.IsApproximatelyEqual((double)m.GetDeterminant(), expected, tolerance);
+        double determinant = m.GetDeterminant();
+        return MathTolerance.IsApproximatelyEqual(determinant, expected, tolerance);
     }
 
     /// <summary>
@@ -119,7 +120,11 @@ public static class LinearAlgebra
     {
         ValidateTolerance(tolerance);
 
-        var trace = (double)m.M11 + (double)m.M22 + (double)m.M33 + (double)m.M44;
+        double m11 = m.M11;
+        double m22 = m.M22;
+        double m33 = m.M33;
+        double m44 = m.M44;
+        var trace = m11 + m22 + m33 + m44;
         return MathTolerance.IsApproximatelyEqual(trace, expected, tolerance);
     }
 
@@ -138,7 +143,8 @@ public static class LinearAlgebra
     {
         ValidateTolerance(tolerance);
 
-        return Math.Abs((double)m.GetDeterminant()) > tolerance;
+        double determinant = m.GetDeterminant();
+        return Math.Abs(determinant) > tolerance;
     }
 
     /// <summary>
@@ -155,7 +161,8 @@ public static class LinearAlgebra
     {
         ValidateTolerance(tolerance);
 
-        return MathTolerance.IsApproximatelyEqual((double)Vector3.Dot(u, v), 0.0, tolerance);
+        double dot = Vector3.Dot(u, v);
+        return MathTolerance.IsApproximatelyEqual(dot, 0.0, tolerance);
     }
 
     /// <summary>
@@ -175,7 +182,8 @@ public static class LinearAlgebra
         ValidateTolerance(tolerance);
 
         var cross = Vector3.Cross(u, v);
-        return MathTolerance.IsApproximatelyEqual((double)cross.Length(), 0.0, tolerance);
+        double crossLength = cross.Length();
+        return MathTolerance.IsApproximatelyEqual(crossLength, 0.0, tolerance);
     }
 
     /// <summary>
@@ -214,13 +222,16 @@ public static class LinearAlgebra
             case 0:
                 return true;
             case 1:
-                return (double)vectors[0].Length() > tolerance;
+                {
+                    double length = vectors[0].Length();
+                    return length > tolerance;
+                }
             case 2:
                 return !AreParallel(vectors[0], vectors[1], tolerance);
             case 3:
                 {
-                    var det = Vector3.Dot(vectors[0], Vector3.Cross(vectors[1], vectors[2]));
-                    return Math.Abs((double)det) > tolerance;
+                    double det = Vector3.Dot(vectors[0], Vector3.Cross(vectors[1], vectors[2]));
+                    return Math.Abs(det) > tolerance;
                 }
             default:
                 return false;

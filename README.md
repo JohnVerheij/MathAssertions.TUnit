@@ -14,9 +14,9 @@ TUnit-native math assertion library for .NET. Covers tolerance comparisons (scal
 
 ---
 
-## Status: v0.1.0 (the wider catalog)
+## Status: v0.2.0 (per-component diagnostics, axis-angle assertions)
 
-The framework-agnostic core is feature-complete across seven topical clusters and the TUnit adapter exposes the full surface as fluent extensions over `Assert.That(value).Method(...)`. ~85 assertion-shaped methods total. Every fluent entry point is generated via TUnit's `[GenerateAssertion]` source generator and integrates directly into the existing `Assert.That(...)` pipeline.
+The framework-agnostic core is feature-complete across seven topical clusters and the TUnit adapter exposes the full surface as fluent extensions over `Assert.That(value).Method(...)`. v0.2.0 adds rich per-component / per-cell delta rendering to every compound `IsApproximatelyEqualTo` failure message and ships `HasAxisAngleApproximately` for axis-angle-form quaternion rotation checks. Every fluent entry point is generated via TUnit's `[GenerateAssertion]` source generator and integrates directly into the existing `Assert.That(...)` pipeline.
 
 | Domain | Coverage |
 |---|---|
@@ -78,7 +78,7 @@ This library replaces both with a single fluent DSL that auto-imports alongside 
 dotnet add package MathAssertions.TUnit
 ```
 
-**Requirements:** TUnit 1.43.11 or later, .NET 10. `MathAssertions` (the framework-agnostic core) and TUnit's runtime + assertion deps come transitively. The package is AOT-compatible, trimmable, and uses no runtime reflection in the assertion path.
+**Requirements:** TUnit 1.44.0 or later, .NET 10. `MathAssertions` (the framework-agnostic core) and TUnit's runtime + assertion deps come transitively. The package is AOT-compatible, trimmable, and uses no runtime reflection in the assertion path.
 
 ## Package layout
 
@@ -158,7 +158,7 @@ This precision-preserving cast is locked behavior. Tests pin it; v0.1.0 additive
 
 ## Entry points
 
-v0.1.0 ships ~85 fluent entry points across twelve adapter classes covering scalar, `System.Numerics` compounds, `double[]`/`float[]`, sequences, statistics, linear algebra, integer number theory, and a complete 3D-geometry surface. The exhaustive method listing lives in the [package README](src/MathAssertions.TUnit/README.md#entry-points-v010); the examples below are representative.
+~85 fluent entry points across twelve adapter classes cover scalar, `System.Numerics` compounds, `double[]`/`float[]`, sequences, statistics, linear algebra, integer number theory, and a complete 3D-geometry surface. v0.2.0 adds `HasAxisAngleApproximately` on `Quaternion` and per-component delta rendering in every compound failure message. The exhaustive method listing lives in the [package README](src/MathAssertions.TUnit/README.md#entry-points); the examples below are representative.
 
 ### Vector3 component-wise
 
@@ -182,6 +182,18 @@ var negated = new Quaternion(-rotation.X, -rotation.Y, -rotation.Z, -rotation.W)
 // q and -q encode the same rotation; component-wise IsApproximatelyEqualTo would fail.
 await Assert.That(rotation).IsRotationallyEquivalentTo(negated, tolerance: 1e-6);
 ```
+
+### Quaternion axis-angle form
+
+```csharp
+// "the rotation under test is approximately 90 degrees around the Y axis"
+var rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI / 2);
+
+await Assert.That(rotation)
+    .HasAxisAngleApproximately(Vector3.UnitY, expectedAngleDegrees: 90.0, tolerance: 1e-4);
+```
+
+`HasAxisAngleApproximately` handles the SO(3) double cover and the 180-degree boundary; both `q` and `-q` for the same rotation, as well as `(axis, +180°)` / `(axis, -180°)` / `(-axis, ±180°)`, compare equivalent to the same expected axis-angle pair. Internally compares via the rotational-equivalence dot-product test, then renders the extracted axis / angle in the failure message for diagnosis.
 
 ### Statistics on a sample
 
@@ -219,7 +231,17 @@ Actual:
   <1, 2, 3>
 ```
 
-The `<1, 2, 99>` and `<1, 2, 3>` are the standard `Vector3.ToString()` rendering. Per-coordinate inspection is left to the reader; future work tracks a per-axis-difference renderer for v0.1.0+.
+v0.2.0+ enriches the rendering with per-axis delta information directly in the failure message:
+
+```text
+Expected:
+  to be approximately equal to <1, 2, 3.001> component-wise within tolerance 1E-06
+    actual:   <1, 2, 3>
+    delta:    (0, 0, 0.0009999275)
+    exceeded: Z (0.0009999275 > 1E-06)
+```
+
+The `delta` and `exceeded` values use general (`G`) numeric formatting with `CultureInfo.InvariantCulture`, so the rendered numbers carry full precision (including any float-to-double widening residue) rather than a rounded display form. The same pattern applies to every compound type (`Vector2`/`Vector4`/`Quaternion`/`Matrix4x4`/`Plane`/`Complex`/`double[]`/`float[]`) plus `IsRotationallyEquivalentTo`, `IsGeometricallyEquivalentTo`, and `HasAxisAngleApproximately`. The exact text format is not stable; see the [Stability intent](#stability-intent-pre-10) section.
 
 ---
 
@@ -315,6 +337,36 @@ public async Task GroundPlaneMatchesExpected(CancellationToken ct)
 
 Use `IsApproximatelyEqualTo` when normal direction is observable in the consumer (winding-aware shading, half-space convention). Use `IsGeometricallyEquivalentTo` when only the plane's geometry is observable.
 
+### Verifying invertible transformations: `HasRoundtripIdentity`
+
+When a transformation is invertible (`f` and its inverse `g`, where `g(f(x)) == x` within tolerance), `MathTolerance.HasRoundtripIdentity(double input, Func<double,double> forward, Func<double,double> backward, double tolerance)` checks the round-trip in one call. The primitive is `double`-only on purpose; consumers compose their own predicate for other types.
+
+Three worked examples:
+
+```csharp
+// 1. Sin and Asin compose back to the input within tolerance.
+await Assert.That(MathTolerance.HasRoundtripIdentity(
+    0.42, Math.Sin, Math.Asin, tolerance: 1e-12)).IsTrue();
+
+// 2. Degree / radian conversion.
+await Assert.That(MathTolerance.HasRoundtripIdentity(
+    45.0,
+    d => d * Math.PI / 180.0,
+    r => r * 180.0 / Math.PI,
+    tolerance: 1e-12)).IsTrue();
+
+// 3. Encode / decode, with consumer-supplied delegates wrapping the under-test API.
+//    Useful for serializer roundtrips when the encode / decode operate on a numeric
+//    representation (e.g. epoch milliseconds <-> DateTimeOffset).
+await Assert.That(MathTolerance.HasRoundtripIdentity(
+    epochMs,
+    ms => DateTimeOffset.FromUnixTimeMilliseconds((long)ms).ToUnixTimeMilliseconds(),
+    ms => (double)ms,
+    tolerance: 0.5)).IsTrue();
+```
+
+When the round-trip needs typed inputs (vector / quaternion / serializer pair), compose `[GenerateAssertion]` on your own type rather than chaining `HasRoundtripIdentity`: the primitive is intentionally `double`-only so the family does not lock in a particular cross-type roundtrip surface.
+
 ### Pattern: detecting an unpopulated zero quaternion
 
 A zero-valued quaternion (all four components zero, length zero) is a valid in-memory state but not a valid rotation. Common cases: a protobuf default for an unpopulated `Quaternion` field, an in-construction calibration output that has not yet been written, an explicit "no rotation set" sentinel.
@@ -379,9 +431,9 @@ For the Vector3 overload, every component pair is evaluated against this table; 
 
 This is a 0.x release and the public API may evolve. Specifically:
 
-- **Additive changes** (new entry points, new tolerance overloads, additional `System.Numerics` types) ship in any patch / minor without breaking ApiCompat. Entry points shipped in v0.0.1 / v0.1.0 will still be present, with the same signatures, in every subsequent release that targets the same TFM.
-- **Breaking changes** to existing signatures bump the minor version (0.X.0) and are called out in the [CHANGELOG](CHANGELOG.md).
-- **`PackageValidationBaselineVersion`** pins to the previous shipped version (v0.0.1 as of v0.1.0), so ApiCompat breakage is caught at pack time. Strict-mode baseline validation captures additive changes as accepted entries in `CompatibilitySuppressions.xml`.
+- **Additive changes** (new entry points, new tolerance overloads, additional `System.Numerics` types) ship in any patch without breaking ApiCompat. Entry points present in a prior version remain present, with compatible signatures, in every subsequent release that targets the same TFM.
+- **Breaking changes** to existing signatures bump the minor version (0.X.0) and are called out in the [CHANGELOG](CHANGELOG.md). v0.2.0 evolved the source-method return types of the compound `IsApproximatelyEqualTo` family from `bool` to `AssertionResult` to enable rich per-component failure messages; the generated TUnit chain extensions (`Assert.That(value).IsApproximatelyEqualTo(...)`) are unaffected at the chain-syntax level.
+- **`PackageValidationBaselineVersion`** pins to the previous shipped version (v0.1.0 as of v0.2.0), so ApiCompat breakage is caught at pack time. Strict-mode baseline validation captures additive changes and intentional API evolution as accepted entries in `CompatibilitySuppressions.xml`.
 
 The 1.0 milestone signals API stability; see [Limitations and future work](#limitations-and-future-work) for what's still being designed.
 
@@ -389,7 +441,7 @@ The 1.0 milestone signals API stability; see [Limitations and future work](#limi
 
 ### Shipped at v0.1.0
 
-The catalog above is feature-complete for v0.1.0. Highlights:
+Foundational catalog established in v0.1.0:
 
 - **System.Numerics compounds:** Vector2/3/4, Quaternion (component-wise + rotational equivalence handling the `q` / `-q` double-cover), Matrix4x4 element-wise, Plane component-wise + geometric-equivalence, Complex
 - **Span / tensor overloads:** `ReadOnlySpan<double>` / `ReadOnlySpan<float>` element-wise; generic `ReadOnlyTensorSpan<T>` for the static `MathTolerance` surface
@@ -399,14 +451,16 @@ The catalog above is feature-complete for v0.1.0. Highlights:
 - **Number theory:** divisibility, primality, GCD, LCM, coprimality, congruence, perfect-square, power-of-base, all with overflow-safe inner loops and `long.MinValue`-aware contracts
 - **Geometry3D primitives** (Sphere, AxisAlignedBox, OrientedBox, Ray3D, LineSegment3D, Triangle3D, Capsule, Cylinder) plus containment, intersection (Möller-Trumbore, slab test), point-distance closed forms (Ericson barycentric Voronoi-region classification), coplanarity / collinearity, pointcloud aggregates
 
-### Planned for v0.2.0
+### Shipped at v0.2.0
+
+- **Per-component / per-cell delta failure messages** for every compound `IsApproximatelyEqualTo` chain plus `IsRotationallyEquivalentTo` and `IsGeometricallyEquivalentTo`. Implementation detail; failure-message text is not part of the stable public surface (callers should pin filter / match-count expectations rather than full message-text equality).
+- **`HasAxisAngleApproximately`** on `Quaternion` (both as a `MathTolerance` static and as a fluent extension). Handles the SO(3) double cover and the 180-degree boundary uniformly via the rotational-equivalence dot-product test.
+
+### Planned for v0.3.0+
 
 - **`ReadOnlyTensorSpan<T>` fluent adapter:** the static `MathTolerance.IsApproximatelyEqual(ReadOnlyTensorSpan<T>, ...)` overload exists today; the fluent `await Assert.That(span).IsApproximatelyEqualTo(...)` form is blocked on TUnit's assertion-builder being unable to capture ref-struct values across an `await` and is candidate work for a later release
 - **Geometry3D depth:** OrientedBox SAT intersection, Triangle-Triangle, Hausdorff distance, RANSAC inlier-ratio
 - **Statistics depth:** distribution support (normal, Student-t, chi-squared), correlation, full percentile-method enum
-
-### Planned for v0.3.0+
-
 - **Mesh validity:** `IndexedMesh` record plus manifold/watertight/convex/volume/surface-area assertions
 - **`BigInteger` overloads of number theory**
 - **Sibling adapters:** `MathAssertions.MathNet.TUnit`, `MathAssertions.GeometRi.TUnit`, `MathAssertions.Prowl.TUnit`, `MathAssertions.HelixToolkit.TUnit`, `MathAssertions.Fft.TUnit`, `MathAssertions.Fractions.TUnit` (each a separate package; demand-driven)

@@ -16,7 +16,7 @@ public static class StatisticsAssertions
     public static bool HasMeanApproximately(this double[] value, double expected, double tolerance)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Statistics.HasMeanApproximately((ReadOnlySpan<double>)value, expected, tolerance);
+        return Statistics.HasMeanApproximately(value, expected, tolerance);
     }
 
     /// <summary>Asserts the unbiased sample variance is within tolerance of <paramref name="expected"/>.</summary>
@@ -26,7 +26,7 @@ public static class StatisticsAssertions
     public static bool HasVarianceApproximately(this double[] value, double expected, double tolerance)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Statistics.HasVarianceApproximately((ReadOnlySpan<double>)value, expected, tolerance);
+        return Statistics.HasVarianceApproximately(value, expected, tolerance);
     }
 
     /// <summary>Asserts the sample standard deviation is within tolerance of <paramref name="expected"/>.</summary>
@@ -36,7 +36,7 @@ public static class StatisticsAssertions
     public static bool HasStdDevApproximately(this double[] value, double expected, double tolerance)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Statistics.HasStdDevApproximately((ReadOnlySpan<double>)value, expected, tolerance);
+        return Statistics.HasStdDevApproximately(value, expected, tolerance);
     }
 
     /// <summary>Asserts the sample sum is within tolerance of <paramref name="expected"/>.</summary>
@@ -46,7 +46,7 @@ public static class StatisticsAssertions
     public static bool HasSumApproximately(this double[] value, double expected, double tolerance)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Statistics.HasSumApproximately((ReadOnlySpan<double>)value, expected, tolerance);
+        return Statistics.HasSumApproximately(value, expected, tolerance);
     }
 
     /// <summary>Asserts the sample median is within tolerance of <paramref name="expected"/>.</summary>
@@ -56,7 +56,7 @@ public static class StatisticsAssertions
     public static bool HasMedianApproximately(this double[] value, double expected, double tolerance)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Statistics.HasMedianApproximately((ReadOnlySpan<double>)value, expected, tolerance);
+        return Statistics.HasMedianApproximately(value, expected, tolerance);
     }
 
     /// <summary>
@@ -73,7 +73,7 @@ public static class StatisticsAssertions
         double tolerance)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Statistics.HasPercentileApproximately((ReadOnlySpan<double>)value, percentile, expected, tolerance);
+        return Statistics.HasPercentileApproximately(value, percentile, expected, tolerance);
     }
 
     /// <summary>
@@ -86,7 +86,7 @@ public static class StatisticsAssertions
     public static bool IsWithinSigmasOfMean(this double value, double[] sample, double sigmas)
     {
         ArgumentNullException.ThrowIfNull(sample);
-        return Statistics.IsWithinSigmasOfMean(value, (ReadOnlySpan<double>)sample, sigmas);
+        return Statistics.IsWithinSigmasOfMean(value, sample, sigmas);
     }
 
     /// <summary>
@@ -99,6 +99,6 @@ public static class StatisticsAssertions
     public static bool AreAllWithinSigmasOfMean(this double[] value, double sigmas)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Statistics.AreAllWithinSigmasOfMean((ReadOnlySpan<double>)value, sigmas);
+        return Statistics.AreAllWithinSigmasOfMean(value, sigmas);
     }
 }

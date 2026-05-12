@@ -11,7 +11,7 @@
     <IsPackable>true</IsPackable>
     <PackageId>MathAssertions.TUnit</PackageId>
     <ProductName>MathAssertions.TUnit</ProductName>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Authors>John Verheij</Authors>
     <Copyright>Copyright (c) 2026 John Verheij</Copyright>
     <Description>TUnit-native math assertions for .NET tests. Fluent .Method(...) entry points (generated via TUnit's [GenerateAssertion]) covering tolerance comparisons (scalar, vector, quaternion, matrix, plane, complex, double[]/float[]), sequences, statistics, Vector3 linear algebra, long-integer number theory, and the Geometry3D primitive surface (containment, distance, intersection, pointcloud aggregates). Extensible: consumers add tolerance assertions for their own domain types via [GenerateAssertion] extensions calling MathTolerance helpers. AOT-compatible, trimmable, no reflection.</Description>
@@ -23,14 +23,22 @@
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
 
     <!-- Pre-1.0 suppressions:
-         Proj0212/Proj0213: PackageIcon and PackageIconUrl omitted; will be added by 1.0.0. -->
-    <NoWarn>$(NoWarn);Proj0212;Proj0213</NoWarn>
+         Proj0212/Proj0213: PackageIcon and PackageIconUrl omitted; will be added by 1.0.0.
+         MA0109 (Consider adding a Span<T>/Memory<T> overload): the adapter surface
+         intentionally exposes T[] extension methods rather than ReadOnlySpan<T>
+         overloads. TUnit's assertion-builder infrastructure cannot capture ref-struct
+         values across the await boundary used by `Assert.That(...)` chains, so a
+         ReadOnlySpan<T>-receiving extension cannot participate in the fluent assertion
+         pipeline. Callers needing zero-allocation comparisons reach for the framework-
+         agnostic MathAssertions.MathTolerance helpers directly. The rationale is also
+         documented in the ArrayAssertions class-level XML comment. -->
+    <NoWarn>$(NoWarn);Proj0212;Proj0213;MA0109</NoWarn>
 
     <!-- Symbol package + API compat (strict mode quad per dpfa Proj0249/0250/0251/0252) -->
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <EnablePackageValidation>true</EnablePackageValidation>
-    <PackageValidationBaselineVersion>0.0.1</PackageValidationBaselineVersion>
+    <PackageValidationBaselineVersion>0.1.0</PackageValidationBaselineVersion>
     <EnableStrictModeForCompatibleFrameworksInPackage>true</EnableStrictModeForCompatibleFrameworksInPackage>
     <EnableStrictModeForBaselineValidation>true</EnableStrictModeForBaselineValidation>
     <ApiCompatGenerateSuppressionFile>true</ApiCompatGenerateSuppressionFile>

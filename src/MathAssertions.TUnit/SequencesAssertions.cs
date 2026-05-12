@@ -16,7 +16,7 @@ public static class SequencesAssertions
     public static bool IsMonotonicallyIncreasing(this double[] value)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Sequences.IsMonotonicallyIncreasing((ReadOnlySpan<double>)value);
+        return Sequences.IsMonotonicallyIncreasing(value);
     }
 
     /// <summary>Asserts the sequence is non-increasing.</summary>
@@ -24,7 +24,7 @@ public static class SequencesAssertions
     public static bool IsMonotonicallyDecreasing(this double[] value)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Sequences.IsMonotonicallyDecreasing((ReadOnlySpan<double>)value);
+        return Sequences.IsMonotonicallyDecreasing(value);
     }
 
     /// <summary>Asserts the sequence is strictly increasing (adjacent equal values fail).</summary>
@@ -32,7 +32,7 @@ public static class SequencesAssertions
     public static bool IsStrictlyMonotonicallyIncreasing(this double[] value)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Sequences.IsStrictlyMonotonicallyIncreasing((ReadOnlySpan<double>)value);
+        return Sequences.IsStrictlyMonotonicallyIncreasing(value);
     }
 
     /// <summary>Asserts the sequence is strictly decreasing.</summary>
@@ -40,7 +40,7 @@ public static class SequencesAssertions
     public static bool IsStrictlyMonotonicallyDecreasing(this double[] value)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Sequences.IsStrictlyMonotonicallyDecreasing((ReadOnlySpan<double>)value);
+        return Sequences.IsStrictlyMonotonicallyDecreasing(value);
     }
 
     /// <summary>Asserts the sequence is sorted (alias for <see cref="IsMonotonicallyIncreasing"/>).</summary>
@@ -48,7 +48,7 @@ public static class SequencesAssertions
     public static bool IsSorted(this double[] value)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Sequences.IsSorted((ReadOnlySpan<double>)value);
+        return Sequences.IsSorted(value);
     }
 
     /// <summary>Asserts every value is in the closed interval <c>[min, max]</c>.</summary>
@@ -56,7 +56,7 @@ public static class SequencesAssertions
     public static bool IsBounded(this double[] value, double min, double max)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Sequences.IsBounded((ReadOnlySpan<double>)value, min, max);
+        return Sequences.IsBounded(value, min, max);
     }
 
     /// <summary>Asserts adjacent differences are equal within tolerance (arithmetic progression).</summary>
@@ -66,7 +66,7 @@ public static class SequencesAssertions
     public static bool IsArithmeticProgression(this double[] value, double tolerance)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Sequences.IsArithmeticProgression((ReadOnlySpan<double>)value, tolerance);
+        return Sequences.IsArithmeticProgression(value, tolerance);
     }
 
     /// <summary>Asserts adjacent ratios are equal within tolerance (geometric progression).</summary>
@@ -76,7 +76,7 @@ public static class SequencesAssertions
     public static bool IsGeometricProgression(this double[] value, double tolerance)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Sequences.IsGeometricProgression((ReadOnlySpan<double>)value, tolerance);
+        return Sequences.IsGeometricProgression(value, tolerance);
     }
 
     /// <summary>Asserts the last value of the sequence is within tolerance of the limit.</summary>
@@ -86,7 +86,7 @@ public static class SequencesAssertions
     public static bool ConvergesTo(this double[] value, double limit, double tolerance)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Sequences.ConvergesTo((ReadOnlySpan<double>)value, limit, tolerance);
+        return Sequences.ConvergesTo(value, limit, tolerance);
     }
 
     /// <summary>Single-step Cauchy criterion: last two values within tolerance of each other.</summary>
@@ -96,7 +96,7 @@ public static class SequencesAssertions
     public static bool IsCauchyConvergent(this double[] value, double tolerance)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Sequences.IsCauchyConvergent((ReadOnlySpan<double>)value, tolerance);
+        return Sequences.IsCauchyConvergent(value, tolerance);
     }
 
     /// <summary>Asserts the array has exactly <paramref name="expected"/> elements.</summary>
@@ -104,7 +104,7 @@ public static class SequencesAssertions
     public static bool HasLength<T>(this T[] value, int expected)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Sequences.HasLength<T>((ReadOnlySpan<T>)value, expected);
+        return Sequences.HasLength<T>(value, expected);
     }
 
     /// <summary>Asserts the array has at least <paramref name="expected"/> elements.</summary>
@@ -112,6 +112,6 @@ public static class SequencesAssertions
     public static bool HasMinLength<T>(this T[] value, int expected)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Sequences.HasMinLength<T>((ReadOnlySpan<T>)value, expected);
+        return Sequences.HasMinLength<T>(value, expected);
     }
 }
