@@ -194,4 +194,49 @@ internal sealed class FailureMessageRenderingTests
         await Assert.That(ex!.Message).Contains("delta vs expected:");
         await Assert.That(ex.Message).Contains("delta vs sign-flipped:");
     }
+
+    /// <summary>Exercises the identity-rotation branch inside
+    /// <c>MathTolerance.ExtractAxisAngle</c>: when the actual quaternion normalizes to (or
+    /// near) the identity, <c>|xyz|</c> is zero and the extracted axis is reported as
+    /// <see cref="Vector3.Zero"/>. The chain fails (expected angle is 90 degrees, actual is
+    /// the identity), so the renderer fires and the identity-branch early-return is taken.</summary>
+    [Test]
+    public async Task Quaternion_HasAxisAngleApproximately_ActualIsIdentity_RendersZeroExtractedAxis(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        AssertionException? ex = await Assert.That(async () =>
+        {
+            await Assert.That(Quaternion.Identity).HasAxisAngleApproximately(Vector3.UnitX, expectedAngleDegrees: 90.0, tolerance: 1e-4);
+        }).Throws<AssertionException>();
+
+        await Assert.That(ex!.Message).Contains("extracted axis:");
+        await Assert.That(ex.Message).Contains("extracted angle:");
+    }
+
+    /// <summary>Exercises the sign-flip alignment branch inside
+    /// <c>MathTolerance.ExtractAxisAngle</c>: when the extracted axis points in the opposite
+    /// direction from the normalized expected axis, the renderer flips the extracted axis and
+    /// negates the extracted angle so the displayed pair is sign-aligned with the caller's
+    /// supplied axis. Triggered by asking for an expected rotation around <c>-UnitY</c> while
+    /// the actual rotation is around <c>+UnitY</c> — both encode the SAME physical rotation
+    /// (so the predicate is happy after <see cref="System.Math"/>-level sign correction), but
+    /// to drive the chain into the FAILURE renderer we use a different angle on top.</summary>
+    [Test]
+    public async Task Quaternion_HasAxisAngleApproximately_ExtractedAxisOppositeExpected_AlignsForDisplay(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // actual rotates 60 degrees around +UnitY; we ask for 30 degrees around -UnitY.
+        // The sign-flip path runs (dot(extracted=+UnitY, expected=-UnitY) < 0 → flip both).
+        // The chain fails because 60 != 30 within tolerance, so the renderer fires.
+        Quaternion actual = Quaternion.CreateFromAxisAngle(Vector3.UnitY, (float)(System.Math.PI / 3.0));
+        AssertionException? ex = await Assert.That(async () =>
+        {
+            await Assert.That(actual).HasAxisAngleApproximately(-Vector3.UnitY, expectedAngleDegrees: 30.0, tolerance: 1e-4);
+        }).Throws<AssertionException>();
+
+        // Render is informational; the message must surface the standard fields.
+        await Assert.That(ex!.Message).Contains("extracted axis:");
+        await Assert.That(ex.Message).Contains("extracted angle:");
+        await Assert.That(ex.Message).Contains("delta angle:");
+    }
 }

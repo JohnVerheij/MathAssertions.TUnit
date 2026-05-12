@@ -1158,4 +1158,57 @@ internal sealed class MathToleranceTests
                 -1e-6))
             .Throws<ArgumentOutOfRangeException>();
     }
+
+    /// <summary>Pins the argument-validation contract of
+    /// <see cref="MathTolerance.HasAxisAngleApproximately(Quaternion, Vector3, double, double)"/>
+    /// against a NaN axis component. The non-finite squared-length check inside
+    /// <c>NormalizeAxisOrThrow</c> must throw <see cref="ArgumentException"/> with a
+    /// caller-facing <c>paramName</c> of <c>expectedAxis</c>.</summary>
+    [Test]
+    public async Task HasAxisAngleApproximately_NaNAxisComponent_Throws(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        ArgumentException? ex = await Assert.That(() => MathTolerance.HasAxisAngleApproximately(
+                Quaternion.Identity, new Vector3(float.NaN, 0f, 0f), 0.0, tolerance: 1e-6))
+            .Throws<ArgumentException>();
+        await Assert.That(ex!.ParamName).IsEqualTo("expectedAxis");
+    }
+
+    /// <summary>Pins the argument-validation contract against an infinite axis component.</summary>
+    [Test]
+    public async Task HasAxisAngleApproximately_InfiniteAxisComponent_Throws(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        ArgumentException? ex = await Assert.That(() => MathTolerance.HasAxisAngleApproximately(
+                Quaternion.Identity, new Vector3(float.PositiveInfinity, 0f, 0f), 0.0, tolerance: 1e-6))
+            .Throws<ArgumentException>();
+        await Assert.That(ex!.ParamName).IsEqualTo("expectedAxis");
+    }
+
+    /// <summary>Pins the post-normalize underflow branch of <c>NormalizeAxisOrThrow</c>. A
+    /// non-zero but sub-denormal-magnitude axis whose squared length underflows to zero in
+    /// <see cref="float"/> causes <see cref="Vector3.Normalize"/> to emit NaN components.
+    /// The post-normalize finiteness check catches this regardless of where the float-denormal
+    /// boundary falls and reports the failure as <c>expectedAxis</c>.</summary>
+    [Test]
+    public async Task HasAxisAngleApproximately_UnderflowAxis_Throws(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        ArgumentException? ex = await Assert.That(() => MathTolerance.HasAxisAngleApproximately(
+                Quaternion.Identity, new Vector3(float.Epsilon, 0f, 0f), 0.0, tolerance: 1e-6))
+            .Throws<ArgumentException>();
+        await Assert.That(ex!.ParamName).IsEqualTo("expectedAxis");
+    }
+
+    /// <summary>Pins the zero-length-axis path on the public surface (the
+    /// <see cref="Vector3.Zero"/> case is the canonical zero-length input).</summary>
+    [Test]
+    public async Task HasAxisAngleApproximately_ZeroAxis_Throws(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        ArgumentException? ex = await Assert.That(() => MathTolerance.HasAxisAngleApproximately(
+                Quaternion.Identity, Vector3.Zero, 0.0, tolerance: 1e-6))
+            .Throws<ArgumentException>();
+        await Assert.That(ex!.ParamName).IsEqualTo("expectedAxis");
+    }
 }

@@ -171,7 +171,7 @@
       "mathassertions.tunit": {
         "type": "Project",
         "dependencies": {
-          "MathAssertions": "[0.1.0, )",
+          "MathAssertions": "[0.2.0, )",
           "TUnit.Assertions": "[1.44.0, )",
           "TUnit.Core": "[1.44.0, )"
         }

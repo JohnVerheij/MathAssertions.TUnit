@@ -714,9 +714,16 @@ public static class MathTolerance
     /// <summary>
     /// Extracts the axis-angle representation of <paramref name="value"/>, applying the SO(3)
     /// double-cover sign flip when needed so the extracted axis aligns with
-    /// <paramref name="expectedAxis"/>. Used by <see cref="HasAxisAngleApproximately"/> and by
-    /// <see cref="MathFailureMessage.AxisAngleApproximately"/> so both the predicate and the
-    /// failure-message renderer agree on the extracted values.
+    /// <paramref name="expectedAxis"/>. Used only by
+    /// <see cref="MathFailureMessage.AxisAngleApproximately"/> for diagnostic display in the
+    /// failure message; the <see cref="HasAxisAngleApproximately"/> predicate itself routes
+    /// through <see cref="IsRotationallyEquivalent(Quaternion, Quaternion, double)"/>, which
+    /// is a dot-product test on unit-quaternion forms and does not depend on this extraction.
+    /// The split is deliberate: dot-product is robust at every angle and across the SO(3)
+    /// double cover, while extracted axis / angle pairs are easier for humans to read in a
+    /// failure message. Near numerical boundaries (180 degrees, near-identity rotations) the
+    /// two paths can disagree by a residual within tolerance; the predicate's verdict is
+    /// authoritative and the extracted pair is informational.
     /// </summary>
     /// <param name="value">The rotation under test.</param>
     /// <param name="expectedAxis">The expected rotation axis (un-normalized).</param>
@@ -794,20 +801,24 @@ public static class MathTolerance
         isIdentityRotation = false;
     }
 
-    private static Vector3 NormalizeAxisOrThrow(Vector3 axis)
+    private static Vector3 NormalizeAxisOrThrow(Vector3 expectedAxis)
     {
+        // Parameter is named expectedAxis (not axis) so the paramName on the thrown
+        // ArgumentException matches what every public caller (HasAxisAngleApproximately,
+        // ExtractAxisAngle) passes as their own parameter, keeping the exception metadata
+        // consistent with the public API's documented parameter name.
         // Reject NaN / infinity components up front: their squared length is non-finite
         // (NaN propagates, infinity squares to infinity) and Vector3.Normalize on either
         // would silently emit NaN components rather than throw.
-        double ax = axis.X;
-        double ay = axis.Y;
-        double az = axis.Z;
+        double ax = expectedAxis.X;
+        double ay = expectedAxis.Y;
+        double az = expectedAxis.Z;
         double lenSquared = ax * ax + ay * ay + az * az;
         if (!double.IsFinite(lenSquared))
         {
             throw new ArgumentException(
                 "expectedAxis must have finite components (a NaN or infinite component leaves the rotation axis undefined).",
-                nameof(axis));
+                nameof(expectedAxis));
         }
 
         // Vector3.Normalize works in single precision; for axis components small enough that
@@ -815,12 +826,12 @@ public static class MathTolerance
         // Verify post-normalize finiteness rather than picking a magic-number lower bound
         // on the squared length; this catches the underflow case regardless of where the
         // float-denormal boundary falls.
-        Vector3 normalized = Vector3.Normalize(axis);
+        Vector3 normalized = Vector3.Normalize(expectedAxis);
         if (!float.IsFinite(normalized.X) || !float.IsFinite(normalized.Y) || !float.IsFinite(normalized.Z))
         {
             throw new ArgumentException(
                 "expectedAxis is too small to normalize without underflow (a zero-length axis has no defined direction).",
-                nameof(axis));
+                nameof(expectedAxis));
         }
 
         return normalized;
