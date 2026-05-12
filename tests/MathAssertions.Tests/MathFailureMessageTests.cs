@@ -163,6 +163,28 @@ internal sealed class MathFailureMessageTests
         await Assert.That(message).Contains("delta angle:");
     }
 
+    /// <summary>Pins the modulo-360 shortest-arc rendering of the delta angle: 350 vs 10
+    /// degrees renders as 20 (the geometric distance in SO(3)), not as 340 (linear
+    /// arithmetic). The full-message-text check (rather than just <c>Contains("20")</c>)
+    /// guards against an accidental "340" or "-340" leak from a regression to the
+    /// linear-arithmetic form.</summary>
+    [Test]
+    public async Task AxisAngleApproximately_DeltaAngleWrapsModulo360_RendersShortestArc(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        Quaternion actual = Quaternion.CreateFromAxisAngle(Vector3.UnitY, (float)(Math.PI / 18.0)); // ~10 degrees
+        string message = MathFailureMessage.AxisAngleApproximately(
+            actual,
+            expectedAxis: Vector3.UnitY,
+            expectedAngleDegrees: 350.0,
+            extractedAxis: Vector3.UnitY,
+            extractedAngleDegrees: 10.0,
+            tolerance: 1e-6);
+
+        await Assert.That(message).Contains("delta angle:        20 degrees");
+        await Assert.That(message).DoesNotContain("340");
+    }
+
     [Test]
     public async Task InvariantCulture_RendersFloatsWithDotDecimalSeparator(CancellationToken cancellationToken)
     {

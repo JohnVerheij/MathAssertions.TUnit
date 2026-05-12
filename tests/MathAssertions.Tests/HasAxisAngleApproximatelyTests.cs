@@ -50,8 +50,14 @@ internal sealed class HasAxisAngleApproximatelyTests
         cancellationToken.ThrowIfCancellationRequested();
         Vector3 axis = Vector3.Normalize(new Vector3(1, 2, 3));
         Quaternion q = Quaternion.CreateFromAxisAngle(axis, (float)Math.PI);
+        // At the 180-degree boundary, (axis, +180), (axis, -180), (-axis, +180), and
+        // (-axis, -180) all encode the same rotation. Pin both axis signs so the SO(3)
+        // axis-sign ambiguity is part of the contract, not an accident of how the test
+        // happened to call into the predicate.
         await Assert.That(MathTolerance.HasAxisAngleApproximately(
             q, axis, 180.0, tolerance: 1e-4)).IsTrue();
+        await Assert.That(MathTolerance.HasAxisAngleApproximately(
+            q, -axis, 180.0, tolerance: 1e-4)).IsTrue();
     }
 
     [Test]

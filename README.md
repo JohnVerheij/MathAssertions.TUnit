@@ -16,7 +16,7 @@ TUnit-native math assertion library for .NET. Covers tolerance comparisons (scal
 
 ## Status: v0.2.0 (per-component diagnostics, axis-angle assertions)
 
-The framework-agnostic core is feature-complete across seven topical clusters and the TUnit adapter exposes the full surface as fluent extensions over `Assert.That(value).Method(...)`. v0.2.0 adds rich per-component / per-cell delta rendering to every compound `IsApproximatelyEqualTo` failure message and ships `HasAxisAngleApproximately` for axis-angle-form quaternion rotation checks. Every fluent entry point is generated via TUnit's `[GenerateAssertion]` source generator and integrates directly into the existing `Assert.That(...)` pipeline.
+The framework-agnostic core is feature-complete across seven topical clusters and the TUnit adapter exposes a near-full fluent surface over `Assert.That(value).Method(...)`; the documented exception is `ReadOnlyTensorSpan<T>`, which is exposed only at the static `MathTolerance` level (see the carve-out note below the table). v0.2.0 adds rich per-component / per-cell delta rendering to every compound `IsApproximatelyEqualTo` failure message and ships `HasAxisAngleApproximately` for axis-angle-form quaternion rotation checks. Every fluent entry point is generated via TUnit's `[GenerateAssertion]` source generator and integrates directly into the existing `Assert.That(...)` pipeline.
 
 | Domain | Coverage |
 |---|---|

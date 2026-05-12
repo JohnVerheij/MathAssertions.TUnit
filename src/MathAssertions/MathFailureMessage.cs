@@ -52,7 +52,7 @@ internal static class MathFailureMessage
         AppendHeader(sb, FormatVector(expected), tolerance);
         sb.Append(CultureInfo.InvariantCulture, $"  actual:   {FormatVector(actual)}").AppendLine();
         sb.Append(CultureInfo.InvariantCulture, $"  delta:    ({Fmt(dx)}, {Fmt(dy)})").AppendLine();
-        AppendExceeded(sb, tolerance, ("X", dx), ("Y", dy));
+        AppendExceeded(sb, tolerance, ("X", ax, ex), ("Y", ay, ey));
         return sb.ToString();
     }
 
@@ -72,7 +72,7 @@ internal static class MathFailureMessage
         AppendHeader(sb, FormatVector(expected), tolerance);
         sb.Append(CultureInfo.InvariantCulture, $"  actual:   {FormatVector(actual)}").AppendLine();
         sb.Append(CultureInfo.InvariantCulture, $"  delta:    ({Fmt(dx)}, {Fmt(dy)}, {Fmt(dz)})").AppendLine();
-        AppendExceeded(sb, tolerance, ("X", dx), ("Y", dy), ("Z", dz));
+        AppendExceeded(sb, tolerance, ("X", ax, ex), ("Y", ay, ey), ("Z", az, ez));
         return sb.ToString();
     }
 
@@ -93,7 +93,7 @@ internal static class MathFailureMessage
         AppendHeader(sb, FormatVector(expected), tolerance);
         sb.Append(CultureInfo.InvariantCulture, $"  actual:   {FormatVector(actual)}").AppendLine();
         sb.Append(CultureInfo.InvariantCulture, $"  delta:    ({Fmt(dx)}, {Fmt(dy)}, {Fmt(dz)}, {Fmt(dw)})").AppendLine();
-        AppendExceeded(sb, tolerance, ("X", dx), ("Y", dy), ("Z", dz), ("W", dw));
+        AppendExceeded(sb, tolerance, ("X", ax, ex), ("Y", ay, ey), ("Z", az, ez), ("W", aw, ew));
         return sb.ToString();
     }
 
@@ -114,7 +114,7 @@ internal static class MathFailureMessage
         AppendHeader(sb, FormatQuaternion(expected), tolerance);
         sb.Append(CultureInfo.InvariantCulture, $"  actual:   {FormatQuaternion(actual)}").AppendLine();
         sb.Append(CultureInfo.InvariantCulture, $"  delta:    ({Fmt(dx)}, {Fmt(dy)}, {Fmt(dz)}, {Fmt(dw)})").AppendLine();
-        AppendExceeded(sb, tolerance, ("X", dx), ("Y", dy), ("Z", dz), ("W", dw));
+        AppendExceeded(sb, tolerance, ("X", ax, ex), ("Y", ay, ey), ("Z", az, ez), ("W", aw, ew));
         return sb.ToString();
     }
 
@@ -137,16 +137,16 @@ internal static class MathFailureMessage
             {
                 double a = actual[row, col];
                 double e = expected[row, col];
-                double delta = Math.Abs(a - e);
-                // NaN is never > tolerance (NaN comparison returns false), so flag it explicitly
-                // alongside the over-tolerance cells. Matches the per-axis NaN handling in
-                // AppendExceeded for the vector / quaternion renderers.
-                if (delta > tolerance || double.IsNaN(delta))
+                // Delegate the exceeded classification to the predicate so equal-special-value
+                // cells (NaN/NaN, same-sign infinity/infinity) are correctly treated as equal,
+                // matching the AppendExceeded helper used by the vector / quaternion renderers.
+                if (!MathTolerance.IsApproximatelyEqual(a, e, tolerance))
                 {
                     if (!first)
                     {
                         exceeded.Append(", ");
                     }
+                    double delta = Math.Abs(a - e);
                     exceeded.Append(CultureInfo.InvariantCulture, $"[{row},{col}] ({Fmt(delta)} > {Fmt(tolerance)})");
                     first = false;
                 }
@@ -174,7 +174,7 @@ internal static class MathFailureMessage
         AppendHeader(sb, FormatPlane(expected), tolerance);
         sb.Append(CultureInfo.InvariantCulture, $"  actual:   {FormatPlane(actual)}").AppendLine();
         sb.Append(CultureInfo.InvariantCulture, $"  delta:    Normal=({Fmt(dnx)}, {Fmt(dny)}, {Fmt(dnz)}), D={Fmt(dd)}").AppendLine();
-        AppendExceeded(sb, tolerance, ("Normal.X", dnx), ("Normal.Y", dny), ("Normal.Z", dnz), ("D", dd));
+        AppendExceeded(sb, tolerance, ("Normal.X", anx, enx), ("Normal.Y", any, eny), ("Normal.Z", anz, enz), ("D", ad, ed));
         return sb.ToString();
     }
 
@@ -185,13 +185,15 @@ internal static class MathFailureMessage
     /// <returns>The rendered failure-message text (multi-line, invariant-culture formatted).</returns>
     public static string ApproximatelyEqual(Complex actual, Complex expected, double tolerance)
     {
-        double dr = Math.Abs(actual.Real - expected.Real);
-        double di = Math.Abs(actual.Imaginary - expected.Imaginary);
+        double ar = actual.Real, ai = actual.Imaginary;
+        double er = expected.Real, ei = expected.Imaginary;
+        double dr = Math.Abs(ar - er);
+        double di = Math.Abs(ai - ei);
         var sb = new StringBuilder();
         AppendHeader(sb, expected.ToString(CultureInfo.InvariantCulture), tolerance);
         sb.Append(CultureInfo.InvariantCulture, $"  actual:   {actual.ToString(CultureInfo.InvariantCulture)}").AppendLine();
         sb.Append(CultureInfo.InvariantCulture, $"  delta:    Real={Fmt(dr)}, Imaginary={Fmt(di)}").AppendLine();
-        AppendExceeded(sb, tolerance, ("Real", dr), ("Imaginary", di));
+        AppendExceeded(sb, tolerance, ("Real", ar, er), ("Imaginary", ai, ei));
         return sb.ToString();
     }
 
@@ -354,18 +356,24 @@ internal static class MathFailureMessage
         sb.Append(CultureInfo.InvariantCulture, $"to be approximately equal to {expectedRendered} component-wise within tolerance {Fmt(tolerance)}").AppendLine();
     }
 
-    private static void AppendExceeded(StringBuilder sb, double tolerance, params (string Name, double Delta)[] components)
+    private static void AppendExceeded(StringBuilder sb, double tolerance, params (string Name, double Actual, double Expected)[] components)
     {
         sb.Append("  exceeded: ");
         var first = true;
-        foreach (var (name, delta) in components)
+        foreach (var (name, actual, expected) in components)
         {
-            if (delta > tolerance || double.IsNaN(delta))
+            // Delegate the exceeded classification to the predicate itself. The predicate
+            // treats NaN/NaN and same-sign infinity/infinity as equal; a naive
+            // `delta > tolerance || double.IsNaN(delta)` would incorrectly flag those
+            // equal-special-value pairs as exceeded (their delta computes to NaN even
+            // though the predicate verdict is equal).
+            if (!MathTolerance.IsApproximatelyEqual(actual, expected, tolerance))
             {
                 if (!first)
                 {
                     sb.Append(", ");
                 }
+                double delta = Math.Abs(actual - expected);
                 sb.Append(CultureInfo.InvariantCulture, $"{name} ({Fmt(delta)} > {Fmt(tolerance)})");
                 first = false;
             }
