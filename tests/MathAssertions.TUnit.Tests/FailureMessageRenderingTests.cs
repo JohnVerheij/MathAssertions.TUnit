@@ -218,9 +218,9 @@ internal sealed class FailureMessageRenderingTests
     /// direction from the normalized expected axis, the renderer flips the extracted axis and
     /// negates the extracted angle so the displayed pair is sign-aligned with the caller's
     /// supplied axis. Triggered by asking for an expected rotation around <c>-UnitY</c> while
-    /// the actual rotation is around <c>+UnitY</c> — both encode the SAME physical rotation
-    /// (so the predicate is happy after <see cref="System.Math"/>-level sign correction), but
-    /// to drive the chain into the FAILURE renderer we use a different angle on top.</summary>
+    /// the actual rotation is around <c>+UnitY</c>. Both encode the same physical rotation
+    /// after sign correction, so the chain is driven into the FAILURE renderer by using a
+    /// different angle on top.</summary>
     [Test]
     public async Task Quaternion_HasAxisAngleApproximately_ExtractedAxisOppositeExpected_AlignsForDisplay(CancellationToken ct)
     {
