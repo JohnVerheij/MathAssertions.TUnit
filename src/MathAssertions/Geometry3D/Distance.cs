@@ -20,7 +20,10 @@ public static class Distance
     /// <param name="plane">Plane to measure to.</param>
     /// <returns>The unsigned perpendicular distance.</returns>
     public static double DistanceFrom(this Vector3 point, Plane plane)
-        => Math.Abs((double)(Vector3.Dot(point, plane.Normal) + plane.D));
+    {
+        double signed = Vector3.Dot(point, plane.Normal) + plane.D;
+        return Math.Abs(signed);
+    }
 
     /// <summary>
     /// Closest-point distance from <paramref name="point"/> to the finite line segment
@@ -43,7 +46,7 @@ public static class Distance
         // analyzer flag (S1244) silent on the value path. The same pattern
         // MathTolerance.IsCloseInUlps uses for its zero-magnitude short-circuit.
         const int MagnitudeMask = 0x7FFF_FFFF;
-        if ((BitConverter.SingleToInt32Bits(abDotAb) & MagnitudeMask) == 0)
+        if ((BitConverter.SingleToInt32Bits(abDotAb) & MagnitudeMask) is 0)
         {
             return Vector3.Distance(point, seg.Start);
         }

@@ -15,7 +15,7 @@ namespace MathAssertions.TUnit;
 /// <see cref="MathAssertions.Geometry3D.Distance"/> form rather than the
 /// extension-method form because TUnit's <c>[GenerateAssertion]</c> source generator
 /// inlines expression bodies into a generated assertion class without copying the
-/// <c>using</c> directives that would be needed to resolve the extension call.
+/// <see langword="using"/> directives that would be needed to resolve the extension call.
 /// </remarks>
 public static class Geometry3DAssertions
 {
@@ -35,7 +35,7 @@ public static class Geometry3DAssertions
     public static bool IsCollinear(this Vector3[] value, double tolerance)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Properties.IsCollinear((ReadOnlySpan<Vector3>)value, tolerance);
+        return Properties.IsCollinear(value, tolerance);
     }
 
     /// <summary>Asserts every point in the array lies on a single plane within tolerance.</summary>
@@ -45,7 +45,7 @@ public static class Geometry3DAssertions
     public static bool AreCoplanar(this Vector3[] value, double tolerance)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Properties.AreCoplanar((ReadOnlySpan<Vector3>)value, tolerance);
+        return Properties.AreCoplanar(value, tolerance);
     }
 
     // ----- Containment -----
@@ -85,7 +85,7 @@ public static class Geometry3DAssertions
     public static bool ConvexHullContainsPoint(this Vector3[] value, Vector3 point, double tolerance)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Containment.ConvexHullContains((ReadOnlySpan<Vector3>)value, point, tolerance);
+        return Containment.ConvexHullContains(value, point, tolerance);
     }
 
     // ----- Distance (predicate-style) -----
@@ -169,7 +169,7 @@ public static class Geometry3DAssertions
     public static bool IsBoundedByBox(this Vector3[] value, AxisAlignedBox box)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Pointcloud.IsBoundedBy((ReadOnlySpan<Vector3>)value, box);
+        return Pointcloud.IsBoundedBy(value, box);
     }
 
     /// <summary>Asserts every point in the cloud lies inside <paramref name="sphere"/>.</summary>
@@ -179,7 +179,7 @@ public static class Geometry3DAssertions
     public static bool IsBoundedBySphere(this Vector3[] value, Sphere sphere)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Pointcloud.IsBoundedBy((ReadOnlySpan<Vector3>)value, sphere);
+        return Pointcloud.IsBoundedBy(value, sphere);
     }
 
     /// <summary>Asserts the cloud's centroid is approximately <paramref name="expected"/>.</summary>
@@ -189,7 +189,7 @@ public static class Geometry3DAssertions
     public static bool HasCentroidAt(this Vector3[] value, Vector3 expected, double tolerance)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Pointcloud.HasCentroidAt((ReadOnlySpan<Vector3>)value, expected, tolerance);
+        return Pointcloud.HasCentroidAt(value, expected, tolerance);
     }
 
     /// <summary>Asserts every point in the cloud lies within <paramref name="maxResidual"/> of <paramref name="plane"/>.</summary>
@@ -199,7 +199,7 @@ public static class Geometry3DAssertions
     public static bool IsApproximatelyOnPlane(this Vector3[] value, Plane plane, double maxResidual)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Pointcloud.IsApproximatelyOnPlane((ReadOnlySpan<Vector3>)value, plane, maxResidual);
+        return Pointcloud.IsApproximatelyOnPlane(value, plane, maxResidual);
     }
 
     /// <summary>Asserts every point in the cloud lies within <paramref name="maxResidual"/> of the sphere surface.</summary>
@@ -213,6 +213,6 @@ public static class Geometry3DAssertions
         double maxResidual)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Pointcloud.IsApproximatelyOnSphere((ReadOnlySpan<Vector3>)value, center, radius, maxResidual);
+        return Pointcloud.IsApproximatelyOnSphere(value, center, radius, maxResidual);
     }
 }

@@ -113,7 +113,7 @@ public static class NumberTheory
     /// <remarks>
     /// <para>
     /// Computed via <c>|a / gcd(a, b) * b|</c>, dividing first to keep the intermediate
-    /// as small as possible. The final multiplication runs in a <c>checked</c> context;
+    /// as small as possible. The final multiplication runs in a <see langword="checked"/> context;
     /// when the LCM does not fit in <see cref="long"/> (large coprime inputs near the
     /// signed range, for example <c>lcm(long.MaxValue, 2)</c>) an
     /// <see cref="OverflowException"/> is thrown rather than the wrapped negative result
@@ -195,7 +195,7 @@ public static class NumberTheory
         if (value < 0)
             return false;
 
-        var sqrt = (long)Math.Sqrt(value);
+        var sqrt = long.CreateTruncating(Math.Sqrt(value));
         if (sqrt * sqrt == value)
             return true;
 

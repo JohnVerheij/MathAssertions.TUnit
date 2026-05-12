@@ -7,15 +7,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
+## [0.2.0] - 2026-05-12: per-component delta diagnostics, axis-angle assertions, family lockstep
 
-- Package descriptions, tags, and README taglines reframed from "tolerance-aware numeric assertions" / "math-assertion DSL" to "math assertion library" to match the package's actual surface (tolerance comparisons, sequences, statistics, linear algebra, number theory, 3D geometry) and long-term scope. Affects `<Description>` and `<PackageTags>` in both csprojs (so the nuget.org listing reflects the broader scope), the tagline in the root `README.md`, and the taglines in `src/MathAssertions.TUnit/README.md` and `src/MathAssertions/README.md`. No API surface change.
+Feature release. Lockstep version bump for both packages. Highlights:
+
+- Per-component / per-cell delta rendering in every compound `IsApproximatelyEqualTo` failure message.
+- `HasAxisAngleApproximately` on `Quaternion` for axis-angle-form rotation assertions.
+- New `HasRoundtripIdentity` cookbook entry surfacing the existing invertible-transformation primitive.
+- Carries forward the `docs/reframe-positioning` work (broader scope language across the package descriptions, tags, and README taglines).
+- SnapshotAssertions 0.3.0 family-wide hygiene baseline applied: `CONVENTIONS.md` v0.3, `MeziantouAnalysisMode=all-warnings` for `src/`, dependency refresh, `BannedSymbols.txt` cleanup.
+
+### Added (MathAssertions, framework-agnostic core)
+
+- **Rich per-component failure-message rendering** for the compound `IsApproximatelyEqual` overloads (`Vector2`, `Vector3`, `Vector4`, `Quaternion`, `Matrix4x4`, `Plane`, `Complex`, `ReadOnlySpan<double>`, `ReadOnlySpan<float>`) plus `IsRotationallyEquivalent` and `IsGeometricallyEquivalent`. Each renderer surfaces three sections under an expectation header: `actual:` echoing the value, `delta:` showing the absolute per-axis / per-cell / first-failing-element difference, and `exceeded:` naming the components whose delta crossed tolerance. The exceeded classification routes through the boolean predicate itself (`MathTolerance.IsApproximatelyEqual`), so equal-special-value pairs (NaN vs NaN, same-sign infinity vs same-sign infinity) are correctly treated as equal even though their absolute delta is NaN. Plane geometric equivalence additionally renders the delta against both the direct and the sign-flipped candidate representation. Numeric formatting is `CultureInfo.InvariantCulture` `G`-form throughout so the rendered text is stable across locales. The renderer type itself is internal (consumed via `[InternalsVisibleTo]` by the adapter assembly); failure-message text remains explicitly not part of the stable public surface.
+- **`MathTolerance.HasAxisAngleApproximately(Quaternion, Vector3, double, double)`**. Asserts a quaternion, viewed as a rotation in axis-angle form, lies within tolerance of the rotation `expectedAngleDegrees` degrees around `expectedAxis`. Normalizes both inputs internally; rejects zero-length expected axis with `ArgumentException`. Uses the rotational-equivalence formulation under the hood (`|dot(unit_q, unit_expected)| >= 1 - tolerance`) so every edge case is handled uniformly: the SO(3) `q` vs `-q` double cover; the 180-degree boundary where `(axis, +180)`, `(axis, -180)`, and `(-axis, ±180)` all encode the same rotation; non-unit inputs. Reference: Hanson, *Visualizing Quaternions*, §4.6.
+
+### Added (MathAssertions.TUnit, TUnit adapter)
+
+- **`QuaternionAssertions.HasAxisAngleApproximately`**. Fluent entry point delegating to `MathTolerance.HasAxisAngleApproximately`. Failure messages render the extracted axis, the extracted angle in degrees, and the delta angle (in the shorter-arc form modulo 360 degrees, so 359 vs 1 renders as 2 not 358).
+- **Rich failure messages on every adapter `IsApproximatelyEqualTo` chain** (`Vector2` / `Vector3` / `Vector4` / `Quaternion` / `Matrix4x4` / `Plane` / `Complex` / `double[]` / `float[]`) plus `IsRotationallyEquivalentTo` and `IsGeometricallyEquivalentTo`. Generated extension methods now invoke the per-component renderer on mismatch instead of returning a static expectation-only template.
 
 ### Documentation
 
-- Cookbook entries on `IsApproximatelyEqualTo` (component-wise) vs `IsRotationallyEquivalentTo` for `Quaternion` (the SO(3) `q` vs `-q` double-cover) and vs `IsGeometricallyEquivalentTo` for `Plane` (the `(n, d)` vs `(-n, -d)` sign flip). Worked examples included for both. Added to the root `README.md` and to `src/MathAssertions.TUnit/README.md` (which ships in the `.nupkg` and shows on nuget.org).
-- Cookbook entry on asserting a quaternion is the zero-valued sentinel (e.g. an unpopulated protobuf field) using `IsApproximatelyEqualTo(Quaternion.Zero, tolerance)`. Reuses the existing component-wise comparison; no new public API.
-- New "NaN and infinity semantics" section in `src/MathAssertions.TUnit/README.md` mirroring the table already in the root README, so consumers see the edge-case behaviour without clicking through to GitHub.
+- **Reframing carry-forward.** Package descriptions, tags, and README taglines reframed from "tolerance-aware numeric assertions" / "math-assertion DSL" to "math assertion library" to match the actual surface (tolerance comparisons, sequences, statistics, linear algebra, number theory, 3D geometry). Affects `<Description>` and `<PackageTags>` in both csprojs (so the nuget.org listing reflects the broader scope), the tagline in the root `README.md`, and the taglines in `src/MathAssertions.TUnit/README.md` and `src/MathAssertions/README.md`. No API surface change here.
+- **Cookbook entries** on `IsApproximatelyEqualTo` (component-wise) vs `IsRotationallyEquivalentTo` for `Quaternion` (the SO(3) `q` vs `-q` double-cover) and vs `IsGeometricallyEquivalentTo` for `Plane` (the `(n, d)` vs `(-n, -d)` sign flip), with worked examples in both READMEs.
+- **Cookbook entry** on asserting a quaternion is the zero-valued sentinel using `IsApproximatelyEqualTo(Quaternion.Zero, tolerance)`.
+- **New `HasRoundtripIdentity` cookbook entry** in both READMEs documenting the existing framework-agnostic primitive with three worked examples (Sin / Asin, degree / radian, encode / decode delegate pair).
+- **"NaN and infinity semantics" section** in `src/MathAssertions.TUnit/README.md` mirroring the table already in the root README.
+- **`CONVENTIONS.md` upgraded to v0.3** with the `SnapshotAssertions.Render` namespace reservation for sibling-package text renderers.
+
+### Changed
+
+- **Dependency refresh** to the family-lockstep versions:
+  - `TUnit` / `TUnit.Assertions` / `TUnit.Core`: 1.43.11 -> 1.44.0
+  - `Microsoft.CodeAnalysis.BannedApiAnalyzers`: 3.3.4 -> 4.14.0
+  - `Meziantou.Analyzer`: 3.0.72 -> 3.0.78
+  - `SnapshotAssertions.TUnit`: 0.2.0 -> 0.3.0
+- **`Directory.Build.props` sets `MeziantouAnalysisMode=all-warnings` for `src/` projects** (path-conditional). Test projects retain Meziantou defaults. Production-code findings surfaced and fixed at source rather than via NoWarn: redundant `(double)floatField` widening casts removed in favor of explicit `double` locals (preserves full-precision subtraction); discrete-equality `== 0` updated to pattern-matching `is 0`; `(int)Math.Floor(x)` / `(long)Math.Sqrt(value)` updated to `int.CreateChecked` / `long.CreateTruncating` (semantic-preserving for the non-negative ranges those call sites guarantee); XML-doc `<c>null</c>` updated to `<see langword="null"/>`. `<NoWarn>` extended with `MA0038;MA0137;MA0174;MA0190` per family convention.
+- **`BannedSymbols.txt`** collapsed bare `#` comment lines into adjacent text-bearing lines so the file parses cleanly under the stricter BannedApiAnalyzers 4.x grammar.
+- **`MathAssertions` adds `[InternalsVisibleTo("MathAssertions.TUnit")]`** so the adapter can call the internal `MathTolerance.ExtractAxisAngle` helper to render the axis-angle failure message consistently with the predicate's own extraction. The helper stays internal (not promoted to the public surface).
+
+### Public API note
+
+- **Compound `IsApproximatelyEqualTo` source-method return types changed from `bool` to `TUnit.Assertions.Core.AssertionResult`.** This applies to the static helpers in `VectorAssertions`, `QuaternionAssertions`, `MatrixAssertions`, `PlaneAssertions`, `ComplexAssertions`, `ArrayAssertions`, plus `IsRotationallyEquivalentTo` and `IsGeometricallyEquivalentTo`. The change enables the rich per-component failure-message rendering; the corresponding generated TUnit chain extensions (`Assert.That(x).IsApproximatelyEqualTo(...)`) are unaffected at the chain-syntax level. Consumers calling the static helpers directly (rather than through `Assert.That`) need to read `.IsPassed` off the returned `AssertionResult`. `CompatibilitySuppressions.xml` captures the signature change as accepted.
+
+### Quality
+
+- ApiCompat strict-mode baseline bumped `0.0.1` -> `0.1.0`. The auto-generated `CompatibilitySuppressions.xml` documents the signature changes above plus the new `HasAxisAngleApproximately` surface.
+- PublicAPI snapshots regenerated to reflect the new `AssertionResult` return types and the `HasAxisAngleApproximately` addition.
+- Test count: 676 (was 619 at 0.1.0); +25 new failure-message-rendering tests covering every compound renderer (Vector2 / Vector3 / Vector4 / Quaternion / Matrix4x4 / Plane / Complex / `double[]` / `float[]`) plus the equal-special-value classification, the modulo-360 shortest-arc rendering of the axis-angle delta, and the fallback-text paths; +11 new axis-angle predicate tests in `MathAssertions.Tests`; +14 new chain-fail tests in `MathAssertions.TUnit.Tests` exercising each renderer end-to-end via the fluent API (including the `ExtractAxisAngle` identity-rotation and sign-flip branches); +4 new argument-validation tests in `MathToleranceTests` pinning the `HasAxisAngleApproximately` `expectedAxis` validation paths (NaN, infinity, underflow, zero) with `paramName` consistency; plus +3 adapter tests pinning the `HasAxisAngleApproximately` chain (happy path, wrong-axis with extracted-diagnostics rendering, SO(3) double-cover via negated quaternion). Coverage gate: 90% line / 90% branch, currently at 99.2% / 98.9%.
+- AOT-publish smoke gate via `tests/MathAssertions.TUnit.SmokeTest/` continues to validate consumer-side AOT correctness; SmokeTest pin bumped to `TUnit 1.44.0` and the floating `MathAssertions.TUnit` reference to `0.2.0-*`.
 
 ## [0.1.0] - 2026-05-09
 

@@ -6,16 +6,15 @@ namespace MathAssertions.TUnit
 {
     public static class ArrayAssertions
     {
-        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be approximately equal to {expected} element-wise within tolerance {tolerance}", InlineMethodBody=false)]
-        public static bool IsApproximatelyEqualTo(this double[] value, double[] expected, double tolerance) { }
-        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be approximately equal to {expected} element-wise within tolerance {tolerance}", InlineMethodBody=false)]
-        public static bool IsApproximatelyEqualTo(this float[] value, float[] expected, float tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(InlineMethodBody=false)]
+        public static TUnit.Assertions.Core.AssertionResult IsApproximatelyEqualTo(this double[] value, double[] expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(InlineMethodBody=false)]
+        public static TUnit.Assertions.Core.AssertionResult IsApproximatelyEqualTo(this float[] value, float[] expected, float tolerance) { }
     }
     public static class ComplexAssertions
     {
-        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be approximately equal to {expected} component-wise within tolerance {toleranc" +
-            "e}", InlineMethodBody=true)]
-        public static bool IsApproximatelyEqualTo(this System.Numerics.Complex value, System.Numerics.Complex expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(InlineMethodBody=true)]
+        public static TUnit.Assertions.Core.AssertionResult IsApproximatelyEqualTo(this System.Numerics.Complex value, System.Numerics.Complex expected, double tolerance) { }
     }
     public static class Geometry3DAssertions
     {
@@ -82,8 +81,8 @@ namespace MathAssertions.TUnit
         public static bool HasDeterminantApproximately(this System.Numerics.Matrix4x4 value, double expected, double tolerance) { }
         [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to have trace approximately {expected} within tolerance {tolerance}", InlineMethodBody=true)]
         public static bool HasTraceApproximately(this System.Numerics.Matrix4x4 value, double expected, double tolerance) { }
-        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be approximately equal to {expected} element-wise within tolerance {tolerance}", InlineMethodBody=true)]
-        public static bool IsApproximatelyEqualTo(this System.Numerics.Matrix4x4 value, System.Numerics.Matrix4x4 expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(InlineMethodBody=true)]
+        public static TUnit.Assertions.Core.AssertionResult IsApproximatelyEqualTo(this System.Numerics.Matrix4x4 value, System.Numerics.Matrix4x4 expected, double tolerance) { }
         [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be the identity matrix within tolerance {tolerance}", InlineMethodBody=true)]
         public static bool IsIdentity(this System.Numerics.Matrix4x4 value, double tolerance) { }
         [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be invertible (|det| > tolerance {tolerance})", InlineMethodBody=true)]
@@ -110,24 +109,23 @@ namespace MathAssertions.TUnit
     }
     public static class PlaneAssertions
     {
-        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be approximately equal to {expected} component-wise within tolerance {toleranc" +
-            "e}", InlineMethodBody=true)]
-        public static bool IsApproximatelyEqualTo(this System.Numerics.Plane value, System.Numerics.Plane expected, double tolerance) { }
-        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be the same plane as {expected} (allowing sign-flip equivalence) within tolera" +
-            "nce {tolerance}", InlineMethodBody=true)]
-        public static bool IsGeometricallyEquivalentTo(this System.Numerics.Plane value, System.Numerics.Plane expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(InlineMethodBody=true)]
+        public static TUnit.Assertions.Core.AssertionResult IsApproximatelyEqualTo(this System.Numerics.Plane value, System.Numerics.Plane expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(InlineMethodBody=true)]
+        public static TUnit.Assertions.Core.AssertionResult IsGeometricallyEquivalentTo(this System.Numerics.Plane value, System.Numerics.Plane expected, double tolerance) { }
     }
     public static class QuaternionAssertions
     {
-        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be approximately equal to {expected} component-wise within tolerance {toleranc" +
-            "e}", InlineMethodBody=true)]
-        public static bool IsApproximatelyEqualTo(this System.Numerics.Quaternion value, System.Numerics.Quaternion expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(InlineMethodBody=true)]
+        public static TUnit.Assertions.Core.AssertionResult HasAxisAngleApproximately(this System.Numerics.Quaternion value, System.Numerics.Vector3 expectedAxis, double expectedAngleDegrees, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(InlineMethodBody=true)]
+        public static TUnit.Assertions.Core.AssertionResult IsApproximatelyEqualTo(this System.Numerics.Quaternion value, System.Numerics.Quaternion expected, double tolerance) { }
         [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be the identity quaternion within tolerance {tolerance}", InlineMethodBody=true)]
         public static bool IsIdentity(this System.Numerics.Quaternion value, double tolerance) { }
         [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be a unit quaternion within tolerance {tolerance}", InlineMethodBody=true)]
         public static bool IsNormalized(this System.Numerics.Quaternion value, double tolerance) { }
-        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be rotationally equivalent to {expected} within tolerance {tolerance}", InlineMethodBody=true)]
-        public static bool IsRotationallyEquivalentTo(this System.Numerics.Quaternion value, System.Numerics.Quaternion expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(InlineMethodBody=true)]
+        public static TUnit.Assertions.Core.AssertionResult IsRotationallyEquivalentTo(this System.Numerics.Quaternion value, System.Numerics.Quaternion expected, double tolerance) { }
     }
     public static class ScalarAssertions
     {
@@ -202,15 +200,12 @@ namespace MathAssertions.TUnit
     {
         [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to have magnitude approximately {expected} within tolerance {tolerance}", InlineMethodBody=true)]
         public static bool HasMagnitudeApproximately(this System.Numerics.Vector3 value, double expected, double tolerance) { }
-        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be approximately equal to {expected} component-wise within tolerance {toleranc" +
-            "e}", InlineMethodBody=true)]
-        public static bool IsApproximatelyEqualTo(this System.Numerics.Vector2 value, System.Numerics.Vector2 expected, double tolerance) { }
-        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be approximately equal to {expected} component-wise within tolerance {toleranc" +
-            "e}", InlineMethodBody=true)]
-        public static bool IsApproximatelyEqualTo(this System.Numerics.Vector3 value, System.Numerics.Vector3 expected, double tolerance) { }
-        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be approximately equal to {expected} component-wise within tolerance {toleranc" +
-            "e}", InlineMethodBody=true)]
-        public static bool IsApproximatelyEqualTo(this System.Numerics.Vector4 value, System.Numerics.Vector4 expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(InlineMethodBody=true)]
+        public static TUnit.Assertions.Core.AssertionResult IsApproximatelyEqualTo(this System.Numerics.Vector2 value, System.Numerics.Vector2 expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(InlineMethodBody=true)]
+        public static TUnit.Assertions.Core.AssertionResult IsApproximatelyEqualTo(this System.Numerics.Vector3 value, System.Numerics.Vector3 expected, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(InlineMethodBody=true)]
+        public static TUnit.Assertions.Core.AssertionResult IsApproximatelyEqualTo(this System.Numerics.Vector4 value, System.Numerics.Vector4 expected, double tolerance) { }
         [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be a unit (normalized) vector within tolerance {tolerance}", InlineMethodBody=true)]
         public static bool IsNormalized(this System.Numerics.Vector3 value, double tolerance) { }
     }
@@ -584,10 +579,17 @@ namespace TUnit.Assertions.Extensions
     }
     public static class QuaternionAssertions
     {
+        public static TUnit.Assertions.Extensions.Quaternion_HasAxisAngleApproximately_Vector3_Double_Double_Assertion HasAxisAngleApproximately(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Quaternion> source, System.Numerics.Vector3 expectedAxis, double expectedAngleDegrees, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expectedAxis")] string? expectedAxisExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("expectedAngleDegrees")] string? expectedAngleDegreesExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
         public static TUnit.Assertions.Extensions.Quaternion_IsApproximatelyEqualTo_Quaternion_Double_Assertion IsApproximatelyEqualTo(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Quaternion> source, System.Numerics.Quaternion expected, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
         public static TUnit.Assertions.Extensions.Quaternion_IsIdentity_Double_Assertion IsIdentity(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Quaternion> source, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
         public static TUnit.Assertions.Extensions.Quaternion_IsNormalized_Double_Assertion IsNormalized(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Quaternion> source, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
         public static TUnit.Assertions.Extensions.Quaternion_IsRotationallyEquivalentTo_Quaternion_Double_Assertion IsRotationallyEquivalentTo(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Quaternion> source, System.Numerics.Quaternion expected, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+    }
+    public sealed class Quaternion_HasAxisAngleApproximately_Vector3_Double_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Quaternion>
+    {
+        public Quaternion_HasAxisAngleApproximately_Vector3_Double_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Quaternion> context, System.Numerics.Vector3 expectedAxis, double expectedAngleDegrees, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Quaternion> metadata) { }
+        protected override string GetExpectation() { }
     }
     public sealed class Quaternion_IsApproximatelyEqualTo_Quaternion_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Quaternion>
     {

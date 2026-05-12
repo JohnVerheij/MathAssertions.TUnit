@@ -11,7 +11,7 @@
     <IsPackable>true</IsPackable>
     <PackageId>MathAssertions</PackageId>
     <ProductName>MathAssertions</ProductName>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Authors>John Verheij</Authors>
     <Copyright>Copyright (c) 2026 John Verheij</Copyright>
     <Description>Framework-agnostic core of the MathAssertions package family. Math assertion helpers for .NET tests, spanning tolerance comparisons (scalar / Vector2-4 / Quaternion + rotational equivalence / Matrix4x4 / Plane + geometric equivalence / Complex / ReadOnlySpan and ReadOnlyTensorSpan / ULP-distance / relative+absolute combined), Sequences (monotonicity / boundedness / progressions / convergence), Statistics (Welford's mean+variance / median / percentile / sigma bounds), LinearAlgebra (matrix invariants and vector pair properties), NumberTheory (long-integer predicates), and Geometry3D (eight primitive types with property predicates / containment / closest-point distance / intersection / pointcloud aggregates). NaN-aware, infinity-aware, AOT-compatible. Test-framework-specific entry points live in adapter packages, starting with MathAssertions.TUnit.</Description>
@@ -30,7 +30,7 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <EnablePackageValidation>true</EnablePackageValidation>
-    <PackageValidationBaselineVersion>0.0.1</PackageValidationBaselineVersion>
+    <PackageValidationBaselineVersion>0.1.0</PackageValidationBaselineVersion>
     <EnableStrictModeForCompatibleFrameworksInPackage>true</EnableStrictModeForCompatibleFrameworksInPackage>
     <EnableStrictModeForBaselineValidation>true</EnableStrictModeForBaselineValidation>
     <ApiCompatGenerateSuppressionFile>true</ApiCompatGenerateSuppressionFile>
@@ -65,6 +65,16 @@
 
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- MathAssertions.TUnit calls the internal MathTolerance.ExtractAxisAngle helper (and the
+         internal MathFailureMessage failure-rendering type) so the adapter can drive both the
+         predicate and the failure message without re-exposing them on the public surface.
+         MathAssertions.Tests references the same internals so the per-component-rendering
+         tests can target MathFailureMessage directly. -->
+    <InternalsVisibleTo Include="MathAssertions.TUnit" />
+    <InternalsVisibleTo Include="MathAssertions.Tests" />
   </ItemGroup>
 
 </Project>

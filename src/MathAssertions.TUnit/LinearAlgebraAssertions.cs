@@ -36,6 +36,6 @@ public static class LinearAlgebraAssertions
     public static bool AreLinearlyIndependent(this Vector3[] value, double tolerance)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return LinearAlgebra.AreLinearlyIndependent((ReadOnlySpan<Vector3>)value, tolerance);
+        return LinearAlgebra.AreLinearlyIndependent(value, tolerance);
     }
 }

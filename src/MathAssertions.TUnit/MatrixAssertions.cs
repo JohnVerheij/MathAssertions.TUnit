@@ -1,20 +1,27 @@
 using System.Numerics;
+using MathAssertions;
 using TUnit.Assertions.Attributes;
+using TUnit.Assertions.Core;
 
 namespace MathAssertions.TUnit;
 
 /// <summary>
 /// Fluent <see cref="Matrix4x4"/> assertions covering element-wise equality and the
-/// matrix invariants from <see cref="MathAssertions.LinearAlgebra"/>.
+/// matrix invariants from <see cref="LinearAlgebra"/>.
 /// </summary>
+/// <remarks>
+/// v0.2.0 enriches the failure message for <see cref="IsApproximatelyEqualTo"/> with the
+/// list of <c>[row, col]</c> cells whose absolute delta exceeded tolerance via
+/// <see cref="MathFailureMessage"/>.
+/// </remarks>
 public static class MatrixAssertions
 {
     /// <summary>Element-wise tolerance comparison across all sixteen elements.</summary>
-    [GenerateAssertion(
-        ExpectationMessage = "to be approximately equal to {expected} element-wise within tolerance {tolerance}",
-        InlineMethodBody = true)]
-    public static bool IsApproximatelyEqualTo(this Matrix4x4 value, Matrix4x4 expected, double tolerance)
-        => MathTolerance.IsApproximatelyEqual(value, expected, tolerance);
+    [GenerateAssertion(InlineMethodBody = true)]
+    public static AssertionResult IsApproximatelyEqualTo(this Matrix4x4 value, Matrix4x4 expected, double tolerance)
+        => MathTolerance.IsApproximatelyEqual(value, expected, tolerance)
+            ? AssertionResult.Passed
+            : AssertionResult.Failed(MathFailureMessage.ApproximatelyEqual(value, expected, tolerance));
 
     /// <summary>Asserts the matrix is symmetric (each off-diagonal pair mirror-equal) within tolerance.</summary>
     [GenerateAssertion(

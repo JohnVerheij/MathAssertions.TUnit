@@ -21,7 +21,8 @@ public static class Properties
     public static bool IsDegenerate(this Triangle3D t, double tolerance)
     {
         ValidateTolerance(tolerance);
-        return (double)t.Area <= tolerance;
+        double area = t.Area;
+        return area <= tolerance;
     }
 
     /// <summary>
@@ -65,7 +66,8 @@ public static class Properties
         for (var i = 1; i < points.Length; i++)
         {
             var d = points[i] - p0;
-            if ((double)d.Length() > tolerance)
+            double dLength = d.Length();
+            if (dLength > tolerance)
             {
                 direction = d;
                 foundDirection = true;
@@ -76,11 +78,12 @@ public static class Properties
             return true;
 
         // foundDirection guarantees |direction| > tolerance >= 0, so the divisor is non-zero.
-        var dirLength = (double)direction.Length();
+        double dirLength = direction.Length();
         for (var i = 1; i < points.Length; i++)
         {
             var cross = Vector3.Cross(direction, points[i] - p0);
-            var perpendicularDistance = (double)cross.Length() / dirLength;
+            double crossLength = cross.Length();
+            var perpendicularDistance = crossLength / dirLength;
             if (perpendicularDistance > tolerance)
                 return false;
         }
@@ -120,7 +123,8 @@ public static class Properties
             for (var j = i + 1; j < points.Length; j++)
             {
                 var n = Vector3.Cross(points[i] - p0, points[j] - p0);
-                if ((double)n.Length() > tolerance)
+                double nLength = n.Length();
+                if (nLength > tolerance)
                 {
                     normal = Vector3.Normalize(n);
                     foundNormal = true;
@@ -133,7 +137,8 @@ public static class Properties
 
         for (var i = 0; i < points.Length; i++)
         {
-            var d = Math.Abs((double)Vector3.Dot(points[i] - p0, normal));
+            double dot = Vector3.Dot(points[i] - p0, normal);
+            var d = Math.Abs(dot);
             if (d > tolerance)
                 return false;
         }

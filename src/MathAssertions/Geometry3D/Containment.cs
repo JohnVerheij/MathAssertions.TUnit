@@ -128,7 +128,7 @@ public static class Containment
     {
         ValidateTolerance(tolerance);
 
-        if (hullVertices.Length < 3 || hullVertices.Length % 3 != 0)
+        if (hullVertices.Length < 3 || hullVertices.Length % 3 is not 0)
             return false;
 
         for (var i = 0; i < hullVertices.Length; i += 3)
@@ -137,10 +137,11 @@ public static class Containment
             var b = hullVertices[i + 1];
             var c = hullVertices[i + 2];
             var normal = Vector3.Cross(b - a, c - a);
-            var normalLength = (double)normal.Length();
+            double normalLength = normal.Length();
             if (normalLength <= 0.0)
                 continue;
-            var signedDistance = (double)Vector3.Dot(point - a, normal) / normalLength;
+            double dot = Vector3.Dot(point - a, normal);
+            var signedDistance = dot / normalLength;
             if (signedDistance > tolerance)
                 return false;
         }

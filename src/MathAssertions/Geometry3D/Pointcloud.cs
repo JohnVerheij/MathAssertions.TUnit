@@ -57,7 +57,7 @@ public static class Pointcloud
     {
         ValidateTolerance(tolerance);
 
-        if (cloud.Length == 0)
+        if (cloud.Length is 0)
             return false;
 
         var sum = Vector3.Zero;
@@ -120,7 +120,8 @@ public static class Pointcloud
 
         foreach (var p in cloud)
         {
-            var residual = Math.Abs((double)Vector3.Distance(p, center) - radius);
+            double distance = Vector3.Distance(p, center);
+            var residual = Math.Abs(distance - radius);
             if (residual > maxResidual)
                 return false;
         }
