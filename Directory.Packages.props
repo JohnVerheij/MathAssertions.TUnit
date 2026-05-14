@@ -19,9 +19,9 @@
     <PackageVersion Include="PublicApiGenerator" Version="11.5.4" />
     <PackageVersion Include="SnapshotAssertions.TUnit" Version="0.3.0" />
     <PackageVersion Include="System.Numerics.Tensors" Version="10.0.7" />
-    <PackageVersion Include="TUnit" Version="1.44.0" />
-    <PackageVersion Include="TUnit.Assertions" Version="1.44.0" />
-    <PackageVersion Include="TUnit.Core" Version="1.44.0" />
+    <PackageVersion Include="TUnit" Version="1.44.39" />
+    <PackageVersion Include="TUnit.Assertions" Version="1.44.39" />
+    <PackageVersion Include="TUnit.Core" Version="1.44.39" />
   </ItemGroup>
 
   <!-- Analyzer pack (applied to every project automatically via GlobalPackageReference) -->
