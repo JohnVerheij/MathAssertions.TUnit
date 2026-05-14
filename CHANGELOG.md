@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-05-14: PoseRenderer + family dependency lockstep
+
+Feature release. Lockstep version bump for both packages. Adds the first concrete renderer under the family-shared `*.Render` namespace convention and brings the dependency pins back into lockstep with the rest of the assertion family. No breaking changes; the public surface grows by one additive namespace.
+
+### Added (MathAssertions, framework-agnostic core)
+
+- **`MathAssertions.Render.PoseRenderer`**, a pure static renderer that turns a 3D pose into deterministic, snapshot-friendly text. `Render(Vector3, Quaternion, double)` emits a two-line block: a `pos: (x, y, z) tol=t` line and a `quat: (x, y, z, w) tol=t` line; the `Render(Vector3, double)` and `Render(Quaternion, double)` overloads emit the position or orientation line alone.
+  - **Self-contained and snapshot-framework-agnostic.** The renderer takes no dependency on `SnapshotAssertions.TUnit`; the canonical pairing is the two-line `Assert.That(PoseRenderer.Render(...)).MatchesSnapshot()` composition.
+  - **Orientation rendered verbatim.** The quaternion sign is not canonicalized, so a regression that flips a quaternion sign surfaces as a snapshot diff. Callers asserting rotational equivalence rather than component identity use `IsRotationallyEquivalentTo` instead.
+  - **The tolerance is recorded, not applied.** The renderer performs no comparison; it echoes the supplied tolerance into the output so a tolerance silently loosened during a refactor surfaces as a snapshot diff.
+  - **Deterministic formatting.** Components use the invariant-culture `F6` fixed format, the tolerance the invariant-culture `G` general format. Lines are terminated with the literal LF byte, never `Environment.NewLine`, so a baseline committed on one OS stays byte-stable for test runs on every other.
+
+### Changed
+
+- **Dependency refresh** to bring the pins back into lockstep with the rest of the assertion family:
+  - `DotNetProjectFile.Analyzers`: 1.13.1 -> 1.14.0
+  - `Meziantou.Analyzer`: 3.0.78 -> 3.0.84
+  - `Microsoft.SourceLink.GitHub`: 10.0.203 -> 10.0.300
+- The external-consumer smoke-test project's floating `MathAssertions.TUnit` pre-release pin updated from `0.2.0-*` to `0.3.0-*`.
+
+### Documentation
+
+- **New cookbook section "Pin a pose as a snapshot"** in `README.md`. Worked example pairing `PoseRenderer.Render` with `MatchesSnapshot()` from `SnapshotAssertions.TUnit`.
+- Roadmap section ("Limitations and future work") updated with a "Shipped at v0.3.0" entry; both package READMEs' status sections updated for the v0.3.0 surface.
+
+### Tests
+
+- **`PoseRendererTests`** (framework-agnostic, in `MathAssertions.Tests`): pins the full-pose two-line shape, the position-only and orientation-only single-line overloads, the fixed six-digit component format, the general-format tolerance, LF line endings, and verbatim (non-canonicalized) quaternion signs.
+- **`PoseRendererCoverageExercise`** (in `MathAssertions.TUnit.Tests`): a coverage touchpoint exercising every `PoseRenderer` overload. The renderer's lines sit in the `MathAssertions` core assembly, but the CI coverage gate instruments only the TUnit-adapter main suite; without this touchpoint the renderer would show as uncovered.
+- **`PoseRendererSnapshotTests`** (in `MathAssertions.TUnit.SnapshotTests`): an end-to-end integration test for the documented "render a pose, pin via snapshot" pairing, exercising `PoseRenderer.Render` against a committed baseline via `MatchesSnapshot()` from `SnapshotAssertions.TUnit`. The two packages share no dependency; the test validates the pairing the way a downstream consumer would.
+
+### Quality
+
+- ApiCompat strict-mode validation against the 0.2.0 baseline. The auto-generated `CompatibilitySuppressions.xml` records the additive `MathAssertions.Render` namespace (the `PoseRenderer` type) as an intentional, accepted difference from the baseline.
+- Test count rises by nine: seven `PoseRendererTests` contract tests in `MathAssertions.Tests`, one `PoseRendererCoverageExercise` touchpoint in `MathAssertions.TUnit.Tests`, and one `PoseRendererSnapshotTests` pairing test in `MathAssertions.TUnit.SnapshotTests`. Coverage gate: 90% line / 90% branch.
+
 ## [0.2.0] - 2026-05-12: per-component delta diagnostics, axis-angle assertions, family lockstep
 
 Feature release. Lockstep version bump for both packages. Highlights:
@@ -190,7 +226,8 @@ The wider surface lands at 0.1.0 alongside the load-bearing review fixes M-1 thr
 - Source Link, deterministic builds, embedded PDB.
 - TUnit dependency pinned to **1.43.11**.
 
-[Unreleased]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/releases/tag/v0.3.0
 [0.2.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/releases/tag/v0.2.0
 [0.1.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/releases/tag/v0.1.0
 [0.0.1]: https://github.com/JohnVerheij/MathAssertions.TUnit/releases/tag/v0.0.1

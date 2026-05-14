@@ -11,7 +11,7 @@
     <IsPackable>true</IsPackable>
     <PackageId>MathAssertions.TUnit</PackageId>
     <ProductName>MathAssertions.TUnit</ProductName>
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
     <Authors>John Verheij</Authors>
     <Copyright>Copyright (c) 2026 John Verheij</Copyright>
     <Description>TUnit-native math assertions for .NET tests. Fluent .Method(...) entry points (generated via TUnit's [GenerateAssertion]) covering tolerance comparisons (scalar, vector, quaternion, matrix, plane, complex, double[]/float[]), sequences, statistics, Vector3 linear algebra, long-integer number theory, and the Geometry3D primitive surface (containment, distance, intersection, pointcloud aggregates). Extensible: consumers add tolerance assertions for their own domain types via [GenerateAssertion] extensions calling MathTolerance helpers. AOT-compatible, trimmable, no reflection.</Description>
@@ -38,7 +38,7 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <EnablePackageValidation>true</EnablePackageValidation>
-    <PackageValidationBaselineVersion>0.1.0</PackageValidationBaselineVersion>
+    <PackageValidationBaselineVersion>0.2.0</PackageValidationBaselineVersion>
     <EnableStrictModeForCompatibleFrameworksInPackage>true</EnableStrictModeForCompatibleFrameworksInPackage>
     <EnableStrictModeForBaselineValidation>true</EnableStrictModeForBaselineValidation>
     <ApiCompatGenerateSuppressionFile>true</ApiCompatGenerateSuppressionFile>

@@ -4,15 +4,15 @@
     "net10.0": {
       "DotNetProjectFile.Analyzers": {
         "type": "Direct",
-        "requested": "[1.13.1, )",
-        "resolved": "1.13.1",
-        "contentHash": "nDIThFLyqnihw9eTStm0oteWT31DanE/0k07TDWxcqrlG4wfEoTY4cWNr3MxLBSoXCI6MdkhUIxyrVB53yrM9A=="
+        "requested": "[1.14.0, )",
+        "resolved": "1.14.0",
+        "contentHash": "ZQh99+wAb+tFTwMu0d/gL44W3i4Mx7+Rilz1VbFrowXwvSKtX6HwMZAFobVeQ5opmUdQ9fnW7K4e6QoAcSUdLA=="
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.78, )",
-        "resolved": "3.0.78",
-        "contentHash": "TServ/AC9odQ7Juyab5PljCW2MoZyi4fyEc9dSnAc7ZcS75pUZgea5EaRru6AGIwTZL9wTv8y7ZMSYAM67eClQ=="
+        "requested": "[3.0.84, )",
+        "resolved": "3.0.84",
+        "contentHash": "KMe2CatTUixfMYWhKbQQlH68ZX0bhjH4iRGhU2H/MV+oExAB1q9/uJp+lZJVe0wLudLUbLvsfH4+iJ1ADKw9Hw=="
       },
       "Microsoft.VisualStudio.Threading.Analyzers": {
         "type": "Direct",

@@ -13,7 +13,7 @@ body:
     id: version
     attributes:
       label: MathAssertions.TUnit version
-      placeholder: "0.2.0"
+      placeholder: "0.3.0"
     validations:
       required: true
 

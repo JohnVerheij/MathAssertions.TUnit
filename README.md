@@ -14,9 +14,9 @@ TUnit-native math assertion library for .NET. Covers tolerance comparisons (scal
 
 ---
 
-## Status: v0.2.0 (per-component diagnostics, axis-angle assertions)
+## Status: v0.3.0 (pose renderer)
 
-The framework-agnostic core is feature-complete across seven topical clusters and the TUnit adapter exposes a near-full fluent surface over `Assert.That(value).Method(...)`; the documented exception is `ReadOnlyTensorSpan<T>`, which is exposed only at the static `MathTolerance` level (see the carve-out note below the table). v0.2.0 adds rich per-component / per-cell delta rendering to every compound `IsApproximatelyEqualTo` failure message and ships `HasAxisAngleApproximately` for axis-angle-form quaternion rotation checks. Every fluent entry point is generated via TUnit's `[GenerateAssertion]` source generator and integrates directly into the existing `Assert.That(...)` pipeline.
+The framework-agnostic core is feature-complete across seven topical clusters and the TUnit adapter exposes a near-full fluent surface over `Assert.That(value).Method(...)`; the documented exception is `ReadOnlyTensorSpan<T>`, which is exposed only at the static `MathTolerance` level (see the carve-out note below the table). v0.2.0 adds rich per-component / per-cell delta rendering to every compound `IsApproximatelyEqualTo` failure message and ships `HasAxisAngleApproximately` for axis-angle-form quaternion rotation checks. Every fluent entry point is generated via TUnit's `[GenerateAssertion]` source generator and integrates directly into the existing `Assert.That(...)` pipeline. v0.3.0 adds the `MathAssertions.Render` namespace with `PoseRenderer`, a pure renderer that turns a position / orientation pose into deterministic, snapshot-friendly text for pinning via `SnapshotAssertions.TUnit`.
 
 | Domain | Coverage |
 |---|---|
@@ -260,6 +260,25 @@ public async Task ComputedPositionIsApproximatelyAtTarget(CancellationToken ct)
 }
 ```
 
+### Pattern: pin a pose as a snapshot
+
+`IsApproximatelyEqualTo` checks one numeric value against a literal expected within tolerance. To pin a *whole pose* (position and orientation together) as a snapshot baseline, render it to deterministic text with `MathAssertions.Render.PoseRenderer` and pin the result. A regression that flips a quaternion sign or swaps two pose fields then surfaces as a snapshot diff, even when each component still passes its own tolerance check.
+
+```csharp
+using MathAssertions.Render;
+
+[Test]
+public async Task GraspPoseMatchesBaseline(CancellationToken ct)
+{
+    (Vector3 position, Quaternion orientation) = SolveGraspPose(input);
+
+    var rendered = PoseRenderer.Render(position, orientation, tolerance: 1e-4);
+    await Assert.That(rendered).MatchesSnapshot();
+}
+```
+
+`PoseRenderer` lives in the framework-agnostic `MathAssertions` core and takes no dependency on a snapshot framework; `MatchesSnapshot()` is from the sibling [`SnapshotAssertions.TUnit`](https://www.nuget.org/packages/SnapshotAssertions.TUnit/) package. The two-line composition is deliberate: the renderer never hard-depends on a snapshot framework. The quaternion is rendered verbatim (the sign is not canonicalized), so a `q` / `-q` flip is caught; the tolerance is recorded into the output, so a tolerance silently loosened during a refactor also shows up as a diff. The `Render(position, tolerance)` and `Render(orientation, tolerance)` overloads pin the position or orientation alone.
+
 ### Pattern: extend the same DSL to your own domain types
 
 The `IsApproximatelyEqualTo` DSL works on any consumer-defined type via a one-line `[GenerateAssertion]` extension that calls `MathTolerance.IsApproximatelyEqual` on each component you care about. Your domain types stay in your own code; the package never sees them.
@@ -436,7 +455,7 @@ This is a 0.x release and the public API may evolve. Specifically:
 
 - **Additive changes** (new entry points, new tolerance overloads, additional `System.Numerics` types) ship in any patch without breaking ApiCompat. Entry points present in a prior version remain present, with compatible signatures, in every subsequent release that targets the same TFM.
 - **Breaking changes** to existing signatures bump the minor version (0.X.0) and are called out in the [CHANGELOG](CHANGELOG.md). v0.2.0 evolved the source-method return types of the compound `IsApproximatelyEqualTo` family from `bool` to `AssertionResult` to enable rich per-component failure messages; the generated TUnit chain extensions (`Assert.That(value).IsApproximatelyEqualTo(...)`) are unaffected at the chain-syntax level.
-- **`PackageValidationBaselineVersion`** pins to the previous shipped version (v0.1.0 as of v0.2.0), so ApiCompat breakage is caught at pack time. Strict-mode baseline validation captures additive changes and intentional API evolution as accepted entries in `CompatibilitySuppressions.xml`.
+- **`PackageValidationBaselineVersion`** pins to the previous shipped version (v0.2.0 as of v0.3.0), so ApiCompat breakage is caught at pack time. Strict-mode baseline validation captures additive changes and intentional API evolution as accepted entries in `CompatibilitySuppressions.xml`.
 
 The 1.0 milestone signals API stability; see [Limitations and future work](#limitations-and-future-work) for what's still being designed.
 
@@ -459,7 +478,12 @@ Foundational catalog established in v0.1.0:
 - **Per-component / per-cell delta failure messages** for every compound `IsApproximatelyEqualTo` chain plus `IsRotationallyEquivalentTo` and `IsGeometricallyEquivalentTo`. Implementation detail; failure-message text is not part of the stable public surface (callers should pin filter / match-count expectations rather than full message-text equality).
 - **`HasAxisAngleApproximately`** on `Quaternion` (both as a `MathTolerance` static and as a fluent extension). Handles the SO(3) double cover and the 180-degree boundary uniformly via the rotational-equivalence dot-product test.
 
-### Planned for v0.3.0+
+### Shipped at v0.3.0
+
+- **`MathAssertions.Render.PoseRenderer`**: the first concrete renderer under the family-shared `*.Render` namespace. A pure static renderer that turns a `Vector3` position and / or a `Quaternion` orientation into deterministic, snapshot-friendly text (`pos:` / `quat:` lines, invariant-culture `F6` components, LF line endings). Self-contained: no dependency on a snapshot framework. Pairs with `SnapshotAssertions.TUnit` via the two-line `Assert.That(PoseRenderer.Render(...)).MatchesSnapshot()` composition. See the [pose-snapshot cookbook entry](#pattern-pin-a-pose-as-a-snapshot).
+- **Dependency-baseline catch-up** to the family-lockstep analyzer and SourceLink versions.
+
+### Planned for v0.4.0+
 
 - **`ReadOnlyTensorSpan<T>` fluent adapter:** the static `MathTolerance.IsApproximatelyEqual(ReadOnlyTensorSpan<T>, ...)` overload exists today; the fluent `await Assert.That(span).IsApproximatelyEqualTo(...)` form is blocked on TUnit's assertion-builder being unable to capture ref-struct values across an `await` and is candidate work for a later release
 - **Geometry3D depth:** OrientedBox SAT intersection, Triangle-Triangle, Hausdorff distance, RANSAC inlier-ratio

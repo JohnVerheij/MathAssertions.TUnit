@@ -69,10 +69,10 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(ArtifactsLocalFeedExists)' == 'true'">
-    <!-- Floating version: consumes whatever 0.2.x preview was packed into the local feed at
-         ../../artifacts. The 0.2.0-* prefix matches both prereleases (0.2.0-rc.x) and the
-         eventual stable 0.2.0 nupkg, so the smoke test resolves cleanly against either. -->
-    <PackageReference Include="MathAssertions.TUnit" Version="0.2.0-*" />
+    <!-- Floating version: consumes whatever 0.3.x preview was packed into the local feed at
+         ../../artifacts. The 0.3.0-* prefix matches both prereleases (0.3.0-rc.x) and the
+         eventual stable 0.3.0 nupkg, so the smoke test resolves cleanly against either. -->
+    <PackageReference Include="MathAssertions.TUnit" Version="0.3.0-*" />
   </ItemGroup>
 
 </Project>
