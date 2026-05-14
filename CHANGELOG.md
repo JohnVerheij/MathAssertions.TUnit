@@ -189,3 +189,8 @@ The wider surface lands at 0.1.0 alongside the load-bearing review fixes M-1 thr
 - SLSA v1.0 build provenance plus CycloneDX 1.6 SBOM plus SPDX 3.0 SBOM plus OpenVEX v0.2.0 plus Sigstore-signed attestations on every release.
 - Source Link, deterministic builds, embedded PDB.
 - TUnit dependency pinned to **1.43.11**.
+
+[Unreleased]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/releases/tag/v0.2.0
+[0.1.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/releases/tag/v0.1.0
+[0.0.1]: https://github.com/JohnVerheij/MathAssertions.TUnit/releases/tag/v0.0.1
