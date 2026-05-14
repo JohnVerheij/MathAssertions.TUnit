@@ -1,29 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<!-- https://learn.microsoft.com/dotnet/fundamentals/package-validation/diagnostic-ids
-     CP0001 on MathFailureMessage: the type is internal but [InternalsVisibleTo] makes it
-     reachable from the sibling MathAssertions.TUnit assembly, so ApiCompat tracks it as a
-     visible-to-friends addition vs the 0.1.0 baseline. Accepted addition; not in the public
-     consumer-facing API surface.
-     CP0002 on MathTolerance.HasAxisAngleApproximately: net-new public method in 0.2.0.
-     CP0003 on assembly version: bumped 0.1.0.0 -> 0.2.0.0. -->
+<!-- https://learn.microsoft.com/dotnet/fundamentals/package-validation/diagnostic-ids -->
 <Suppressions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Suppression>
     <DiagnosticId>CP0001</DiagnosticId>
-    <Target>T:MathAssertions.MathFailureMessage</Target>
-    <Left>lib/net10.0/MathAssertions.dll</Left>
-    <Right>lib/net10.0/MathAssertions.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:MathAssertions.MathTolerance.HasAxisAngleApproximately(System.Numerics.Quaternion,System.Numerics.Vector3,System.Double,System.Double)</Target>
+    <Target>T:MathAssertions.Render.PoseRenderer</Target>
     <Left>lib/net10.0/MathAssertions.dll</Left>
     <Right>lib/net10.0/MathAssertions.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>
   </Suppression>
   <Suppression>
     <DiagnosticId>CP0003</DiagnosticId>
-    <Target>MathAssertions, Version=0.1.0.0, Culture=neutral, PublicKeyToken=null</Target>
+    <Target>MathAssertions, Version=0.2.0.0, Culture=neutral, PublicKeyToken=null</Target>
     <Left>lib/net10.0/MathAssertions.dll</Left>
     <Right>lib/net10.0/MathAssertions.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>

@@ -194,3 +194,12 @@ namespace MathAssertions
         public static System.ValueTuple<double, double> MeanAndVariance(System.ReadOnlySpan<double> values) { }
     }
 }
+namespace MathAssertions.Render
+{
+    public static class PoseRenderer
+    {
+        public static string Render(System.Numerics.Quaternion orientation, double tolerance) { }
+        public static string Render(System.Numerics.Vector3 position, double tolerance) { }
+        public static string Render(System.Numerics.Vector3 position, System.Numerics.Quaternion orientation, double tolerance) { }
+    }
+}
