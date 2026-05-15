@@ -13,7 +13,7 @@ coverage:
         threshold: 1%
     patch:
       default:
-        target: 80%
+        target: 90%
 
 ignore:
   - "**/obj/**"
