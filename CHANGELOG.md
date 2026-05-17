@@ -10,7 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **TUnit dependency bumped `1.44.0` -> `1.44.39`** (and the external-consumer smoke-test pin). 1.44.39 carries the `[GenerateAssertion]` source-generator fix for value-type optional parameters; no behavioural change for this package, taken for family lockstep.
-- **`CONVENTIONS.md` updated to v0.4**: added `JsonAssertions.TUnit` (the fifth family package, JSON path / value / shape assertions) to the family roster. The file is copied identically across all five repos.
+- Updated `CONVENTIONS.md` to v0.7 (cumulative from v0.5).
+- Added `JsonAssertions.TUnit` (the fifth family package, JSON path / value / shape assertions) and `SseAssertions.TUnit` (the sixth family package, Server-Sent Events wire-format assertions) to the `CONVENTIONS.md` family roster.
+- Added a per-package strict-scope policy section to `CONVENTIONS.md` with explicit scope statements for all six packages.
+- Added a core+adapter packaging rule section to `CONVENTIONS.md`: five of six family packages ship core+adapter; `JsonAssertions.TUnit` is the sole single-package member.
+- Synchronised `CONVENTIONS.md` across all six family repos (the file is copied identically).
+- Expanded the `README.md` Family roster to six packages, adding `JsonAssertions.TUnit` and `SseAssertions.TUnit` to the "Family compatibility" section, the "Pair with" section, and the "shared across" line in Contributing.
 
 ## [0.3.0] - 2026-05-14: PoseRenderer + family dependency lockstep
 
