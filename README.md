@@ -475,7 +475,7 @@ This is a 0.x release and the public API may evolve. Specifically:
 
 - **Additive changes** (new entry points, new tolerance overloads, additional `System.Numerics` types) ship in any patch without breaking ApiCompat. Entry points present in a prior version remain present, with compatible signatures, in every subsequent release that targets the same TFM.
 - **Breaking changes** to existing signatures bump the minor version (0.X.0) and are called out in the [CHANGELOG](CHANGELOG.md). v0.2.0 evolved the source-method return types of the compound `IsApproximatelyEqualTo` family from `bool` to `AssertionResult` to enable rich per-component failure messages; the generated TUnit chain extensions (`Assert.That(value).IsApproximatelyEqualTo(...)`) are unaffected at the chain-syntax level.
-- **`PackageValidationBaselineVersion`** pins to the previous shipped version (v0.2.0 as of v0.3.0), so ApiCompat breakage is caught at pack time. Strict-mode baseline validation captures additive changes and intentional API evolution as accepted entries in `CompatibilitySuppressions.xml`.
+- **`PackageValidationBaselineVersion`** pins to the previous shipped version, so ApiCompat breakage is caught at pack time. Strict-mode baseline validation captures additive changes and intentional API evolution as accepted entries in `CompatibilitySuppressions.xml`.
 
 The 1.0 milestone signals API stability; see [Limitations and future work](#limitations-and-future-work) for what's still being designed.
 
