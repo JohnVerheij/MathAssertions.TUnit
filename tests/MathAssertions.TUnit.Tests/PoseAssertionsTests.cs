@@ -11,7 +11,7 @@ namespace MathAssertions.TUnit.Tests;
 /// End-to-end tests for the <c>[GenerateAssertion]</c>-emitted pose / rigid-transform fluent
 /// extensions. Covers the tuple and <see cref="Matrix4x4"/> forms on the happy path and the two
 /// failure halves (position-only and rotation-only), asserting the combined diagnostic names which
-/// half exceeded, plus the non-decomposable-matrix guards.
+/// half exceeded.
 /// </summary>
 [Category("Smoke")]
 [Timeout(5_000)]

@@ -99,19 +99,21 @@ internal sealed class PoseToleranceTests
     public async Task IsPoseApproximatelyEqual_NegativePositionTolerance_Throws(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
-        await Assert.That(() => MathTolerance.IsPoseApproximatelyEqual(
+        var ex = await Assert.That(() => MathTolerance.IsPoseApproximatelyEqual(
                 Vector3.Zero, Quaternion.Identity, Vector3.Zero, Quaternion.Identity,
                 positionTolerance: -1.0, rotationToleranceDegrees: 0.5))
             .Throws<ArgumentOutOfRangeException>();
+        await Assert.That(ex!.ParamName).IsEqualTo("positionTolerance");
     }
 
     [Test]
     public async Task IsPoseApproximatelyEqual_NegativeRotationTolerance_Throws(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
-        await Assert.That(() => MathTolerance.IsPoseApproximatelyEqual(
+        var ex = await Assert.That(() => MathTolerance.IsPoseApproximatelyEqual(
                 Vector3.Zero, Quaternion.Identity, Vector3.Zero, Quaternion.Identity,
                 positionTolerance: 1e-3, rotationToleranceDegrees: -0.5))
             .Throws<ArgumentOutOfRangeException>();
+        await Assert.That(ex!.ParamName).IsEqualTo("rotationToleranceDegrees");
     }
 }

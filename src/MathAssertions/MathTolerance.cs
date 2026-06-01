@@ -680,8 +680,8 @@ public static class MathTolerance
         double positionTolerance,
         double rotationToleranceDegrees)
     {
-        ValidateTolerance(positionTolerance);
-        ValidateTolerance(rotationToleranceDegrees);
+        ValidateTolerance(positionTolerance, nameof(positionTolerance));
+        ValidateTolerance(rotationToleranceDegrees, nameof(rotationToleranceDegrees));
         return PositionDistance(actualPosition, expectedPosition) <= positionTolerance
             && RotationAngleDegrees(actualOrientation, expectedOrientation) <= rotationToleranceDegrees;
     }
