@@ -618,6 +618,75 @@ public static class MathTolerance
     }
 
     /// <summary>
+    /// Returns the geodesic angle between two rotations, in degrees: the magnitude of the single
+    /// rotation that carries one orientation onto the other. The SO(3) double cover is handled by
+    /// taking the absolute dot product, so a quaternion and its negation yield a zero angle. Both
+    /// inputs are normalized internally; the result lies in <c>[0, 180]</c>.
+    /// </summary>
+    /// <param name="a">First rotation.</param>
+    /// <param name="b">Second rotation.</param>
+    /// <returns>The geodesic angle between the two rotations in degrees, in <c>[0, 180]</c>.</returns>
+    public static double RotationAngleDegrees(Quaternion a, Quaternion b)
+    {
+        var aNormalized = Quaternion.Normalize(a);
+        var bNormalized = Quaternion.Normalize(b);
+        // Clamp with Math.Min (not an if) so float rounding that pushes |dot| just past 1.0 cannot
+        // feed Math.Acos a >1 argument (which would return NaN), and so there is no defensive
+        // branch to leave uncovered.
+        double dot = Math.Min(1.0, Math.Abs(Quaternion.Dot(aNormalized, bNormalized)));
+        return Math.Acos(dot) * 2.0 * (180.0 / Math.PI);
+    }
+
+    /// <summary>
+    /// Returns the Euclidean distance between two positions, computed in <see cref="double"/>
+    /// precision (components widen from <see cref="float"/> before the subtraction to avoid
+    /// catastrophic cancellation near large coordinates).
+    /// </summary>
+    /// <param name="a">First position.</param>
+    /// <param name="b">Second position.</param>
+    /// <returns>The Euclidean distance between the two positions.</returns>
+    public static double PositionDistance(Vector3 a, Vector3 b)
+    {
+        double ax = a.X, ay = a.Y, az = a.Z;
+        double bx = b.X, by = b.Y, bz = b.Z;
+        double dx = ax - bx;
+        double dy = ay - by;
+        double dz = az - bz;
+        return Math.Sqrt((dx * dx) + (dy * dy) + (dz * dz));
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> when two rigid poses (a position and an orientation) match
+    /// within separate tolerances: the Euclidean <see cref="PositionDistance(Vector3, Vector3)"/>
+    /// is at most <paramref name="positionTolerance"/> AND the geodesic
+    /// <see cref="RotationAngleDegrees(Quaternion, Quaternion)"/> is at most
+    /// <paramref name="rotationToleranceDegrees"/>. Position and orientation carry different units
+    /// (typically metres vs degrees), so a single shared tolerance would be wrong; the two are
+    /// supplied and evaluated independently.
+    /// </summary>
+    /// <param name="actualPosition">The actual pose translation.</param>
+    /// <param name="actualOrientation">The actual pose rotation.</param>
+    /// <param name="expectedPosition">The expected pose translation.</param>
+    /// <param name="expectedOrientation">The expected pose rotation.</param>
+    /// <param name="positionTolerance">Maximum allowed Euclidean position distance. Non-negative, not NaN.</param>
+    /// <param name="rotationToleranceDegrees">Maximum allowed geodesic rotation angle in degrees. Non-negative, not NaN.</param>
+    /// <returns><see langword="true"/> when both the position and the orientation are within their tolerances.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">Either tolerance is NaN or negative.</exception>
+    public static bool IsPoseApproximatelyEqual(
+        Vector3 actualPosition,
+        Quaternion actualOrientation,
+        Vector3 expectedPosition,
+        Quaternion expectedOrientation,
+        double positionTolerance,
+        double rotationToleranceDegrees)
+    {
+        ValidateTolerance(positionTolerance);
+        ValidateTolerance(rotationToleranceDegrees);
+        return PositionDistance(actualPosition, expectedPosition) <= positionTolerance
+            && RotationAngleDegrees(actualOrientation, expectedOrientation) <= rotationToleranceDegrees;
+    }
+
+    /// <summary>
     /// Returns <see langword="true"/> when two planes describe the same set of points in
     /// 3-space within tolerance. A plane <c>(n, d)</c> and its sign-flipped counterpart
     /// <c>(-n, -d)</c> describe the same geometric plane; this method treats them as

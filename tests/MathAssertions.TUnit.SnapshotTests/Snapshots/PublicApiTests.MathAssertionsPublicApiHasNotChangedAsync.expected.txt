@@ -148,9 +148,12 @@ namespace MathAssertions
         public static bool IsGeometricallyEquivalent(System.Numerics.Plane a, System.Numerics.Plane b, double tolerance) { }
         public static bool IsNonNegativeFinite(double v) { }
         public static bool IsPercentage(double v) { }
+        public static bool IsPoseApproximatelyEqual(System.Numerics.Vector3 actualPosition, System.Numerics.Quaternion actualOrientation, System.Numerics.Vector3 expectedPosition, System.Numerics.Quaternion expectedOrientation, double positionTolerance, double rotationToleranceDegrees) { }
         public static bool IsProbability(double v) { }
         public static bool IsRelativelyAndAbsolutelyClose(double a, double b, double relativeTolerance, double absoluteTolerance) { }
         public static bool IsRotationallyEquivalent(System.Numerics.Quaternion a, System.Numerics.Quaternion b, double tolerance) { }
+        public static double PositionDistance(System.Numerics.Vector3 a, System.Numerics.Vector3 b) { }
+        public static double RotationAngleDegrees(System.Numerics.Quaternion a, System.Numerics.Quaternion b) { }
     }
     public static class NumberTheory
     {

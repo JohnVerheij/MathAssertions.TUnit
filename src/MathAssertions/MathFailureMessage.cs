@@ -351,6 +351,41 @@ internal static class MathFailureMessage
         return sb.ToString();
     }
 
+    /// <summary>
+    /// Renders the combined failure for
+    /// <see cref="MathTolerance.IsPoseApproximatelyEqual(Vector3, Quaternion, Vector3, Quaternion, double, double)"/>:
+    /// the expected and actual pose, the Euclidean position delta, and the geodesic rotation delta
+    /// in degrees, each flagged against its own tolerance so the reader sees which half of the pose
+    /// missed.
+    /// </summary>
+    /// <param name="actualPosition">The actual pose translation.</param>
+    /// <param name="actualOrientation">The actual pose rotation.</param>
+    /// <param name="expectedPosition">The expected pose translation.</param>
+    /// <param name="expectedOrientation">The expected pose rotation.</param>
+    /// <param name="positionTolerance">The Euclidean position tolerance the comparison used.</param>
+    /// <param name="rotationToleranceDegrees">The geodesic rotation tolerance in degrees.</param>
+    /// <param name="positionDelta">The measured Euclidean distance between the positions.</param>
+    /// <param name="rotationDeltaDegrees">The measured geodesic angle between the orientations, in degrees.</param>
+    /// <returns>The rendered failure-message text (multi-line, invariant-culture formatted).</returns>
+    public static string Pose(
+        Vector3 actualPosition,
+        Quaternion actualOrientation,
+        Vector3 expectedPosition,
+        Quaternion expectedOrientation,
+        double positionTolerance,
+        double rotationToleranceDegrees,
+        double positionDelta,
+        double rotationDeltaDegrees)
+    {
+        var sb = new StringBuilder();
+        sb.Append(CultureInfo.InvariantCulture, $"to be the same pose within position tolerance {Fmt(positionTolerance)} and rotation tolerance {Fmt(rotationToleranceDegrees)} degrees").AppendLine();
+        sb.Append(CultureInfo.InvariantCulture, $"  expected: pos {FormatVector(expectedPosition)} quat {FormatQuaternion(expectedOrientation)}").AppendLine();
+        sb.Append(CultureInfo.InvariantCulture, $"  actual:   pos {FormatVector(actualPosition)} quat {FormatQuaternion(actualOrientation)}").AppendLine();
+        sb.Append(CultureInfo.InvariantCulture, $"  position: delta={Fmt(positionDelta)} (tolerance {Fmt(positionTolerance)}) {(positionDelta <= positionTolerance ? "OK" : "EXCEEDED")}").AppendLine();
+        sb.Append(CultureInfo.InvariantCulture, $"  rotation: delta={Fmt(rotationDeltaDegrees)} degrees (tolerance {Fmt(rotationToleranceDegrees)} degrees) {(rotationDeltaDegrees <= rotationToleranceDegrees ? "OK" : "EXCEEDED")}");
+        return sb.ToString();
+    }
+
     private static void AppendHeader(StringBuilder sb, string expectedRendered, double tolerance)
     {
         sb.Append(CultureInfo.InvariantCulture, $"to be approximately equal to {expectedRendered} component-wise within tolerance {Fmt(tolerance)}").AppendLine();

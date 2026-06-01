@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-06-01: pose and rigid-transform approximate-equality assertions
+
+Feature release. Adds the pose assertion the package's `PoseRenderer` was waiting for: a pose is a position and an orientation together, so `IsPoseApproximatelyEqualTo` compares both halves in one call with separate position (length) and rotation (degrees) tolerances and one combined diagnostic that names which half missed. Also folds in the accumulated CI hardening, the Renovate migration, and the CONVENTIONS v0.7 sync that had collected on the unreleased line.
+
+### Added
+
+- **`Assert.That((position, orientation)).IsPoseApproximatelyEqualTo((expectedPosition, expectedOrientation), positionTolerance, rotationToleranceDegrees)`** (TUnit adapter) compares a `(Vector3, Quaternion)` pose in one call. The two halves use separate tolerances because they carry different units: a Euclidean position distance and a geodesic rotation angle in degrees. On failure the combined message renders both poses and the measured position and rotation deltas, flagging which half exceeded its tolerance. The orientation comparison uses the SO(3) metric, so a quaternion and its negation are the same rotation. Source-generated via `[GenerateAssertion]`.
+- **`Assert.That(matrix).IsRigidTransformApproximatelyEqualTo(expectedMatrix, positionTolerance, rotationToleranceDegrees)`** (TUnit adapter) is the `Matrix4x4` overload (a pose is a rigid transform). Translation is read from `Matrix4x4.Translation` and rotation via `Quaternion.CreateFromRotationMatrix`; the overload assumes a rigid transform (orthonormal rotation, unit scale).
+- **`MathTolerance.IsPoseApproximatelyEqual(...)`, `RotationAngleDegrees(Quaternion, Quaternion)`, and `PositionDistance(Vector3, Vector3)`** (framework-agnostic core) back the assertions: the geodesic rotation angle in degrees, the double-precision Euclidean position distance, and the combined pose predicate.
+
 ### Changed
 
 - Removed `paths-ignore` from `.github/workflows/ci.yml` so the `Build, test & pack` required check always reports a status. Without the fix, docs-only PRs stuck in `Expected - Waiting for status to be reported` and could not satisfy branch protection.
@@ -244,7 +254,8 @@ The wider surface lands at 0.1.0 alongside the load-bearing review fixes M-1 thr
 - Source Link, deterministic builds, embedded PDB.
 - TUnit dependency pinned to **1.43.11**.
 
-[Unreleased]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/releases/tag/v0.4.0
 [0.3.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/releases/tag/v0.3.0
 [0.2.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/releases/tag/v0.2.0
 [0.1.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/releases/tag/v0.1.0

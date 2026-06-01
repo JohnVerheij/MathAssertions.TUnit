@@ -17,7 +17,7 @@ TUnit-native math assertion library for .NET. Covers tolerance comparisons (scal
 
 ## Status
 
-The framework-agnostic core is feature-complete across seven topical clusters and the TUnit adapter exposes a near-full fluent surface over `Assert.That(value).Method(...)`; the documented exception is `ReadOnlyTensorSpan<T>`, which is exposed only at the static `MathTolerance` level (see the carve-out note below the table). v0.2.0 adds rich per-component / per-cell delta rendering to every compound `IsApproximatelyEqualTo` failure message and ships `HasAxisAngleApproximately` for axis-angle-form quaternion rotation checks. Every fluent entry point is generated via TUnit's `[GenerateAssertion]` source generator and integrates directly into the existing `Assert.That(...)` pipeline. v0.3.0 adds the `MathAssertions.Render` namespace with `PoseRenderer`, a pure renderer that turns a position / orientation pose into deterministic, snapshot-friendly text for pinning via `SnapshotAssertions.TUnit`.
+The framework-agnostic core is feature-complete across seven topical clusters and the TUnit adapter exposes a near-full fluent surface over `Assert.That(value).Method(...)`; the documented exception is `ReadOnlyTensorSpan<T>`, which is exposed only at the static `MathTolerance` level (see the carve-out note below the table). v0.2.0 adds rich per-component / per-cell delta rendering to every compound `IsApproximatelyEqualTo` failure message and ships `HasAxisAngleApproximately` for axis-angle-form quaternion rotation checks. Every fluent entry point is generated via TUnit's `[GenerateAssertion]` source generator and integrates directly into the existing `Assert.That(...)` pipeline. v0.3.0 adds the `MathAssertions.Render` namespace with `PoseRenderer`, a pure renderer that turns a position / orientation pose into deterministic, snapshot-friendly text for pinning via `SnapshotAssertions.TUnit`. v0.4.0 adds `IsPoseApproximatelyEqualTo` (and the `Matrix4x4` overload `IsRigidTransformApproximatelyEqualTo`), comparing a pose's position and orientation in one call with separate tolerances and a combined failure diagnostic.
 
 | Domain | Coverage |
 |---|---|
@@ -195,6 +195,25 @@ await Assert.That(rotation)
 ```
 
 `HasAxisAngleApproximately` handles the SO(3) double cover and the 180-degree boundary; both `q` and `-q` for the same rotation, as well as `(axis, +180°)` / `(axis, -180°)` / `(-axis, ±180°)`, compare equivalent to the same expected axis-angle pair. Internally compares via the rotational-equivalence dot-product test, then renders the extracted axis / angle in the failure message for diagnosis.
+
+### Pose / rigid-transform approximate equality
+
+A pose is a position and an orientation together. `IsPoseApproximatelyEqualTo` compares both halves in one call, with *separate* tolerances because they carry different units: position as a Euclidean distance, rotation as a geodesic angle in degrees.
+
+```csharp
+(Vector3 position, Quaternion orientation) actual = SolveGraspPose(input);
+
+await Assert.That((actual.position, actual.orientation))
+    .IsPoseApproximatelyEqualTo((expectedPosition, expectedOrientation),
+        positionTolerance: 1e-3, rotationToleranceDegrees: 0.5);
+
+// Matrix4x4 overload: a pose is a rigid transform.
+await Assert.That(actualTransform)
+    .IsRigidTransformApproximatelyEqualTo(expectedTransform,
+        positionTolerance: 1e-3, rotationToleranceDegrees: 0.5);
+```
+
+The orientation comparison uses the SO(3) metric, so `q` and `-q` are the same rotation. On failure the combined message renders both poses and the measured position and rotation deltas, flagging which half exceeded its tolerance, so a position-only or orientation-only miss is read at a glance rather than from two independent assertions.
 
 ### Statistics on a sample
 

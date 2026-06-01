@@ -114,6 +114,17 @@ namespace MathAssertions.TUnit
         [TUnit.Assertions.Attributes.GenerateAssertion(InlineMethodBody=true)]
         public static TUnit.Assertions.Core.AssertionResult IsGeometricallyEquivalentTo(this System.Numerics.Plane value, System.Numerics.Plane expected, double tolerance) { }
     }
+    public static class PoseAssertions
+    {
+        [TUnit.Assertions.Attributes.GenerateAssertion(InlineMethodBody=true)]
+        public static TUnit.Assertions.Core.AssertionResult IsPoseApproximatelyEqualTo([System.Runtime.CompilerServices.TupleElementNames(new string[] {
+                "Position",
+                "Orientation"})] this System.ValueTuple<System.Numerics.Vector3, System.Numerics.Quaternion> value, [System.Runtime.CompilerServices.TupleElementNames(new string[] {
+                "Position",
+                "Orientation"})] System.ValueTuple<System.Numerics.Vector3, System.Numerics.Quaternion> expected, double positionTolerance, double rotationToleranceDegrees) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(InlineMethodBody=true)]
+        public static TUnit.Assertions.Core.AssertionResult IsRigidTransformApproximatelyEqualTo(this System.Numerics.Matrix4x4 value, System.Numerics.Matrix4x4 expected, double positionTolerance, double rotationToleranceDegrees) { }
+    }
     public static class QuaternionAssertions
     {
         [TUnit.Assertions.Attributes.GenerateAssertion(InlineMethodBody=true)]
@@ -529,6 +540,12 @@ namespace TUnit.Assertions.Extensions
         protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Matrix4x4> metadata) { }
         protected override string GetExpectation() { }
     }
+    public sealed class Matrix4x4_IsRigidTransformApproximatelyEqualTo_Matrix4x4_Double_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Matrix4x4>
+    {
+        public Matrix4x4_IsRigidTransformApproximatelyEqualTo_Matrix4x4_Double_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Matrix4x4> context, System.Numerics.Matrix4x4 expected, double positionTolerance, double rotationToleranceDegrees) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Matrix4x4> metadata) { }
+        protected override string GetExpectation() { }
+    }
     public sealed class Matrix4x4_IsSymmetric_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Matrix4x4>
     {
         public Matrix4x4_IsSymmetric_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Matrix4x4> context, double tolerance) { }
@@ -576,6 +593,15 @@ namespace TUnit.Assertions.Extensions
         public Plane_IsGeometricallyEquivalentTo_Plane_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Plane> context, System.Numerics.Plane expected, double tolerance) { }
         protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Plane> metadata) { }
         protected override string GetExpectation() { }
+    }
+    public static class PoseAssertions
+    {
+        public static TUnit.Assertions.Extensions.ValueTupleVector3Quaternion_IsPoseApproximatelyEqualTo_ValueTupleVector3Quaternion_Double_Double_Assertion IsPoseApproximatelyEqualTo([System.Runtime.CompilerServices.TupleElementNames(new string?[]?[] {
+                "Position",
+                "Orientation"})] this TUnit.Assertions.Core.IAssertionSource<System.ValueTuple<System.Numerics.Vector3, System.Numerics.Quaternion>> source, [System.Runtime.CompilerServices.TupleElementNames(new string?[]?[] {
+                "Position",
+                "Orientation"})] System.ValueTuple<System.Numerics.Vector3, System.Numerics.Quaternion> expected, double positionTolerance, double rotationToleranceDegrees, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("positionTolerance")] string? positionToleranceExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("rotationToleranceDegrees")] string? rotationToleranceDegreesExpression = null) { }
+        public static TUnit.Assertions.Extensions.Matrix4x4_IsRigidTransformApproximatelyEqualTo_Matrix4x4_Double_Double_Assertion IsRigidTransformApproximatelyEqualTo(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Matrix4x4> source, System.Numerics.Matrix4x4 expected, double positionTolerance, double rotationToleranceDegrees, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("positionTolerance")] string? positionToleranceExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("rotationToleranceDegrees")] string? rotationToleranceDegreesExpression = null) { }
     }
     public static class QuaternionAssertions
     {
@@ -709,6 +735,21 @@ namespace TUnit.Assertions.Extensions
     {
         public Triangle3D_IsDegenerate_Double_Assertion(TUnit.Assertions.Core.AssertionContext<MathAssertions.Geometry3D.Triangle3D> context, double tolerance) { }
         protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<MathAssertions.Geometry3D.Triangle3D> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    [System.Runtime.CompilerServices.TupleElementNames(new string[] {
+            "Position",
+            "Orientation"})]
+    public sealed class ValueTupleVector3Quaternion_IsPoseApproximatelyEqualTo_ValueTupleVector3Quaternion_Double_Double_Assertion : TUnit.Assertions.Core.Assertion<System.ValueTuple<System.Numerics.Vector3, System.Numerics.Quaternion>>
+    {
+        public ValueTupleVector3Quaternion_IsPoseApproximatelyEqualTo_ValueTupleVector3Quaternion_Double_Double_Assertion([System.Runtime.CompilerServices.TupleElementNames(new string[] {
+                "Position",
+                "Orientation"})] TUnit.Assertions.Core.AssertionContext<System.ValueTuple<System.Numerics.Vector3, System.Numerics.Quaternion>> context, [System.Runtime.CompilerServices.TupleElementNames(new string[] {
+                "Position",
+                "Orientation"})] System.ValueTuple<System.Numerics.Vector3, System.Numerics.Quaternion> expected, double positionTolerance, double rotationToleranceDegrees) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync([System.Runtime.CompilerServices.TupleElementNames(new string[] {
+                "Position",
+                "Orientation"})] TUnit.Assertions.Core.EvaluationMetadata<System.ValueTuple<System.Numerics.Vector3, System.Numerics.Quaternion>> metadata) { }
         protected override string GetExpectation() { }
     }
     public sealed class Vector2_IsApproximatelyEqualTo_Vector2_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Vector2>
