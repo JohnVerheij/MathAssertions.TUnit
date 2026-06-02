@@ -17,7 +17,7 @@ TUnit-native math assertion library for .NET. Covers tolerance comparisons (scal
 
 ## Status
 
-The framework-agnostic core is feature-complete across seven topical clusters and the TUnit adapter exposes a near-full fluent surface over `Assert.That(value).Method(...)`; the documented exception is `ReadOnlyTensorSpan<T>`, which is exposed only at the static `MathTolerance` level (see the carve-out note below the table). v0.2.0 adds rich per-component / per-cell delta rendering to every compound `IsApproximatelyEqualTo` failure message and ships `HasAxisAngleApproximately` for axis-angle-form quaternion rotation checks. Every fluent entry point is generated via TUnit's `[GenerateAssertion]` source generator and integrates directly into the existing `Assert.That(...)` pipeline. v0.3.0 adds the `MathAssertions.Render` namespace with `PoseRenderer`, a pure renderer that turns a position / orientation pose into deterministic, snapshot-friendly text for pinning via `SnapshotAssertions.TUnit`.
+The framework-agnostic core is feature-complete across seven topical clusters and the TUnit adapter exposes a near-full fluent surface over `Assert.That(value).Method(...)`; the documented exception is `ReadOnlyTensorSpan<T>`, which is exposed only at the static `MathTolerance` level (see the carve-out note below the table). v0.2.0 adds rich per-component / per-cell delta rendering to every compound `IsApproximatelyEqualTo` failure message and ships `HasAxisAngleApproximately` for axis-angle-form quaternion rotation checks. Every fluent entry point is generated via TUnit's `[GenerateAssertion]` source generator and integrates directly into the existing `Assert.That(...)` pipeline. v0.3.0 adds the `MathAssertions.Render` namespace with `PoseRenderer`, a pure renderer that turns a position / orientation pose into deterministic, snapshot-friendly text for pinning via `SnapshotAssertions.TUnit`. v0.4.0 adds `IsPoseApproximatelyEqualTo` (and the `Matrix4x4` overload `IsRigidTransformApproximatelyEqualTo`), comparing a pose's position and orientation in one call with separate tolerances and a combined failure diagnostic.
 
 | Domain | Coverage |
 |---|---|
@@ -195,6 +195,25 @@ await Assert.That(rotation)
 ```
 
 `HasAxisAngleApproximately` handles the SO(3) double cover and the 180-degree boundary; both `q` and `-q` for the same rotation, as well as `(axis, +180°)` / `(axis, -180°)` / `(-axis, ±180°)`, compare equivalent to the same expected axis-angle pair. Internally compares via the rotational-equivalence dot-product test, then renders the extracted axis / angle in the failure message for diagnosis.
+
+### Pose / rigid-transform approximate equality
+
+A pose is a position and an orientation together. `IsPoseApproximatelyEqualTo` compares both halves in one call, with *separate* tolerances because they carry different units: position as a Euclidean distance, rotation as a geodesic angle in degrees.
+
+```csharp
+(Vector3 position, Quaternion orientation) actual = SolveGraspPose(input);
+
+await Assert.That((actual.position, actual.orientation))
+    .IsPoseApproximatelyEqualTo((expectedPosition, expectedOrientation),
+        positionTolerance: 1e-3, rotationToleranceDegrees: 0.5);
+
+// Matrix4x4 overload: a pose is a rigid transform.
+await Assert.That(actualTransform)
+    .IsRigidTransformApproximatelyEqualTo(expectedTransform,
+        positionTolerance: 1e-3, rotationToleranceDegrees: 0.5);
+```
+
+The orientation comparison uses the SO(3) metric, so `q` and `-q` are the same rotation. On failure the combined message renders both poses and the measured position and rotation deltas, flagging which half exceeded its tolerance, so a position-only or orientation-only miss is read at a glance rather than from two independent assertions.
 
 ### Statistics on a sample
 
@@ -456,7 +475,7 @@ This is a 0.x release and the public API may evolve. Specifically:
 
 - **Additive changes** (new entry points, new tolerance overloads, additional `System.Numerics` types) ship in any patch without breaking ApiCompat. Entry points present in a prior version remain present, with compatible signatures, in every subsequent release that targets the same TFM.
 - **Breaking changes** to existing signatures bump the minor version (0.X.0) and are called out in the [CHANGELOG](CHANGELOG.md). v0.2.0 evolved the source-method return types of the compound `IsApproximatelyEqualTo` family from `bool` to `AssertionResult` to enable rich per-component failure messages; the generated TUnit chain extensions (`Assert.That(value).IsApproximatelyEqualTo(...)`) are unaffected at the chain-syntax level.
-- **`PackageValidationBaselineVersion`** pins to the previous shipped version (v0.2.0 as of v0.3.0), so ApiCompat breakage is caught at pack time. Strict-mode baseline validation captures additive changes and intentional API evolution as accepted entries in `CompatibilitySuppressions.xml`.
+- **`PackageValidationBaselineVersion`** pins to the previous shipped version, so ApiCompat breakage is caught at pack time. Strict-mode baseline validation captures additive changes and intentional API evolution as accepted entries in `CompatibilitySuppressions.xml`.
 
 The 1.0 milestone signals API stability; see [Limitations and future work](#limitations-and-future-work) for what's still being designed.
 
@@ -502,7 +521,7 @@ Foundational catalog established in v0.1.0:
 
 ## Family compatibility
 
-The six assertion-family packages release independently and target the same .NET TFM at any moment (LTS-anchored, multi-target during STS support windows; see the [TFM policy in CONVENTIONS.md](CONVENTIONS.md#tfm-policy) for the rotation schedule). **Mix versions freely.** Each package ships under SemVer with `EnablePackageValidation` strict-mode ApiCompat against its previous baseline, so binary breaks within a version line are caught at pack time.
+The seven assertion-family packages release independently and target the same .NET TFM at any moment (LTS-anchored, multi-target during STS support windows; see the [TFM policy in CONVENTIONS.md](CONVENTIONS.md#tfm-policy) for the rotation schedule). **Mix versions freely.** Each package ships under SemVer with `EnablePackageValidation` strict-mode ApiCompat against its previous baseline, so binary breaks within a version line are caught at pack time.
 
 For per-package release notes:
 
@@ -512,6 +531,7 @@ For per-package release notes:
 - [MathAssertions.TUnit CHANGELOG](https://github.com/JohnVerheij/MathAssertions.TUnit/blob/main/CHANGELOG.md)
 - [JsonAssertions.TUnit CHANGELOG](https://github.com/JohnVerheij/JsonAssertions.TUnit/blob/main/CHANGELOG.md)
 - [SseAssertions.TUnit CHANGELOG](https://github.com/JohnVerheij/SseAssertions.TUnit/blob/main/CHANGELOG.md)
+- [GrpcAssertions.TUnit CHANGELOG](https://github.com/JohnVerheij/GrpcAssertions.TUnit/blob/main/CHANGELOG.md)
 
 ## Pair with
 
@@ -520,6 +540,7 @@ For per-package release notes:
 - **[`TimeAssertions.TUnit`](https://www.nuget.org/packages/TimeAssertions.TUnit/):** assertion-level timing budgets via `.And.WithinTimeBudget(...)`. Compose with any `IsApproximatelyEqualTo` chain for combined value+timing assertions.
 - **[`JsonAssertions.TUnit`](https://www.nuget.org/packages/JsonAssertions.TUnit/):** fluent JSON assertions over `System.Text.Json`, HTTP response bodies (including RFC 7807 ProblemDetails), and source-generated `JsonSerializerContext` registration.
 - **[`SseAssertions.TUnit`](https://www.nuget.org/packages/SseAssertions.TUnit/):** Server-Sent Events (SSE) wire-format assertions: event-count, field shape (`event:`, `data:`, `id:`, `retry:`), and stream content validation.
+- **[`GrpcAssertions.TUnit`](https://www.nuget.org/packages/GrpcAssertions.TUnit/):** fluent gRPC outcome assertions (`ThrowsGrpcException` with `StatusCode` shorthands and detail refinements) plus the `GrpcCallBuilder` test-double helper.
 
 ## Contributing
 
