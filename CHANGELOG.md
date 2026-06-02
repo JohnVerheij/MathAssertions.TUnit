@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.4.0] - 2026-06-01: pose and rigid-transform approximate-equality assertions
+## [0.4.0] - 2026-06-02: pose and rigid-transform approximate-equality assertions
 
 Feature release. Adds the pose assertion the package's `PoseRenderer` was waiting for: a pose is a position and an orientation together, so `IsPoseApproximatelyEqualTo` compares both halves in one call with separate position (length) and rotation (degrees) tolerances and one combined diagnostic that names which half missed. Also folds in the accumulated CI hardening, the Renovate migration, and the CONVENTIONS v0.7 sync that had collected on the unreleased line.
 
