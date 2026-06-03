@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-06-03
+
+Bug-fix release. No public API signature change.
+
+### Fixed
+
+- **`IsPoseApproximatelyEqualTo`** (and the `Matrix4x4` overload `IsRigidTransformApproximatelyEqualTo`, and the underlying `MathTolerance.RotationAngleDegrees`) reported a non-zero rotation angle for a pose compared with itself, failing on identical inputs. The geodesic angle was computed as `2 * acos(|dot|)`, and `acos` has infinite slope at `dot = 1`, so the residual float error of normalizing a non-unit quaternion (any quaternion whose magnitude is not exactly 1) was amplified into a spurious angle large enough to exceed a tight rotation tolerance. The metric is now the numerically-stable `theta = 2 * atan2(||imag(q1 * conj(q2))||, |real(q1 * conj(q2))|)`, which is well-conditioned across the whole 0-180 degree range, and both quaternions are normalized in double precision before measuring (a quaternion and any positive scalar multiple are the same rotation), so a quaternion compared with itself now measures exactly zero.
+- **`IsPoseApproximatelyEqual`** now handles a degenerate, non-normalizable orientation (squared magnitude underflows to zero, e.g. `default(Quaternion)` = `(0, 0, 0, 0)`), which has no defined geodesic angle. The orientation half falls back to a componentwise comparison against a tight fixed tolerance, independent of the caller's rotation tolerance: the rotation tolerance is a degrees value, and reusing it would be far too permissive (a tolerance of 1 or more would accept a zero quaternion as equal to a real rotation, whose nearest component delta is at most 1). So a default-pose round-trip (`(0,0,0,0)` vs `(0,0,0,0)`) passes, while `(0,0,0,0)` compared with a real rotation fails regardless of the angular tolerance, with the combined diagnostic naming the rotation half.
+
 ## [0.4.0] - 2026-06-02: pose and rigid-transform approximate-equality assertions
 
 Feature release. Adds the pose assertion the package's `PoseRenderer` was waiting for: a pose is a position and an orientation together, so `IsPoseApproximatelyEqualTo` compares both halves in one call with separate position (length) and rotation (degrees) tolerances and one combined diagnostic that names which half missed. Also folds in the accumulated CI hardening, the Renovate migration, and the CONVENTIONS v0.7 sync that had collected on the unreleased line.
@@ -254,7 +263,8 @@ The wider surface lands at 0.1.0 alongside the load-bearing review fixes M-1 thr
 - Source Link, deterministic builds, embedded PDB.
 - TUnit dependency pinned to **1.43.11**.
 
-[Unreleased]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/JohnVerheij/MathAssertions.TUnit/releases/tag/v0.4.1
 [0.4.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/releases/tag/v0.4.0
 [0.3.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/releases/tag/v0.3.0
 [0.2.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/releases/tag/v0.2.0

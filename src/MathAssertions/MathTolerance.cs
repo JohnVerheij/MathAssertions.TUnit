@@ -620,21 +620,105 @@ public static class MathTolerance
     /// <summary>
     /// Returns the geodesic angle between two rotations, in degrees: the magnitude of the single
     /// rotation that carries one orientation onto the other. The SO(3) double cover is handled by
-    /// taking the absolute dot product, so a quaternion and its negation yield a zero angle. Both
-    /// inputs are normalized internally; the result lies in <c>[0, 180]</c>.
+    /// taking the absolute value of the relative quaternion's real part, so a quaternion and its
+    /// negation yield a zero angle. Both inputs are normalized internally; the result lies in
+    /// <c>[0, 180]</c>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The angle is computed from the relative rotation <c>r = a * conj(b)</c> as
+    /// <c>theta = 2 * atan2(‖imag(r)‖, |real(r)|)</c>. This <c>atan2</c> form is numerically
+    /// stable across the whole <c>0°-180°</c> range: unlike <c>2 * acos(|dot|)</c>, it does not
+    /// sit on the infinite-slope shoulder of <c>acos</c> near <c>dot = 1</c>, where the residual
+    /// float error of normalizing a non-unit quaternion would otherwise be amplified into a
+    /// spurious non-zero angle (so <c>d(q, q)</c> measured as non-zero for nearly every real
+    /// quaternion). The relative quaternion is formed in <see cref="double"/> precision after a
+    /// double-precision normalization, so the metric is symmetric and a quaternion compared with
+    /// itself yields exactly <c>0</c>.
+    /// </para>
+    /// <para>
+    /// A quaternion that is not normalizable (squared magnitude underflows to zero, e.g.
+    /// <c>default(Quaternion)</c> = <c>(0, 0, 0, 0)</c>) has no defined rotation axis, so no
+    /// geodesic angle exists; this method returns <see cref="double.NaN"/> in that case. Callers
+    /// that need a defined verdict for the zero quaternion (such as
+    /// <see cref="IsPoseApproximatelyEqual(Vector3, Quaternion, Vector3, Quaternion, double, double)"/>)
+    /// fall back to a componentwise comparison.
+    /// </para>
+    /// </remarks>
+    /// <param name="a">First rotation.</param>
+    /// <param name="b">Second rotation.</param>
+    /// <returns>The geodesic angle between the two rotations in degrees, in <c>[0, 180]</c>;
+    /// or <see cref="double.NaN"/> when either input is not normalizable.</returns>
+    public static double RotationAngleDegrees(Quaternion a, Quaternion b)
+    {
+        return TryRotationAngleDegrees(a, b, out double angle) ? angle : double.NaN;
+    }
+
+    /// <summary>
+    /// Computes the geodesic angle between two rotations in degrees using the numerically-stable
+    /// <c>2 * atan2(‖imag(r)‖, |real(r)|)</c> form on the relative quaternion <c>r = a * conj(b)</c>,
+    /// reporting via <paramref name="angleDegrees"/>. Returns <see langword="false"/> when either
+    /// input is not normalizable (squared magnitude underflows to zero), in which case no geodesic
+    /// angle is defined.
     /// </summary>
     /// <param name="a">First rotation.</param>
     /// <param name="b">Second rotation.</param>
-    /// <returns>The geodesic angle between the two rotations in degrees, in <c>[0, 180]</c>.</returns>
-    public static double RotationAngleDegrees(Quaternion a, Quaternion b)
+    /// <param name="angleDegrees">Receives the geodesic angle in degrees, in <c>[0, 180]</c>, when
+    /// the method returns <see langword="true"/>; otherwise <c>0</c>.</param>
+    /// <returns><see langword="true"/> when both inputs are normalizable and an angle was computed;
+    /// <see langword="false"/> when either input is not normalizable.</returns>
+    internal static bool TryRotationAngleDegrees(Quaternion a, Quaternion b, out double angleDegrees)
     {
-        var aNormalized = Quaternion.Normalize(a);
-        var bNormalized = Quaternion.Normalize(b);
-        // Clamp with Math.Min (not an if) so float rounding that pushes |dot| just past 1.0 cannot
-        // feed Math.Acos a >1 argument (which would return NaN), and so there is no defensive
-        // branch to leave uncovered.
-        double dot = Math.Min(1.0, Math.Abs(Quaternion.Dot(aNormalized, bNormalized)));
-        return Math.Acos(dot) * 2.0 * (180.0 / Math.PI);
+        if (!TryNormalizeToDouble(a, out double ax, out double ay, out double az, out double aw)
+            || !TryNormalizeToDouble(b, out double bx, out double by, out double bz, out double bw))
+        {
+            angleDegrees = 0.0;
+            return false;
+        }
+
+        // Relative rotation r = a * conj(b), with conj(b) = (-bx, -by, -bz, bw), formed in double
+        // precision. The real part is the cosine of the half-angle; the imaginary magnitude is its
+        // sine. atan2 of the two is stable over the full 0-180 degree range.
+        double rw = (aw * bw) + (ax * bx) + (ay * by) + (az * bz);
+        double rx = (-aw * bx) + (ax * bw) - (ay * bz) + (az * by);
+        double ry = (-aw * by) + (ax * bz) + (ay * bw) - (az * bx);
+        double rz = (-aw * bz) - (ax * by) + (ay * bx) + (az * bw);
+
+        double imaginaryNorm = Math.Sqrt((rx * rx) + (ry * ry) + (rz * rz));
+        // |real(r)| collapses the SO(3) double cover: q and -q yield the same angle.
+        double halfAngle = Math.Atan2(imaginaryNorm, Math.Abs(rw));
+        angleDegrees = halfAngle * 2.0 * (180.0 / Math.PI);
+        return true;
+    }
+
+    /// <summary>
+    /// Normalizes <paramref name="q"/> to unit magnitude in <see cref="double"/> precision,
+    /// reporting the components through the <see langword="out"/> parameters. Returns <see langword="false"/>
+    /// when the squared magnitude is non-finite or underflows to zero (the quaternion has no
+    /// defined direction and cannot be normalized).
+    /// </summary>
+    /// <param name="q">The quaternion to normalize.</param>
+    /// <param name="x">Receives the normalized X component.</param>
+    /// <param name="y">Receives the normalized Y component.</param>
+    /// <param name="z">Receives the normalized Z component.</param>
+    /// <param name="w">Receives the normalized W component.</param>
+    /// <returns><see langword="true"/> when normalization succeeded; otherwise <see langword="false"/>.</returns>
+    private static bool TryNormalizeToDouble(Quaternion q, out double x, out double y, out double z, out double w)
+    {
+        double qx = q.X, qy = q.Y, qz = q.Z, qw = q.W;
+        double lengthSquared = (qx * qx) + (qy * qy) + (qz * qz) + (qw * qw);
+        if (!double.IsFinite(lengthSquared) || lengthSquared <= 0.0)
+        {
+            x = y = z = w = 0.0;
+            return false;
+        }
+
+        double inverseLength = 1.0 / Math.Sqrt(lengthSquared);
+        x = qx * inverseLength;
+        y = qy * inverseLength;
+        z = qz * inverseLength;
+        w = qw * inverseLength;
+        return true;
     }
 
     /// <summary>
@@ -655,6 +739,12 @@ public static class MathTolerance
         return Math.Sqrt((dx * dx) + (dy * dy) + (dz * dz));
     }
 
+    /// <summary>Component-space tolerance for the degenerate-orientation fallback in
+    /// <see cref="IsPoseApproximatelyEqual"/>. Tight and fixed (not the caller's degrees value, which
+    /// would be far too permissive) so a non-normalizable quaternion only matches a near-identical one,
+    /// never a real rotation.</summary>
+    private const double DegenerateOrientationComponentTolerance = 1e-6;
+
     /// <summary>
     /// Returns <see langword="true"/> when two rigid poses (a position and an orientation) match
     /// within separate tolerances: the Euclidean <see cref="PositionDistance(Vector3, Vector3)"/>
@@ -671,6 +761,21 @@ public static class MathTolerance
     /// <param name="positionTolerance">Maximum allowed Euclidean position distance. Non-negative, not NaN.</param>
     /// <param name="rotationToleranceDegrees">Maximum allowed geodesic rotation angle in degrees. Non-negative, not NaN.</param>
     /// <returns><see langword="true"/> when both the position and the orientation are within their tolerances.</returns>
+    /// <remarks>
+    /// <para>
+    /// Degenerate orientation: a quaternion that is not normalizable (squared magnitude underflows
+    /// to zero, e.g. <c>default(Quaternion)</c> = <c>(0, 0, 0, 0)</c>) has no defined rotation axis,
+    /// so the geodesic angle from
+    /// <see cref="RotationAngleDegrees(Quaternion, Quaternion)"/> is undefined. Rather than fail a
+    /// legitimate default-pose round-trip, the orientation half falls back to a componentwise
+    /// comparison against a tight fixed tolerance
+    /// (<see cref="DegenerateOrientationComponentTolerance"/>), independent of
+    /// <paramref name="rotationToleranceDegrees"/>. Reusing the degrees value would be far too
+    /// permissive (a tolerance of 1 or more would accept a zero quaternion as equal to a real
+    /// rotation). So <c>(0, 0, 0, 0)</c> compared with itself passes, while <c>(0, 0, 0, 0)</c>
+    /// compared with any real rotation fails on the component deltas regardless of the angular tolerance.
+    /// </para>
+    /// </remarks>
     /// <exception cref="ArgumentOutOfRangeException">Either tolerance is NaN or negative.</exception>
     public static bool IsPoseApproximatelyEqual(
         Vector3 actualPosition,
@@ -682,8 +787,21 @@ public static class MathTolerance
     {
         ValidateTolerance(positionTolerance, nameof(positionTolerance));
         ValidateTolerance(rotationToleranceDegrees, nameof(rotationToleranceDegrees));
-        return PositionDistance(actualPosition, expectedPosition) <= positionTolerance
-            && RotationAngleDegrees(actualOrientation, expectedOrientation) <= rotationToleranceDegrees;
+        if (PositionDistance(actualPosition, expectedPosition) > positionTolerance)
+        {
+            return false;
+        }
+
+        // When either orientation is not normalizable, no geodesic angle is defined; fall back to a
+        // componentwise comparison against a tight fixed tolerance (not the degrees value, which would
+        // accept a zero quaternion as equal to a real rotation once the angular tolerance reaches 1).
+        if (TryRotationAngleDegrees(actualOrientation, expectedOrientation, out double angleDegrees))
+        {
+            return angleDegrees <= rotationToleranceDegrees;
+        }
+
+        return IsApproximatelyEqual(
+            actualOrientation, expectedOrientation, DegenerateOrientationComponentTolerance);
     }
 
     /// <summary>

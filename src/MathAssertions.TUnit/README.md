@@ -13,7 +13,7 @@ TUnit-native math assertion library for .NET. Covers tolerance comparisons, sequ
 
 ## Status
 
-The mathematical-assertion surface is exposed as fluent extensions over TUnit's `Assert.That(value).Method(...)`. ~85 fluent entry points across twelve adapter classes covering scalar tolerance comparisons, the `System.Numerics` compound types (vector / quaternion / matrix / plane / complex), `double[]` / `float[]` element-wise comparison with null-array guards, sequence properties, descriptive statistics, linear-algebra invariants, integer number theory, and a complete 3D-geometry primitive surface (containment / closest-point distance / intersection / pointcloud aggregates). v0.2.0 adds rich per-component / per-cell delta rendering to every compound `IsApproximatelyEqualTo` failure message plus `HasAxisAngleApproximately` on `Quaternion`. v0.3.0 adds the `MathAssertions.Render` namespace with `PoseRenderer` for turning a position / orientation pose into deterministic, snapshot-friendly text.
+The mathematical-assertion surface is exposed as fluent extensions over TUnit's `Assert.That(value).Method(...)`. ~85 fluent entry points across twelve adapter classes covering scalar tolerance comparisons, the `System.Numerics` compound types (vector / quaternion / matrix / plane / complex), `double[]` / `float[]` element-wise comparison with null-array guards, sequence properties, descriptive statistics, linear-algebra invariants, integer number theory, and a complete 3D-geometry primitive surface (containment / closest-point distance / intersection / pointcloud aggregates). v0.2.0 adds rich per-component / per-cell delta rendering to every compound `IsApproximatelyEqualTo` failure message plus `HasAxisAngleApproximately` on `Quaternion`. v0.3.0 adds the `MathAssertions.Render` namespace with `PoseRenderer` for turning a position / orientation pose into deterministic, snapshot-friendly text. v0.4.0 adds `IsPoseApproximatelyEqualTo` (and the `Matrix4x4` overload `IsRigidTransformApproximatelyEqualTo`), comparing a pose's position and orientation in one call with separate position (Euclidean distance) and rotation (geodesic degrees) tolerances and a combined failure diagnostic.
 
 ## Install
 
@@ -197,6 +197,9 @@ Part of an assertion family for TUnit:
 - [LogAssertions.TUnit](https://github.com/JohnVerheij/LogAssertions.TUnit)
 - [SnapshotAssertions.TUnit](https://github.com/JohnVerheij/SnapshotAssertions.TUnit)
 - [TimeAssertions.TUnit](https://github.com/JohnVerheij/TimeAssertions.TUnit)
+- [JsonAssertions.TUnit](https://github.com/JohnVerheij/JsonAssertions.TUnit)
+- [SseAssertions.TUnit](https://github.com/JohnVerheij/SseAssertions.TUnit)
+- [GrpcAssertions.TUnit](https://github.com/JohnVerheij/GrpcAssertions.TUnit)
 
 ## License
 
