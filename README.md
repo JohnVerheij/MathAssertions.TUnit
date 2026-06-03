@@ -299,6 +299,31 @@ public async Task GraspPoseMatchesBaseline(CancellationToken ct)
 
 `PoseRenderer` lives in the framework-agnostic `MathAssertions` core and takes no dependency on a snapshot framework; `MatchesSnapshot()` is from the sibling [`SnapshotAssertions.TUnit`](https://www.nuget.org/packages/SnapshotAssertions.TUnit/) package. The two-line composition is deliberate: the renderer never hard-depends on a snapshot framework. The quaternion is rendered verbatim (the sign is not canonicalized), so a `q` / `-q` flip is caught; the tolerance is recorded into the output, so a tolerance silently loosened during a refactor also shows up as a diff. The `Render(position, tolerance)` and `Render(orientation, tolerance)` overloads pin the position or orientation alone.
 
+### Pattern: assert a pose whose orientation comes from a protobuf message
+
+The pose assertions take `System.Numerics` types (`Vector3` and `Quaternion`). A pose delivered over the wire as a protobuf message usually carries its own position and orientation message types with `double` (or `float`) fields. Project the protobuf pose to `System.Numerics` first, then assert. Keeping the projection in one small mapping helper (here `ToVector3()` / `ToQuaternion()`) means the assertion reads the same whether the pose came from a solver or a deserialized message.
+
+```csharp
+// MyProtoPose is your generated protobuf message; ToVector3() / ToQuaternion()
+// are your own one-line projections from its fields onto System.Numerics types.
+private static Vector3 ToVector3(MyProtoPosition p) => new((float)p.X, (float)p.Y, (float)p.Z);
+private static Quaternion ToQuaternion(MyProtoOrientation q) => new((float)q.X, (float)q.Y, (float)q.Z, (float)q.W);
+
+[Test]
+public async Task DecodedPoseMatchesExpected(CancellationToken ct)
+{
+    MyProtoPose decoded = MyProtoPose.Parser.ParseFrom(payload);
+
+    await Assert.That((ToVector3(decoded.Position), ToQuaternion(decoded.Orientation)))
+        .IsPoseApproximatelyEqualTo(
+            (expectedPosition, expectedOrientation),
+            positionTolerance: 1e-3,
+            rotationToleranceDegrees: 0.5);
+}
+```
+
+A protobuf orientation is rarely a unit quaternion to the bit, and a default-initialized message leaves it as `(0, 0, 0, 0)`. Both are handled: the orientation comparison normalizes before measuring the geodesic angle, and a non-normalizable `(0, 0, 0, 0)` falls back to a componentwise comparison, so a default-pose round-trip passes while a real mismatch still fails.
+
 ### Pattern: extend the same DSL to your own domain types
 
 The `IsApproximatelyEqualTo` DSL works on any consumer-defined type via a one-line `[GenerateAssertion]` extension that calls `MathTolerance.IsApproximatelyEqual` on each component you care about. Your domain types stay in your own code; the package never sees them.
@@ -503,7 +528,13 @@ Foundational catalog established in v0.1.0:
 - **`MathAssertions.Render.PoseRenderer`**: the first concrete renderer under the family-shared `*.Render` namespace. A pure static renderer that turns a `Vector3` position and / or a `Quaternion` orientation into deterministic, snapshot-friendly text (`pos:` / `quat:` lines, invariant-culture `F6` components, LF line endings). Self-contained: no dependency on a snapshot framework. Pairs with `SnapshotAssertions.TUnit` via the two-line `Assert.That(PoseRenderer.Render(...)).MatchesSnapshot()` composition. See the [pose-snapshot cookbook entry](#pattern-pin-a-pose-as-a-snapshot).
 - **Dependency-baseline catch-up** to the family-lockstep analyzer and SourceLink versions.
 
-### Planned for v0.4.0+
+### Shipped at v0.4.0
+
+- **`IsPoseApproximatelyEqualTo`** (TUnit adapter): compares a `(Vector3, Quaternion)` pose in one call, with separate tolerances for the position (Euclidean distance) and the orientation (geodesic rotation angle in degrees). On failure the combined message renders both poses and the measured position and rotation deltas, flagging which half exceeded its tolerance. The orientation comparison uses the SO(3) metric, so a quaternion and its negation are the same rotation.
+- **`IsRigidTransformApproximatelyEqualTo`** (TUnit adapter): the `Matrix4x4` overload (a pose is a rigid transform). Translation is read from `Matrix4x4.Translation` and rotation via `Quaternion.CreateFromRotationMatrix`; the overload assumes a rigid transform (orthonormal rotation, unit scale).
+- **`MathTolerance.IsPoseApproximatelyEqual`, `RotationAngleDegrees(Quaternion, Quaternion)`, and `PositionDistance(Vector3, Vector3)`** (framework-agnostic core): the combined pose predicate, the geodesic rotation angle in degrees, and the double-precision Euclidean position distance that back the assertions.
+
+### Planned for v0.5.0+
 
 - **`ReadOnlyTensorSpan<T>` fluent adapter:** the static `MathTolerance.IsApproximatelyEqual(ReadOnlyTensorSpan<T>, ...)` overload exists today; the fluent `await Assert.That(span).IsApproximatelyEqualTo(...)` form is blocked on TUnit's assertion-builder being unable to capture ref-struct values across an `await` and is candidate work for a later release
 - **Geometry3D depth:** OrientedBox SAT intersection, Triangle-Triangle, Hausdorff distance, RANSAC inlier-ratio

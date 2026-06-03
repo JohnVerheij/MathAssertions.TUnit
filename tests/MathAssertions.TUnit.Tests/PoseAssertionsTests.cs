@@ -85,4 +85,47 @@ internal sealed class PoseAssertionsTests
                 m2, positionTolerance: 1e-4, rotationToleranceDegrees: 0.1);
         }).Throws<AssertionException>();
     }
+
+    [Test]
+    public async Task Pose_NonUnitQuaternionAgainstItself_Passes(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // Minimal repro for the rotation-angle stability bug: |q| ~ 0.99985 (non-unit). Before the
+        // atan2 + normalize fix, d(q, q) measured as a non-zero angle that blew the 1e-3 tolerance.
+        var q = new Quaternion(0f, 0f, 0.707f, 0.707f);
+        await Assert.That((Vector3.Zero, q))
+            .IsPoseApproximatelyEqualTo(
+                (Vector3.Zero, q),
+                positionTolerance: 1e-6,
+                rotationToleranceDegrees: 1e-3);
+    }
+
+    [Test]
+    public async Task Pose_ZeroQuaternionRoundTrip_Passes(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // default(Quaternion) = (0,0,0,0): not normalizable, so the componentwise fallback applies
+        // and a default-pose round-trip passes.
+        await Assert.That((Vector3.Zero, default(Quaternion)))
+            .IsPoseApproximatelyEqualTo(
+                (Vector3.Zero, default(Quaternion)),
+                positionTolerance: 1e-6,
+                rotationToleranceDegrees: 1e-3);
+    }
+
+    [Test]
+    public async Task Pose_ZeroQuaternionVersusRealRotation_Fails(CancellationToken ct)
+    {
+        var ex = await Assert.That(async () =>
+        {
+            await Assert.That((Vector3.Zero, default(Quaternion)))
+                .IsPoseApproximatelyEqualTo(
+                    (Vector3.Zero, Quaternion.Identity),
+                    positionTolerance: 1e-6,
+                    rotationToleranceDegrees: 1e-3);
+        }).Throws<AssertionException>();
+
+        await Assert.That(ex!.Message).Contains("rotation: delta=");
+        await Assert.That(ex.Message).Contains("EXCEEDED");
+    }
 }
