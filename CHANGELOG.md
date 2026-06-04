@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-06-05: pose-tolerance migration and projection docs
+
+Documentation patch. No code, public API, or behaviour change; the `0.4.1` ApiCompat baseline surface is unchanged.
+
+### Changed
+
+- README adds a **"Migrating from a per-component quaternion tolerance"** note under the pose section: `rotationToleranceDegrees` is a geodesic angle in degrees, not a per-component quaternion delta, so a component epsilon must not be reused as the rotation tolerance. The note gives the rough angle-to-component mapping (a component tolerance `ε` corresponds to about `115·ε` degrees) so a fresh degrees value can be chosen.
+- README adds a **"Projecting a non-`System.Numerics` pose"** example: `IsPoseApproximatelyEqualTo` operates on `System.Numerics`, so a pose arriving as another shape (for example a protobuf message with separate position and orientation fields) is projected to `Vector3` / `Quaternion` first, with a short conversion snippet.
+- The packed package README cross-references the migration note from the `PoseAssertions` entry.
+- Bumped `PackageValidationBaselineVersion` from `0.4.0` to `0.4.1` on both packages so ApiCompat strict-mode validates `0.4.2` against the most recently published baseline. Documentation-only; no `CompatibilitySuppressions.xml` change.
+
 ## [0.4.1] - 2026-06-03
 
 Bug-fix release. No public API signature change.

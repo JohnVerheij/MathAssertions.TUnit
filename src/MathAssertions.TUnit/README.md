@@ -53,7 +53,7 @@ The fluent surface, organized by adapter class:
 | `ScalarAssertions` | `IsApproximatelyEqualTo`, `IsCloseInUlpsTo`, `IsRelativelyAndAbsolutelyCloseTo`, `IsNonNegativeFinite`, `IsProbability`, `IsPercentage`, `HasRoundtripIdentity` for `double`/`float`. |
 | `VectorAssertions` | `IsApproximatelyEqualTo` for `Vector2`/`Vector3`/`Vector4`; `Vector3.HasMagnitudeApproximately`, `IsNormalized`. |
 | `QuaternionAssertions` | `IsApproximatelyEqualTo`, `IsRotationallyEquivalentTo` (SO(3) double-cover), `HasAxisAngleApproximately` (axis-angle form; v0.2.0+), `IsIdentity`, `IsNormalized`. |
-| `PoseAssertions` | `(Vector3, Quaternion).IsPoseApproximatelyEqualTo` and `Matrix4x4.IsRigidTransformApproximatelyEqualTo`: pose / rigid-transform equality with separate position (Euclidean distance) and rotation (geodesic degrees) tolerances, plus a combined failure diagnostic (v0.4.0+). |
+| `PoseAssertions` | `(Vector3, Quaternion).IsPoseApproximatelyEqualTo` and `Matrix4x4.IsRigidTransformApproximatelyEqualTo`: pose / rigid-transform equality with separate position (Euclidean distance) and rotation (geodesic degrees) tolerances, plus a combined failure diagnostic (v0.4.0+). `rotationToleranceDegrees` is an angle, not a per-component quaternion delta; do not port a component epsilon into it (see the migration note in the main README). |
 | `MatrixAssertions` | `Matrix4x4.IsApproximatelyEqualTo` plus the full invariant surface: `IsSymmetric`, `IsOrthogonal`, `IsIdentity`, `HasDeterminantApproximately`, `HasTraceApproximately`, `IsInvertible`. |
 | `PlaneAssertions` | `IsApproximatelyEqualTo`, `IsGeometricallyEquivalentTo` (sign-flip equivalence). |
 | `ComplexAssertions` | `IsApproximatelyEqualTo`. |

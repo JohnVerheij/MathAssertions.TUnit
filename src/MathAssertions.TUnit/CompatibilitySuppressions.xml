@@ -3,7 +3,7 @@
 <Suppressions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Suppression>
     <DiagnosticId>CP0003</DiagnosticId>
-    <Target>MathAssertions.TUnit, Version=0.2.0.0, Culture=neutral, PublicKeyToken=null</Target>
+    <Target>MathAssertions.TUnit, Version=0.4.1.0, Culture=neutral, PublicKeyToken=null</Target>
     <Left>lib/net10.0/MathAssertions.TUnit.dll</Left>
     <Right>lib/net10.0/MathAssertions.TUnit.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>

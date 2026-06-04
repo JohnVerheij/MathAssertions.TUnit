@@ -215,6 +215,24 @@ await Assert.That(actualTransform)
 
 The orientation comparison uses the SO(3) metric, so `q` and `-q` are the same rotation. On failure the combined message renders both poses and the measured position and rotation deltas, flagging which half exceeded its tolerance, so a position-only or orientation-only miss is read at a glance rather than from two independent assertions.
 
+#### Migrating from a per-component quaternion tolerance
+
+`rotationToleranceDegrees` is a **geodesic angle in degrees**, not a per-component delta. If you are replacing a two-call pattern that compared the orientation component-wise with `IsApproximatelyEqualTo(expectedQuaternion, epsilon)`, do **not** reuse that component epsilon as `rotationToleranceDegrees`: the two measure different things. A `1e-6` component epsilon becomes an absurdly tight `1e-6` degrees, while a `0.5` component epsilon becomes a loose half-degree. Pick a fresh value in degrees that matches the angular precision the test actually needs (for example `1e-3` degrees for a near-exact round trip, `0.5` degrees for a solver result). As a rough intuition, for a unit quaternion a small rotation of `θ` radians moves each component by roughly `θ/2`, so a component tolerance `ε` corresponds to an angle near `2ε` radians, or about `115·ε` degrees.
+
+#### Projecting a non-`System.Numerics` pose
+
+`IsPoseApproximatelyEqualTo` operates on `System.Numerics` (`Vector3` position, `Quaternion` orientation). If a pose arrives in another shape, for example a protobuf message with separate `x`/`y`/`z` and `x`/`y`/`z`/`w` fields, project it to `System.Numerics` first and assert on that:
+
+```csharp
+static (Vector3 Position, Quaternion Orientation) ToNumerics(ProtoPose p) =>
+    (new Vector3(p.Position.X, p.Position.Y, p.Position.Z),
+     new Quaternion(p.Orientation.X, p.Orientation.Y, p.Orientation.Z, p.Orientation.W));
+
+await Assert.That(ToNumerics(actual))
+    .IsPoseApproximatelyEqualTo(ToNumerics(expected),
+        positionTolerance: 1e-3, rotationToleranceDegrees: 0.5);
+```
+
 ### Statistics on a sample
 
 ```csharp
