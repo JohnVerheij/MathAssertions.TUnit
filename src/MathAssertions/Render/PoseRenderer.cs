@@ -43,7 +43,7 @@ namespace MathAssertions.Render;
 /// </para>
 /// <para>
 /// <b>Deterministic formatting.</b> Components use the invariant-culture <c>F6</c> fixed
-/// format — six fractional digits, enough to distinguish typical calibration / grasp-pose
+/// format — six fractional digits, enough to distinguish typical calibration / pose
 /// outputs without recording floating-point noise that would make the snapshot fragile
 /// across platforms. The tolerance uses the invariant-culture <c>G</c> general format.
 /// Lines are terminated with the literal LF byte (<c>'\n'</c>), never

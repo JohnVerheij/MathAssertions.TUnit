@@ -201,7 +201,7 @@ await Assert.That(rotation)
 A pose is a position and an orientation together. `IsPoseApproximatelyEqualTo` compares both halves in one call, with *separate* tolerances because they carry different units: position as a Euclidean distance, rotation as a geodesic angle in degrees.
 
 ```csharp
-(Vector3 position, Quaternion orientation) actual = SolveGraspPose(input);
+(Vector3 position, Quaternion orientation) actual = ComputePose(input);
 
 await Assert.That((actual.position, actual.orientation))
     .IsPoseApproximatelyEqualTo((expectedPosition, expectedOrientation),
@@ -306,9 +306,9 @@ public async Task ComputedPositionIsApproximatelyAtTarget(CancellationToken ct)
 using MathAssertions.Render;
 
 [Test]
-public async Task GraspPoseMatchesBaseline(CancellationToken ct)
+public async Task PoseMatchesBaseline(CancellationToken ct)
 {
-    (Vector3 position, Quaternion orientation) = SolveGraspPose(input);
+    (Vector3 position, Quaternion orientation) = ComputePose(input);
 
     var rendered = PoseRenderer.Render(position, orientation, tolerance: 1e-4);
     await Assert.That(rendered).MatchesSnapshot();
