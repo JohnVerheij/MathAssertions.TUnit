@@ -274,10 +274,11 @@ The wider surface lands at 0.1.0 alongside the load-bearing review fixes M-1 thr
 - Source Link, deterministic builds, embedded PDB.
 - TUnit dependency pinned to **1.43.11**.
 
-[Unreleased]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.4.1...HEAD
-[0.4.1]: https://github.com/JohnVerheij/MathAssertions.TUnit/releases/tag/v0.4.1
-[0.4.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/releases/tag/v0.4.0
-[0.3.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/releases/tag/v0.3.0
-[0.2.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/releases/tag/v0.2.0
-[0.1.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/releases/tag/v0.1.0
+[unreleased]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.4.1...v0.4.2
+[0.4.1]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.0.1...v0.1.0
 [0.0.1]: https://github.com/JohnVerheij/MathAssertions.TUnit/releases/tag/v0.0.1

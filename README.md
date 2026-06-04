@@ -27,7 +27,7 @@ The framework-agnostic core is feature-complete across seven topical clusters an
 | Statistics | Welford's mean + variance, median, percentile (overflow-safe), standard deviation, sum, sigma-bound checks |
 | Linear algebra | `Matrix4x4` invariants (symmetric, orthogonal, identity, determinant, trace, invertible); `Vector3` pair properties (orthogonality, parallelism, linear independence) |
 | Number theory | `long` predicates: divisibility, primality (overflow-safe), coprimality, GCD/LCM (`long.MinValue`-aware, `OverflowException`-on-LCM-overflow), powers of base, perfect square (overflow-safe successor check), modular congruence (canonical-residue form) |
-| Geometry3D | Eight primitive `record struct` types (`Sphere`, `AxisAlignedBox`, `OrientedBox`, `Ray3D`, `LineSegment3D`, `Triangle3D`, `Capsule`, `Cylinder`); property predicates (`IsDegenerate`, `IsCollinear`, `AreCoplanar`); containment (point/box/sphere/OBB/convex hull); closest-point distance (point→plane/segment/triangle, citing Ericson, *Real-Time Collision Detection* §§5.1.2, 5.1.5); intersection (sphere-sphere, AABB-AABB, ray-plane/sphere/triangle/AABB, citing Akenine-Möller, Haines, Hoffman, *Real-Time Rendering* 4th ed. §§22.6, 22.7, 22.8); pointcloud aggregates (boundedness, centroid, on-plane, on-sphere) |
+| Geometry3D | Eight primitive `record struct` types (`Sphere`, `AxisAlignedBox`, `OrientedBox`, `Ray3D`, `LineSegment3D`, `Triangle3D`, `Capsule`, `Cylinder`); property predicates (`IsDegenerate`, `IsCollinear`, `AreCoplanar`); containment (point/box/sphere/OBB/convex hull); closest-point distance (point->plane/segment/triangle, citing Ericson, *Real-Time Collision Detection* §§5.1.2, 5.1.5); intersection (sphere-sphere, AABB-AABB, ray-plane/sphere/triangle/AABB, citing Akenine-Möller, Haines, Hoffman, *Real-Time Rendering* 4th ed. §§22.6, 22.7, 22.8); pointcloud aggregates (boundedness, centroid, on-plane, on-sphere) |
 
 `MathAssertions.TUnit` ships ~85 fluent extensions across twelve adapter classes; `MathAssertions` (the framework-agnostic core) ships the underlying static helpers. See the per-package READMEs and CHANGELOG for the exhaustive method listings.
 
@@ -47,7 +47,6 @@ The framework-agnostic core is feature-complete across seven topical clusters an
 - [Entry points](#entry-points)
 - [Failure diagnostics](#failure-diagnostics)
 - [Cookbook: common patterns](#cookbook-common-patterns)
-- [Modern .NET 10+ practices on display](#modern-net-10-practices-on-display)
 - [Design notes](#design-notes)
 - [NaN and infinity semantics](#nan-and-infinity-semantics)
 - [Stability intent (pre-1.0)](#stability-intent-pre-10)
@@ -472,30 +471,10 @@ This reads as "the quaternion is approximately the zero quaternion" and fails fo
 
 ---
 
-## Modern .NET 10+ practices on display
-
-The package is a deliberate showcase of modern .NET conventions:
-
-- **AOT-compatible** (`IsAotCompatible=true`), trimmable (`IsTrimmable=true`), no runtime reflection in the assertion path.
-- **Source-generated assertion entries** via TUnit's `[GenerateAssertion]`. No interface implementation required, no reflection at runtime.
-- **`CallerArgumentExpression`** on tolerance / value parameters surfaces the caller's expression in failure messages without manual string passing (TUnit handles the wiring).
-- **C# 14 file-scoped namespaces** + `Nullable=enable` + `TreatWarningsAsErrors=true` + five Roslyn analyzer packs at full strength (Meziantou, SonarAnalyzer, Roslynator, Microsoft.VisualStudio.Threading, DotNetProjectFile).
-- **`Microsoft.CodeAnalysis.BannedApiAnalyzers`** enforces no-reflection at build time via a shared `BannedSymbols.txt`.
-- **Allocation-conscious failure rendering** (component cast happens inline; no intermediate vector allocations).
-
 ## Design notes
 
-### Why `IsApproximatelyEqualTo` (not `IsCloseTo`)
-
-TUnit core uses `IsCloseTo(expected, tolerance)` for primitive `double` / `float`. Reusing the name on compound types would suggest those overloads use the same scalar-distance semantics; that conflict between mental models would cause real bugs. `IsApproximatelyEqualTo` is the explicit "compound, component-wise, NaN/infinity-aware tolerance" name. Pick TUnit's primitive `IsCloseTo` for scalars; pick `IsApproximatelyEqualTo` for `System.Numerics` compounds. Each says exactly what it does.
-
-### Why widen components to double, not narrow tolerance to float
-
-See the [Tolerance precision](#tolerance-precision) section. The short version: a `double` tolerance must be honored at full `double` precision; the alternative (cast tolerance to float) silently rounds tight tolerances to zero and produces incorrect "equal-to-itself" results in real test scenarios.
-
-### Why no primitive `IsApproximatelyEqual(double, double)` fluent extension
-
-TUnit core already provides `Assert.That(myDouble).IsCloseTo(expected, tolerance)` with identical NaN-aware semantics. Shipping a parallel `Assert.That(myDouble).IsApproximatelyEqualTo(...)` would just create overload-resolution noise. The framework-agnostic `MathTolerance.IsApproximatelyEqual(double, double, double)` exists in the core for callers who need to check primitive tolerance from `[GenerateAssertion]` extensions on their own types; it's not promoted to a TUnit-side fluent call.
+- **`IsApproximatelyEqualTo`, not `IsCloseTo`.** TUnit core's `IsCloseTo` is for scalar `double` / `float`; reusing the name on compound types would imply the same scalar-distance semantics and cause bugs. `IsApproximatelyEqualTo` names the compound, component-wise, NaN/infinity-aware comparison. There is no primitive fluent `IsApproximatelyEqualTo` (TUnit's `IsCloseTo` already covers scalars); the core `MathTolerance.IsApproximatelyEqual(double, double, double)` is available to `[GenerateAssertion]` authors.
+- **Components widen to `double`; tolerance is not narrowed to `float`.** A `double` tolerance must be honored at full precision: casting it to `float` silently rounds tight tolerances to zero and yields wrong "equal-to-itself" results. See [Tolerance precision](#tolerance-precision).
 
 ## NaN and infinity semantics
 
@@ -524,49 +503,13 @@ The 1.0 milestone signals API stability; see [Limitations and future work](#limi
 
 ## Limitations and future work
 
-### Shipped at v0.1.0
+The catalog covers System.Numerics compounds (vectors, quaternions, matrices, planes, complex), span/tensor and array overloads, statistics, linear-algebra invariants, number theory, and Geometry3D primitives with containment, intersection, and point-distance. Everything below is demand-driven; nothing is committed.
 
-Foundational catalog established in v0.1.0:
+- **Depth:** more Geometry3D (OrientedBox SAT, triangle-triangle, Hausdorff, RANSAC), statistics (distributions, correlation), mesh validity, `BigInteger` number theory.
+- **`ReadOnlyTensorSpan<T>` fluent adapter:** the static `MathTolerance` overload exists; the fluent form is blocked on TUnit capturing ref-struct values across `await`.
+- **Sibling adapters** (`MathAssertions.MathNet.TUnit`, `MathAssertions.GeometRi.TUnit`, and similar): separate packages, built on request.
 
-- **System.Numerics compounds:** Vector2/3/4, Quaternion (component-wise + rotational equivalence handling the `q` / `-q` double-cover), Matrix4x4 element-wise, Plane component-wise + geometric-equivalence, Complex
-- **Span / tensor overloads:** `ReadOnlySpan<double>` / `ReadOnlySpan<float>` element-wise; generic `ReadOnlyTensorSpan<T>` for the static `MathTolerance` surface
-- **Array-shaped adapters:** `double[]` / `float[]` fluent extensions with `ArgumentNullException` on null
-- **Statistics:** Welford's mean + variance, median, percentile (overflow-safe), standard deviation, sum, sigma bounds
-- **Linear algebra invariants:** symmetric, orthogonal, identity, determinant, trace, invertible, parallel / orthogonal vector pairs, linear independence
-- **Number theory:** divisibility, primality, GCD, LCM, coprimality, congruence, perfect-square, power-of-base, all with overflow-safe inner loops and `long.MinValue`-aware contracts
-- **Geometry3D primitives** (Sphere, AxisAlignedBox, OrientedBox, Ray3D, LineSegment3D, Triangle3D, Capsule, Cylinder) plus containment, intersection (Möller-Trumbore, slab test), point-distance closed forms (Ericson barycentric Voronoi-region classification), coplanarity / collinearity, pointcloud aggregates
-
-### Shipped at v0.2.0
-
-- **Per-component / per-cell delta failure messages** for every compound `IsApproximatelyEqualTo` chain plus `IsRotationallyEquivalentTo` and `IsGeometricallyEquivalentTo`. Implementation detail; failure-message text is not part of the stable public surface (callers should pin filter / match-count expectations rather than full message-text equality).
-- **`HasAxisAngleApproximately`** on `Quaternion` (both as a `MathTolerance` static and as a fluent extension). Handles the SO(3) double cover and the 180-degree boundary uniformly via the rotational-equivalence dot-product test.
-
-### Shipped at v0.3.0
-
-- **`MathAssertions.Render.PoseRenderer`**: the first concrete renderer under the family-shared `*.Render` namespace. A pure static renderer that turns a `Vector3` position and / or a `Quaternion` orientation into deterministic, snapshot-friendly text (`pos:` / `quat:` lines, invariant-culture `F6` components, LF line endings). Self-contained: no dependency on a snapshot framework. Pairs with `SnapshotAssertions.TUnit` via the two-line `Assert.That(PoseRenderer.Render(...)).MatchesSnapshot()` composition. See the [pose-snapshot cookbook entry](#pattern-pin-a-pose-as-a-snapshot).
-- **Dependency-baseline catch-up** to the family-lockstep analyzer and SourceLink versions.
-
-### Shipped at v0.4.0
-
-- **`IsPoseApproximatelyEqualTo`** (TUnit adapter): compares a `(Vector3, Quaternion)` pose in one call, with separate tolerances for the position (Euclidean distance) and the orientation (geodesic rotation angle in degrees). On failure the combined message renders both poses and the measured position and rotation deltas, flagging which half exceeded its tolerance. The orientation comparison uses the SO(3) metric, so a quaternion and its negation are the same rotation.
-- **`IsRigidTransformApproximatelyEqualTo`** (TUnit adapter): the `Matrix4x4` overload (a pose is a rigid transform). Translation is read from `Matrix4x4.Translation` and rotation via `Quaternion.CreateFromRotationMatrix`; the overload assumes a rigid transform (orthonormal rotation, unit scale).
-- **`MathTolerance.IsPoseApproximatelyEqual`, `RotationAngleDegrees(Quaternion, Quaternion)`, and `PositionDistance(Vector3, Vector3)`** (framework-agnostic core): the combined pose predicate, the geodesic rotation angle in degrees, and the double-precision Euclidean position distance that back the assertions.
-
-### Planned for v0.5.0+
-
-- **`ReadOnlyTensorSpan<T>` fluent adapter:** the static `MathTolerance.IsApproximatelyEqual(ReadOnlyTensorSpan<T>, ...)` overload exists today; the fluent `await Assert.That(span).IsApproximatelyEqualTo(...)` form is blocked on TUnit's assertion-builder being unable to capture ref-struct values across an `await` and is candidate work for a later release
-- **Geometry3D depth:** OrientedBox SAT intersection, Triangle-Triangle, Hausdorff distance, RANSAC inlier-ratio
-- **Statistics depth:** distribution support (normal, Student-t, chi-squared), correlation, full percentile-method enum
-- **Mesh validity:** `IndexedMesh` record plus manifold/watertight/convex/volume/surface-area assertions
-- **`BigInteger` overloads of number theory**
-- **Sibling adapters:** `MathAssertions.MathNet.TUnit`, `MathAssertions.GeometRi.TUnit`, `MathAssertions.Prowl.TUnit`, `MathAssertions.HelixToolkit.TUnit`, `MathAssertions.Fft.TUnit`, `MathAssertions.Fractions.TUnit` (each a separate package; demand-driven)
-
-### Out of scope
-
-- **Statistical inference / hypothesis testing** (different problem domain; out of scope)
-- **Symbolic math** (different mental model from tolerance-numeric; out of scope)
-- **2D-Euclidean primitives in core** (only 3D; 2D arrives via adapter if a strong 2D library demands it)
-- **Production-code use** (per the scope blockquote on every README)
+Out of scope: statistical inference / hypothesis testing, symbolic math, 2D-Euclidean primitives in core (2D would arrive via an adapter), and production-code use.
 
 ## Family compatibility
 
