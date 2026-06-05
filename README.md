@@ -162,7 +162,7 @@ This precision-preserving cast is locked behavior. Tests pin it; v0.1.0 additive
 
 ### Vector3 component-wise
 
-| Entry point | Behaviour |
+| Entry point | Behavior |
 |---|---|
 | `IsApproximatelyEqualTo(Vector3 expected, double tolerance)` | Asserts every component (`X`, `Y`, `Z`) of the value is within `tolerance` of the corresponding component of `expected`. Components widen to `double` for precision. NaN-aware, infinity-aware (see [NaN and infinity semantics](#nan-and-infinity-semantics)). |
 
