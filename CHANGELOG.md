@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.4.2] - 2026-06-05: pose-tolerance migration and projection docs
 
-Documentation patch. No code, public API, or behaviour change; the `0.4.1` ApiCompat baseline surface is unchanged.
+Documentation and release-tooling patch. No code, public API, or behaviour change; the `0.4.1` ApiCompat baseline surface is unchanged.
 
 ### Changed
 
@@ -17,6 +17,7 @@ Documentation patch. No code, public API, or behaviour change; the `0.4.1` ApiCo
 - README adds a **"Projecting a non-`System.Numerics` pose"** example: `IsPoseApproximatelyEqualTo` operates on `System.Numerics`, so a pose arriving as another shape (for example a protobuf message with separate position and orientation fields) is projected to `Vector3` / `Quaternion` first, with a short conversion snippet.
 - The packed package README cross-references the migration note from the `PoseAssertions` entry.
 - Bumped `PackageValidationBaselineVersion` from `0.4.0` to `0.4.1` on both packages so ApiCompat strict-mode validates `0.4.2` against the most recently published baseline. Documentation-only; no `CompatibilitySuppressions.xml` change.
+- The release workflow now publishes the matching `CHANGELOG.md` section as the GitHub release body (`body_path`), so release notes carry the full hand-written detail instead of GitHub's auto-generated commit summary.
 
 ## [0.4.1] - 2026-06-03
 
