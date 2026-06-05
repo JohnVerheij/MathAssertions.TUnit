@@ -25,7 +25,7 @@ namespace MathAssertions.TUnit.SnapshotTests;
 internal sealed class PoseRendererSnapshotTests
 {
     /// <summary>
-    /// Pins the rendered text of a fixed grasp-pose-shaped position / orientation pair against
+    /// Pins the rendered text of a fixed pose-shaped position / orientation pair against
     /// the committed <c>RenderedPose.expected.txt</c> baseline. The baseline is the canonical
     /// shape consumers will see: a <c>pos:</c> line and a <c>quat:</c> line, invariant-culture
     /// <c>F6</c> components, the tolerance echoed into each line, LF line endings.

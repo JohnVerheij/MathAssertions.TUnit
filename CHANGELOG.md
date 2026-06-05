@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-06-05: pose-tolerance migration and projection docs
+
+Documentation and release-tooling patch. No code, public API, or behavior change; the `0.4.1` ApiCompat baseline surface is unchanged.
+
+### Changed
+
+- README adds a **"Migrating from a per-component quaternion tolerance"** note under the pose section: `rotationToleranceDegrees` is a geodesic angle in degrees, not a per-component quaternion delta, so a component epsilon must not be reused as the rotation tolerance. The note gives the rough angle-to-component mapping (a component tolerance `ε` corresponds to about `115·ε` degrees) so a fresh degrees value can be chosen.
+- README adds a **"Projecting a non-`System.Numerics` pose"** example: `IsPoseApproximatelyEqualTo` operates on `System.Numerics`, so a pose arriving as another shape (for example a protobuf message with separate position and orientation fields) is projected to `Vector3` / `Quaternion` first, with a short conversion snippet.
+- The packed package README cross-references the migration note from the `PoseAssertions` entry.
+- Bumped `PackageValidationBaselineVersion` from `0.4.0` to `0.4.1` on both packages so ApiCompat strict-mode validates `0.4.2` against the most recently published baseline. Documentation-only; no `CompatibilitySuppressions.xml` change.
+- The release workflow now publishes the matching `CHANGELOG.md` section as the GitHub release body (`body_path`), so release notes carry the full hand-written detail instead of GitHub's auto-generated commit summary.
+
 ## [0.4.1] - 2026-06-03
 
 Bug-fix release. No public API signature change.
@@ -31,7 +43,7 @@ Feature release. Adds the pose assertion the package's `PoseRenderer` was waitin
 - Removed `paths-ignore` from `.github/workflows/ci.yml` so the `Build, test & pack` required check always reports a status. Without the fix, docs-only PRs stuck in `Expected - Waiting for status to be reported` and could not satisfy branch protection.
 - Dropped drift-prone own-version anchors from the root README and packed adapter README: `## Status: v0.3.0 (pose renderer)` is now `## Status`. Historical "added in vX.Y" markers and the `### Shipped at v0.X.Y` historical sections are unchanged. The CHANGELOG remains the single source of truth for what shipped when.
 - Migrated CI dependency automation from Dependabot to Renovate (`.github/renovate.json`), matching `SseAssertions.TUnit` and `TimeAssertions.TUnit`. Daily schedule (before 4am Europe/Amsterdam), `customManagers` keep TUnit version literals in the root README, package README, smoketest csproj, and bug-report Issue Form in lockstep with the central `Directory.Packages.props` pin. `platformAutomerge` replaces the separate `dependabot-auto-merge.yml` workflow. Dependency dashboard issue enabled. Explicit semantic commit scopes: `deps(nuget)`, `ci(github-actions)`, `ci(dotnet-sdk)`. Auto-merge covers `digest`, `pin`, `pinDigest`, and `lockFileMaintenance` updateTypes alongside `minor` and `patch`. The three TUnit packages (`TUnit`, `TUnit.Assertions`, `TUnit.Core`) are grouped into a single PR per release.
-- **TUnit dependency bumped `1.44.0` -> `1.44.39`** (and the external-consumer smoke-test pin). 1.44.39 carries the `[GenerateAssertion]` source-generator fix for value-type optional parameters; no behavioural change for this package, taken for family lockstep.
+- **TUnit dependency bumped `1.44.0` -> `1.44.39`** (and the external-consumer smoke-test pin). 1.44.39 carries the `[GenerateAssertion]` source-generator fix for value-type optional parameters; no behavioral change for this package, taken for family lockstep.
 - Updated `CONVENTIONS.md` to v0.7 (cumulative from v0.5).
 - Added `JsonAssertions.TUnit` (the fifth family package, JSON path / value / shape assertions) and `SseAssertions.TUnit` (the sixth family package, Server-Sent Events wire-format assertions) to the `CONVENTIONS.md` family roster.
 - Added a per-package strict-scope policy section to `CONVENTIONS.md` with explicit scope statements for all six packages.
@@ -263,10 +275,11 @@ The wider surface lands at 0.1.0 alongside the load-bearing review fixes M-1 thr
 - Source Link, deterministic builds, embedded PDB.
 - TUnit dependency pinned to **1.43.11**.
 
-[Unreleased]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.4.1...HEAD
-[0.4.1]: https://github.com/JohnVerheij/MathAssertions.TUnit/releases/tag/v0.4.1
-[0.4.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/releases/tag/v0.4.0
-[0.3.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/releases/tag/v0.3.0
-[0.2.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/releases/tag/v0.2.0
-[0.1.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/releases/tag/v0.1.0
+[unreleased]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.4.1...v0.4.2
+[0.4.1]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.0.1...v0.1.0
 [0.0.1]: https://github.com/JohnVerheij/MathAssertions.TUnit/releases/tag/v0.0.1
