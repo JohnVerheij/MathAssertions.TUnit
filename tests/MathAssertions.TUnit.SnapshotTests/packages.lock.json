@@ -38,13 +38,13 @@
       },
       "SnapshotAssertions.TUnit": {
         "type": "Direct",
-        "requested": "[0.4.0, )",
-        "resolved": "0.4.0",
-        "contentHash": "zm2wHFE0z9VOAY0EhoNgXJDS4S5S7mlYKeArLfR/l+xngpyhbx+f/XRQjwuD9N6mBMzlMh5c+yCniRlxI8EzBg==",
+        "requested": "[0.6.1, )",
+        "resolved": "0.6.1",
+        "contentHash": "ufykxrbUCq2mdVVgTHixaGljf3Hpxbtz98Fi1RKznXmczWxPOViJ3fwYwqEv6YvpK9X8k9r2VZ1hbgZvxk9CBQ==",
         "dependencies": {
-          "SnapshotAssertions": "0.4.0",
-          "TUnit.Assertions": "1.44.39",
-          "TUnit.Core": "1.44.39"
+          "SnapshotAssertions": "0.6.1",
+          "TUnit.Assertions": "1.48.6",
+          "TUnit.Core": "1.48.6"
         }
       },
       "SonarAnalyzer.CSharp": {
@@ -142,8 +142,8 @@
       },
       "SnapshotAssertions": {
         "type": "Transitive",
-        "resolved": "0.4.0",
-        "contentHash": "ZXuoazsxGjjydG285jPdmywqp23IHnZmok9Jn3Zv9RkkdPe3EHD9c0gl251n9LsjfBmrSwyQ6Lvr6f2ubLyzag=="
+        "resolved": "0.6.1",
+        "contentHash": "T9HEoKLIw/N0MxGfDDboGTd/Cs63Acs7OVXQp/3VYAaLFZNK9+30D9Rd4R+Raj/YoKsTHKDJpktV/b9xwNJhaQ=="
       },
       "System.CodeDom": {
         "type": "Transitive",
