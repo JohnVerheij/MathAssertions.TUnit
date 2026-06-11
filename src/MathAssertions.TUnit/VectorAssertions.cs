@@ -48,7 +48,13 @@ public static class VectorAssertions
         ExpectationMessage = "to have magnitude approximately {expected} within tolerance {tolerance}",
         InlineMethodBody = true)]
     public static bool HasMagnitudeApproximately(this Vector3 value, double expected, double tolerance)
-        => MathTolerance.IsApproximatelyEqual(value.Length(), expected, tolerance);
+    {
+        // Widen components to double before squaring so the magnitude is computed at full
+        // precision; Vector3.Length() does the dot product and sqrt in float, which adds
+        // arithmetic error that can defeat a tight tolerance at large coordinates.
+        double x = value.X, y = value.Y, z = value.Z;
+        return MathTolerance.IsApproximatelyEqual(System.Math.Sqrt((x * x) + (y * y) + (z * z)), expected, tolerance);
+    }
 
     /// <summary>
     /// Asserts the vector is a unit vector (magnitude approximately <c>1</c>) within
@@ -58,5 +64,10 @@ public static class VectorAssertions
         ExpectationMessage = "to be a unit (normalized) vector within tolerance {tolerance}",
         InlineMethodBody = true)]
     public static bool IsNormalized(this Vector3 value, double tolerance)
-        => MathTolerance.IsApproximatelyEqual(value.Length(), 1.0, tolerance);
+    {
+        // Magnitude in double precision (see HasMagnitudeApproximately): Vector3.Length()'s
+        // float arithmetic adds error that can spuriously fail a tight normalization tolerance.
+        double x = value.X, y = value.Y, z = value.Z;
+        return MathTolerance.IsApproximatelyEqual(System.Math.Sqrt((x * x) + (y * y) + (z * z)), 1.0, tolerance);
+    }
 }
