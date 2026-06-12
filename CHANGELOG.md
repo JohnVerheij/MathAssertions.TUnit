@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.4.3] - 2026-06-11: double-precision magnitude for IsNormalized and HasMagnitudeApproximately
+## [0.4.3] - 2026-06-12: double-precision magnitude for IsNormalized and HasMagnitudeApproximately
 
 Patch release. Computes vector and quaternion magnitudes in double precision so a tight tolerance reflects the value's actual deviation from unit length rather than single-precision arithmetic noise. No public API change.
 
