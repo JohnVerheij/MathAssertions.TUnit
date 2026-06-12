@@ -211,6 +211,18 @@ internal sealed class AdapterExpansionTests
     }
 
     [Test]
+    public async Task Vector3_HasMagnitudeApproximately_LargeMagnitude_ComputedInDouble(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // At large coordinates Vector3.Length() squares the components in float and overflows to
+        // infinity (3e19 squared exceeds float.MaxValue), so the float magnitude is unusable. The
+        // assertion computes the magnitude in double, which does not overflow and sees the true
+        // 5e19 magnitude (a 3-4-5 triple scaled up). Guards against a regression to float Length().
+        var v = new Vector3(3e19f, 4e19f, 0f);
+        await Assert.That(v).HasMagnitudeApproximately(5e19, 1e15);
+    }
+
+    [Test]
     public async Task Vector3_IsNormalized(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
@@ -250,6 +262,16 @@ internal sealed class AdapterExpansionTests
     {
         ct.ThrowIfCancellationRequested();
         var q = Quaternion.Identity;
+        await Assert.That(q).IsNormalized(Tol);
+    }
+
+    [Test]
+    public async Task Quaternion_IsNormalized_NonIdentityUnit_Passes(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // A normalized non-identity quaternion (real components, not the trivial identity) exercises
+        // the double-precision magnitude path the normalization check now uses.
+        var q = Quaternion.Normalize(new Quaternion(0.3f, -0.5f, 0.71f, 0.2f));
         await Assert.That(q).IsNormalized(Tol);
     }
 

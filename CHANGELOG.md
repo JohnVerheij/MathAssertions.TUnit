@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.3] - 2026-06-12: double-precision magnitude for IsNormalized and HasMagnitudeApproximately
+
+Patch release. Computes vector and quaternion magnitudes in double precision so a tight tolerance reflects the value's actual deviation from unit length rather than single-precision arithmetic noise. No public API change.
+
+### Fixed
+
+- **`IsNormalized` (Vector3 and Quaternion) and `HasMagnitudeApproximately` (Vector3) now compute the magnitude in double precision.** They previously called `System.Numerics.Vector3.Length()` / `Quaternion.Length()`, which compute the dot product and square root in `float`. The residual single-precision error could defeat a tight tolerance: a quaternion normalized to float precision could fail `IsNormalized` at a small tolerance, and at large coordinates the float square overflows to infinity, which makes `HasMagnitudeApproximately` unsatisfiable. The components now widen to `double` before the sum of squares and the square root, the same widening already used for `PositionDistance` and the `0.4.1` quaternion-angle fix. The comparison semantics and the meaning of `tolerance` are unchanged.
+
+### Changed
+
+- Bumped `PackageValidationBaselineVersion` from `0.4.1` to `0.4.2` on both packages so ApiCompat strict-mode validates `0.4.3` against the most recently published baseline. No public API change; only the assembly-version suppression's target moves.
+
 ## [0.4.2] - 2026-06-05: pose-tolerance migration and projection docs
 
 Documentation and release-tooling patch. No code, public API, or behavior change; the `0.4.1` ApiCompat baseline surface is unchanged.

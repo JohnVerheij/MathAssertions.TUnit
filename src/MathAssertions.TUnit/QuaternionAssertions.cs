@@ -65,5 +65,11 @@ public static class QuaternionAssertions
         ExpectationMessage = "to be a unit quaternion within tolerance {tolerance}",
         InlineMethodBody = true)]
     public static bool IsNormalized(this Quaternion value, double tolerance)
-        => MathTolerance.IsApproximatelyEqual(value.Length(), 1.0, tolerance);
+    {
+        // Magnitude in double precision: Quaternion.Length() computes the dot product and sqrt
+        // in float, whose residual error can spuriously fail a tight normalization tolerance on a
+        // quaternion that is normalized to float precision (the sibling of the acos to atan2 fix).
+        double x = value.X, y = value.Y, z = value.Z, w = value.W;
+        return MathTolerance.IsApproximatelyEqual(System.Math.Sqrt((x * x) + (y * y) + (z * z) + (w * w)), 1.0, tolerance);
+    }
 }

@@ -3,7 +3,7 @@
 <Suppressions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Suppression>
     <DiagnosticId>CP0003</DiagnosticId>
-    <Target>MathAssertions, Version=0.4.1.0, Culture=neutral, PublicKeyToken=null</Target>
+    <Target>MathAssertions, Version=0.4.2.0, Culture=neutral, PublicKeyToken=null</Target>
     <Left>lib/net10.0/MathAssertions.dll</Left>
     <Right>lib/net10.0/MathAssertions.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>
