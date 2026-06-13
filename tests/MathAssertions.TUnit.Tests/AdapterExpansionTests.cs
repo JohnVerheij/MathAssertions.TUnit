@@ -302,6 +302,20 @@ internal sealed class AdapterExpansionTests
     }
 
     [Test]
+    public async Task Matrix_IsRotation(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        await Assert.That(Matrix4x4.CreateRotationZ(MathF.PI / 4)).IsRotation(Tol);
+    }
+
+    [Test]
+    public async Task Vector_HasAngleBetweenApproximately(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        await Assert.That(Vector3.UnitX).HasAngleBetweenApproximately(Vector3.UnitY, Math.PI / 2, 1e-5);
+    }
+
+    [Test]
     public async Task Matrix_IsIdentity(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();

@@ -114,6 +114,7 @@ namespace MathAssertions
 {
     public static class LinearAlgebra
     {
+        public static double AngleBetween(System.Numerics.Vector3 u, System.Numerics.Vector3 v) { }
         public static bool AreLinearlyIndependent(System.ReadOnlySpan<System.Numerics.Vector3> vectors, double tolerance) { }
         public static bool AreOrthogonal(System.Numerics.Vector3 u, System.Numerics.Vector3 v, double tolerance) { }
         public static bool AreParallel(System.Numerics.Vector3 u, System.Numerics.Vector3 v, double tolerance) { }
@@ -122,6 +123,7 @@ namespace MathAssertions
         public static bool IsIdentity(System.Numerics.Matrix4x4 m, double tolerance) { }
         public static bool IsInvertible(System.Numerics.Matrix4x4 m, double tolerance) { }
         public static bool IsOrthogonal(System.Numerics.Matrix4x4 m, double tolerance) { }
+        public static bool IsRotation(System.Numerics.Matrix4x4 m, double tolerance) { }
         public static bool IsSymmetric(System.Numerics.Matrix4x4 m, double tolerance) { }
     }
     public static class MathTolerance

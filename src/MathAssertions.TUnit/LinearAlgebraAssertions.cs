@@ -27,6 +27,17 @@ public static class LinearAlgebraAssertions
         => LinearAlgebra.AreParallel(value, other, tolerance);
 
     /// <summary>
+    /// Asserts the angle between <paramref name="value"/> and <paramref name="other"/> is within
+    /// <paramref name="tolerance"/> of <paramref name="expectedRadians"/>. The angle is the unsigned
+    /// angle on <c>[0, pi]</c>, computed via <c>atan2(|u x v|, u . v)</c> for numerical accuracy.
+    /// </summary>
+    [GenerateAssertion(
+        ExpectationMessage = "to have an angle of {expectedRadians} rad to {other} within tolerance {tolerance}",
+        InlineMethodBody = true)]
+    public static bool HasAngleBetweenApproximately(this Vector3 value, Vector3 other, double expectedRadians, double tolerance)
+        => MathTolerance.IsApproximatelyEqual(LinearAlgebra.AngleBetween(value, other), expectedRadians, tolerance);
+
+    /// <summary>
     /// Asserts the supplied vectors are linearly independent in <c>R^3</c> within
     /// tolerance. Spans of four or more vectors are always dependent.
     /// </summary>
