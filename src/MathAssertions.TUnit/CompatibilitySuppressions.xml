@@ -2,8 +2,50 @@
 <!-- https://learn.microsoft.com/dotnet/fundamentals/package-validation/diagnostic-ids -->
 <Suppressions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Suppression>
+    <DiagnosticId>CP0001</DiagnosticId>
+    <Target>T:TUnit.Assertions.Extensions.Matrix4x4_IsRotation_Double_Assertion</Target>
+    <Left>lib/net10.0/MathAssertions.TUnit.dll</Left>
+    <Right>lib/net10.0/MathAssertions.TUnit.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0001</DiagnosticId>
+    <Target>T:TUnit.Assertions.Extensions.Vector3_HasAngleBetweenApproximately_Vector3_Double_Double_Assertion</Target>
+    <Left>lib/net10.0/MathAssertions.TUnit.dll</Left>
+    <Right>lib/net10.0/MathAssertions.TUnit.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:MathAssertions.TUnit.LinearAlgebraAssertions.HasAngleBetweenApproximately(System.Numerics.Vector3,System.Numerics.Vector3,System.Double,System.Double)</Target>
+    <Left>lib/net10.0/MathAssertions.TUnit.dll</Left>
+    <Right>lib/net10.0/MathAssertions.TUnit.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:MathAssertions.TUnit.MatrixAssertions.IsRotation(System.Numerics.Matrix4x4,System.Double)</Target>
+    <Left>lib/net10.0/MathAssertions.TUnit.dll</Left>
+    <Right>lib/net10.0/MathAssertions.TUnit.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:TUnit.Assertions.Extensions.LinearAlgebraAssertions.HasAngleBetweenApproximately(TUnit.Assertions.Core.IAssertionSource{System.Numerics.Vector3},System.Numerics.Vector3,System.Double,System.Double,System.String,System.String,System.String)</Target>
+    <Left>lib/net10.0/MathAssertions.TUnit.dll</Left>
+    <Right>lib/net10.0/MathAssertions.TUnit.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:TUnit.Assertions.Extensions.MatrixAssertions.IsRotation(TUnit.Assertions.Core.IAssertionSource{System.Numerics.Matrix4x4},System.Double,System.String)</Target>
+    <Left>lib/net10.0/MathAssertions.TUnit.dll</Left>
+    <Right>lib/net10.0/MathAssertions.TUnit.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
     <DiagnosticId>CP0003</DiagnosticId>
-    <Target>MathAssertions.TUnit, Version=0.4.2.0, Culture=neutral, PublicKeyToken=null</Target>
+    <Target>MathAssertions.TUnit, Version=0.4.3.0, Culture=neutral, PublicKeyToken=null</Target>
     <Left>lib/net10.0/MathAssertions.TUnit.dll</Left>
     <Right>lib/net10.0/MathAssertions.TUnit.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>

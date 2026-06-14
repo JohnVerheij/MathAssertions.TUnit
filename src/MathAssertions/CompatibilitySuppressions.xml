@@ -2,8 +2,22 @@
 <!-- https://learn.microsoft.com/dotnet/fundamentals/package-validation/diagnostic-ids -->
 <Suppressions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:MathAssertions.LinearAlgebra.AngleBetween(System.Numerics.Vector3,System.Numerics.Vector3)</Target>
+    <Left>lib/net10.0/MathAssertions.dll</Left>
+    <Right>lib/net10.0/MathAssertions.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:MathAssertions.LinearAlgebra.IsRotation(System.Numerics.Matrix4x4,System.Double)</Target>
+    <Left>lib/net10.0/MathAssertions.dll</Left>
+    <Right>lib/net10.0/MathAssertions.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
     <DiagnosticId>CP0003</DiagnosticId>
-    <Target>MathAssertions, Version=0.4.2.0, Culture=neutral, PublicKeyToken=null</Target>
+    <Target>MathAssertions, Version=0.4.3.0, Culture=neutral, PublicKeyToken=null</Target>
     <Left>lib/net10.0/MathAssertions.dll</Left>
     <Right>lib/net10.0/MathAssertions.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>

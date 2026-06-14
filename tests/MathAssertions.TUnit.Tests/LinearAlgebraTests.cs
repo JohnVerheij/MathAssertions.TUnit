@@ -317,6 +317,88 @@ internal sealed class LinearAlgebraTests
             .Throws<ArgumentOutOfRangeException>();
     }
 
+    [Test]
+    public async Task AreParallel_IsScaleInvariant(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // The same direction pair gives the same verdict at unit scale and at large scale, because
+        // parallelism is measured by sin(angle) = |u x v| / (|u||v|), not the raw cross magnitude.
+        // The raw-magnitude test would have called the large pair non-parallel (|u x v| = 1000).
+        var unit = LinearAlgebra.AreParallel(new Vector3(1f, 0f, 0f), new Vector3(1f, 0.001f, 0f), 1e-2);
+        var scaled = LinearAlgebra.AreParallel(new Vector3(1000f, 0f, 0f), new Vector3(1000f, 1f, 0f), 1e-2);
+        await Assert.That(unit).IsTrue();
+        await Assert.That(scaled).IsEqualTo(unit);
+    }
+
+    [Test]
+    public async Task AreParallel_SecondVectorZero_True(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // The zero guard also covers a zero second operand (avoids dividing by |v| = 0).
+        await Assert.That(LinearAlgebra.AreParallel(Vector3.UnitX, Vector3.Zero, Tol)).IsTrue();
+    }
+
+    [Test]
+    public async Task AngleBetween_Perpendicular_IsHalfPi(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        await Assert.That(LinearAlgebra.AngleBetween(Vector3.UnitX, Vector3.UnitY)).IsEqualTo(Math.PI / 2).Within(Tol);
+    }
+
+    [Test]
+    public async Task AngleBetween_AntiParallel_IsPi(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        await Assert.That(LinearAlgebra.AngleBetween(Vector3.UnitX, -Vector3.UnitX)).IsEqualTo(Math.PI).Within(Tol);
+    }
+
+    [Test]
+    public async Task AngleBetween_SameDirectionAnyScale_IsZero(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        await Assert.That(LinearAlgebra.AngleBetween(Vector3.UnitX, new Vector3(5f, 0f, 0f))).IsEqualTo(0.0).Within(Tol);
+    }
+
+    [Test]
+    public async Task AngleBetween_ZeroVector_IsZeroByConvention(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // atan2(0, 0) = 0: the angle is otherwise undefined and is reported as zero.
+        await Assert.That(LinearAlgebra.AngleBetween(Vector3.Zero, Vector3.UnitX)).IsEqualTo(0.0).Within(Tol);
+    }
+
+    [Test]
+    public async Task IsRotation_ProperRotation_True(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        await Assert.That(LinearAlgebra.IsRotation(Matrix4x4.CreateRotationZ(MathF.PI / 3), Tol)).IsTrue();
+        await Assert.That(LinearAlgebra.IsRotation(Matrix4x4.Identity, Tol)).IsTrue();
+    }
+
+    [Test]
+    public async Task IsRotation_Reflection_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // A reflection is orthogonal but has determinant -1, so it is not a proper rotation.
+        await Assert.That(LinearAlgebra.IsRotation(Matrix4x4.CreateScale(-1f, 1f, 1f), Tol)).IsFalse();
+    }
+
+    [Test]
+    public async Task IsRotation_TranslationOrScale_False(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        await Assert.That(LinearAlgebra.IsRotation(Matrix4x4.CreateTranslation(1f, 2f, 3f), Tol)).IsFalse();
+        await Assert.That(LinearAlgebra.IsRotation(Matrix4x4.CreateScale(2f), Tol)).IsFalse();
+    }
+
+    [Test]
+    public async Task IsRotation_NegativeTolerance_Throws(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        await Assert.That(() => LinearAlgebra.IsRotation(Matrix4x4.Identity, -1e-6))
+            .Throws<ArgumentOutOfRangeException>();
+    }
+
     // ----- AreLinearlyIndependent -----
 
     [Test]

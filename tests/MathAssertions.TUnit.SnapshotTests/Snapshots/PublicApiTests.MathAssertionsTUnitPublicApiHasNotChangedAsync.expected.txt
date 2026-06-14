@@ -70,6 +70,8 @@ namespace MathAssertions.TUnit
     {
         [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be linearly independent within tolerance {tolerance}", InlineMethodBody=false)]
         public static bool AreLinearlyIndependent(this System.Numerics.Vector3[] value, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to have an angle of {expectedRadians} rad to {other} within tolerance {tolerance}", InlineMethodBody=true)]
+        public static bool HasAngleBetweenApproximately(this System.Numerics.Vector3 value, System.Numerics.Vector3 other, double expectedRadians, double tolerance) { }
         [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be orthogonal to {other} within tolerance {tolerance}", InlineMethodBody=true)]
         public static bool IsOrthogonalTo(this System.Numerics.Vector3 value, System.Numerics.Vector3 other, double tolerance) { }
         [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be parallel to {other} within tolerance {tolerance}", InlineMethodBody=true)]
@@ -89,6 +91,8 @@ namespace MathAssertions.TUnit
         public static bool IsInvertible(this System.Numerics.Matrix4x4 value, double tolerance) { }
         [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be orthogonal within tolerance {tolerance}", InlineMethodBody=true)]
         public static bool IsOrthogonal(this System.Numerics.Matrix4x4 value, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be a proper rotation within tolerance {tolerance}", InlineMethodBody=true)]
+        public static bool IsRotation(this System.Numerics.Matrix4x4 value, double tolerance) { }
         [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be symmetric within tolerance {tolerance}", InlineMethodBody=true)]
         public static bool IsSymmetric(this System.Numerics.Matrix4x4 value, double tolerance) { }
     }
@@ -465,6 +469,7 @@ namespace TUnit.Assertions.Extensions
     public static class LinearAlgebraAssertions
     {
         public static TUnit.Assertions.Extensions.Vector3Array_AreLinearlyIndependent_Double_Assertion AreLinearlyIndependent(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Vector3[]> source, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Vector3_HasAngleBetweenApproximately_Vector3_Double_Double_Assertion HasAngleBetweenApproximately(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Vector3> source, System.Numerics.Vector3 other, double expectedRadians, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("other")] string? otherExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("expectedRadians")] string? expectedRadiansExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
         public static TUnit.Assertions.Extensions.Vector3_IsOrthogonalTo_Vector3_Double_Assertion IsOrthogonalTo(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Vector3> source, System.Numerics.Vector3 other, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("other")] string? otherExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
         public static TUnit.Assertions.Extensions.Vector3_IsParallelTo_Vector3_Double_Assertion IsParallelTo(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Vector3> source, System.Numerics.Vector3 other, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("other")] string? otherExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
     }
@@ -546,6 +551,12 @@ namespace TUnit.Assertions.Extensions
         protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Matrix4x4> metadata) { }
         protected override string GetExpectation() { }
     }
+    public sealed class Matrix4x4_IsRotation_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Matrix4x4>
+    {
+        public Matrix4x4_IsRotation_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Matrix4x4> context, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Matrix4x4> metadata) { }
+        protected override string GetExpectation() { }
+    }
     public sealed class Matrix4x4_IsSymmetric_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Matrix4x4>
     {
         public Matrix4x4_IsSymmetric_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Matrix4x4> context, double tolerance) { }
@@ -560,6 +571,7 @@ namespace TUnit.Assertions.Extensions
         public static TUnit.Assertions.Extensions.Matrix4x4_IsIdentity_Double_Assertion IsIdentity(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Matrix4x4> source, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
         public static TUnit.Assertions.Extensions.Matrix4x4_IsInvertible_Double_Assertion IsInvertible(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Matrix4x4> source, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
         public static TUnit.Assertions.Extensions.Matrix4x4_IsOrthogonal_Double_Assertion IsOrthogonal(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Matrix4x4> source, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Matrix4x4_IsRotation_Double_Assertion IsRotation(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Matrix4x4> source, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
         public static TUnit.Assertions.Extensions.Matrix4x4_IsSymmetric_Double_Assertion IsSymmetric(this TUnit.Assertions.Core.IAssertionSource<System.Numerics.Matrix4x4> source, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
     }
     public static class NumberTheoryAssertions
@@ -810,6 +822,12 @@ namespace TUnit.Assertions.Extensions
     {
         public Vector3Array_IsCollinear_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Vector3[]> context, double tolerance) { }
         protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Vector3[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Vector3_HasAngleBetweenApproximately_Vector3_Double_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Vector3>
+    {
+        public Vector3_HasAngleBetweenApproximately_Vector3_Double_Double_Assertion(TUnit.Assertions.Core.AssertionContext<System.Numerics.Vector3> context, System.Numerics.Vector3 other, double expectedRadians, double tolerance) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Numerics.Vector3> metadata) { }
         protected override string GetExpectation() { }
     }
     public sealed class Vector3_HasDistanceFromPlane_Plane_Double_Double_Assertion : TUnit.Assertions.Core.Assertion<System.Numerics.Vector3>

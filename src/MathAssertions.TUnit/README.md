@@ -54,13 +54,13 @@ The fluent surface, organized by adapter class:
 | `VectorAssertions` | `IsApproximatelyEqualTo` for `Vector2`/`Vector3`/`Vector4`; `Vector3.HasMagnitudeApproximately`, `IsNormalized`. |
 | `QuaternionAssertions` | `IsApproximatelyEqualTo`, `IsRotationallyEquivalentTo` (SO(3) double-cover), `HasAxisAngleApproximately` (axis-angle form; v0.2.0+), `IsIdentity`, `IsNormalized`. |
 | `PoseAssertions` | `(Vector3, Quaternion).IsPoseApproximatelyEqualTo` and `Matrix4x4.IsRigidTransformApproximatelyEqualTo`: pose / rigid-transform equality with separate position (Euclidean distance) and rotation (geodesic degrees) tolerances, plus a combined failure diagnostic (v0.4.0+). `rotationToleranceDegrees` is an angle, not a per-component quaternion delta; do not port a component epsilon into it (see the migration note in the main README). |
-| `MatrixAssertions` | `Matrix4x4.IsApproximatelyEqualTo` plus the full invariant surface: `IsSymmetric`, `IsOrthogonal`, `IsIdentity`, `HasDeterminantApproximately`, `HasTraceApproximately`, `IsInvertible`. |
+| `MatrixAssertions` | `Matrix4x4.IsApproximatelyEqualTo` plus the full invariant surface: `IsSymmetric`, `IsOrthogonal`, `IsRotation` (proper rotation: orthogonal with determinant +1; v0.5.0+), `IsIdentity`, `HasDeterminantApproximately`, `HasTraceApproximately`, `IsInvertible`. |
 | `PlaneAssertions` | `IsApproximatelyEqualTo`, `IsGeometricallyEquivalentTo` (sign-flip equivalence). |
 | `ComplexAssertions` | `IsApproximatelyEqualTo`. |
 | `ArrayAssertions` | `double[]` / `float[]` element-wise `IsApproximatelyEqualTo` with `ArgumentNullException` on null arrays. |
 | `SequencesAssertions` | Monotonicity, `IsBounded`, `IsArithmeticProgression`, `IsGeometricProgression`, `ConvergesTo`, `IsCauchyConvergent`, generic `HasLength`, `HasMinLength` over `T[]`. |
 | `StatisticsAssertions` | `HasMean/Variance/StdDev/Sum/Median/PercentileApproximately`, `IsWithinSigmasOfMean`, `AreAllWithinSigmasOfMean`. |
-| `LinearAlgebraAssertions` | `Vector3.IsOrthogonalTo`, `IsParallelTo`; `Vector3[].AreLinearlyIndependent`. |
+| `LinearAlgebraAssertions` | `Vector3.IsOrthogonalTo`, `IsParallelTo` (scale-invariant; v0.5.0+), `HasAngleBetweenApproximately` (v0.5.0+); `Vector3[].AreLinearlyIndependent`. |
 | `NumberTheoryAssertions` | `long`-integer predicates: `IsDivisibleBy`, `IsPrime`, `IsCoprimeWith`, `IsPowerOf`, `IsPerfectSquare`, `IsCongruentTo`. |
 | `Geometry3DAssertions` | Triangle / point-set property predicates, containment (point/box/sphere/OBB/convex hull), predicate-style `HasDistanceFromPlane/Segment/Triangle`, ray-plane/sphere/triangle/AABB intersection, pointcloud aggregates. |
 

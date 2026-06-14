@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-06-14: scale-invariant parallelism, angle and rotation assertions
+
+Minor release. Fixes the scale-dependence of the parallel check and adds an angle-between assertion and a proper-rotation matrix assertion.
+
+### Fixed
+
+- **`AreParallel` / `IsParallelTo` are now scale-invariant.** The check compared the raw cross-product magnitude `|u x v|` against an absolute tolerance, so whether two vectors read as parallel depended on their length, not just their direction: the same angular deviation passed at unit scale and failed at large scale. It now compares the sine of the angle, `|u x v| / (|u| |v|)`, against the tolerance (an angular measure), the same normalization the package already applied in `IsCollinear`. A zero or shorter-than-tolerance vector is still treated as parallel to any vector. Tolerances chosen for unit vectors are unchanged in meaning; tolerances applied to non-unit vectors now express an angle rather than a magnitude.
+
+### Added
+
+- **`Assert.That(vector).HasAngleBetweenApproximately(other, expectedRadians, tolerance)`** asserts the unsigned angle between two vectors (on `[0, pi]`) is within tolerance of an expected value. The angle is computed as `atan2(|u x v|, u . v)`, which stays accurate across the whole range where `acos` of the normalized dot product loses precision near `0` and `pi`. `LinearAlgebra.AngleBetween(u, v)` exposes the same computation on the framework-agnostic core.
+- **`Assert.That(matrix).IsRotation(tolerance)`** asserts a `Matrix4x4` is a proper rotation: orthogonal (`M * M^T = I`) with determinant `+1`. Reflections (determinant `-1`) and matrices carrying translation or scale are rejected. Exposed on the core as `LinearAlgebra.IsRotation`.
+
+### Changed
+
+- Bumped `PackageValidationBaselineVersion` from `0.4.2` to `0.4.3` on both packages so ApiCompat strict-mode validates `0.5.0` against the most recently published baseline.
+
 ## [0.4.3] - 2026-06-12: double-precision magnitude for IsNormalized and HasMagnitudeApproximately
 
 Patch release. Computes vector and quaternion magnitudes in double precision so a tight tolerance reflects the value's actual deviation from unit length rather than single-precision arithmetic noise. No public API change.
@@ -287,7 +304,9 @@ The wider surface lands at 0.1.0 alongside the load-bearing review fixes M-1 thr
 - Source Link, deterministic builds, embedded PDB.
 - TUnit dependency pinned to **1.43.11**.
 
-[unreleased]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.4.2...HEAD
+[unreleased]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.4.3...v0.5.0
+[0.4.3]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.3.0...v0.4.0

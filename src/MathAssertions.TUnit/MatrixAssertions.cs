@@ -37,6 +37,15 @@ public static class MatrixAssertions
     public static bool IsOrthogonal(this Matrix4x4 value, double tolerance)
         => LinearAlgebra.IsOrthogonal(value, tolerance);
 
+    /// <summary>Asserts the matrix is a proper rotation (orthogonal with determinant <c>+1</c>)
+    /// within tolerance. Reflections (determinant <c>-1</c>) and matrices carrying a translation
+    /// or scale are rejected.</summary>
+    [GenerateAssertion(
+        ExpectationMessage = "to be a proper rotation within tolerance {tolerance}",
+        InlineMethodBody = true)]
+    public static bool IsRotation(this Matrix4x4 value, double tolerance)
+        => LinearAlgebra.IsRotation(value, tolerance);
+
     /// <summary>Asserts the matrix is the identity matrix within tolerance.</summary>
     [GenerateAssertion(
         ExpectationMessage = "to be the identity matrix within tolerance {tolerance}",

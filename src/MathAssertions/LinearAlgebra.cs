@@ -68,6 +68,22 @@ public static class LinearAlgebra
     }
 
     /// <summary>
+    /// Returns <see langword="true"/> when the matrix is a proper rotation: orthogonal
+    /// (<c>M * M^T = I</c>, so it preserves lengths and angles) <em>and</em> has determinant
+    /// <c>+1</c> within tolerance. The determinant condition rules out reflections (an improper
+    /// orthogonal matrix has determinant <c>-1</c>). A matrix carrying a non-zero translation is not
+    /// orthogonal and so is not a rotation under this definition.
+    /// </summary>
+    /// <param name="m">Matrix to test.</param>
+    /// <param name="tolerance">Maximum allowed absolute deviation, applied to both the
+    /// orthogonality check (per element of <c>M * M^T - I</c>) and the determinant (from <c>+1</c>).
+    /// Must be non-negative and not NaN.</param>
+    /// <returns><see langword="true"/> if the matrix is a proper rotation within tolerance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
+    public static bool IsRotation(Matrix4x4 m, double tolerance)
+        => IsOrthogonal(m, tolerance) && HasDeterminantApproximately(m, 1.0, tolerance);
+
+    /// <summary>
     /// Returns <see langword="true"/> when the matrix equals the
     /// <see cref="Matrix4x4.Identity"/> matrix element-wise within tolerance.
     /// Convenience wrapper over <see cref="MathTolerance.IsApproximatelyEqual(Matrix4x4, Matrix4x4, double)"/>
@@ -167,24 +183,49 @@ public static class LinearAlgebra
 
     /// <summary>
     /// Returns <see langword="true"/> when the two vectors are parallel (or anti-parallel):
-    /// the magnitude of their cross product is within <paramref name="tolerance"/> of zero.
-    /// A zero vector is treated as parallel to every other vector under this definition
-    /// because <c>0 x v = 0</c> for any <c>v</c>.
+    /// the sine of the angle between their directions, <c>|u x v| / (|u| |v|)</c>, is within
+    /// <paramref name="tolerance"/> of zero. The measure is scale-invariant, so parallelism
+    /// depends only on direction, not on the vectors' magnitudes. A zero (or shorter-than-tolerance)
+    /// vector is treated as parallel to every other vector, both because <c>0 x v = 0</c> and to
+    /// avoid dividing by a zero length.
     /// </summary>
+    /// <remarks>
+    /// The tolerance is an angular measure (the sine of the maximum permitted deviation from exactly
+    /// parallel), not an absolute cross-product magnitude. For small angles <c>sin(theta) ~ theta</c>,
+    /// so a tolerance of <c>1e-3</c> admits directions within roughly a milliradian of parallel
+    /// regardless of how long the vectors are.
+    /// </remarks>
     /// <param name="u">First vector.</param>
     /// <param name="v">Second vector.</param>
-    /// <param name="tolerance">Maximum allowed absolute deviation of the cross-product
-    /// magnitude from zero. Must be non-negative and not NaN.</param>
-    /// <returns><see langword="true"/> if <c>|u x v| ~ 0</c>.</returns>
+    /// <param name="tolerance">Maximum allowed sine of the angle between the directions. Must be
+    /// non-negative and not NaN.</param>
+    /// <returns><see langword="true"/> if the directions are parallel within tolerance.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
     public static bool AreParallel(Vector3 u, Vector3 v, double tolerance)
     {
         ValidateTolerance(tolerance);
 
-        var cross = Vector3.Cross(u, v);
-        double crossLength = cross.Length();
-        return MathTolerance.IsApproximatelyEqual(crossLength, 0.0, tolerance);
+        double uLength = u.Length();
+        double vLength = v.Length();
+        if (uLength <= tolerance || vLength <= tolerance)
+            return true;
+
+        double sineOfAngle = Vector3.Cross(u, v).Length() / (uLength * vLength);
+        return MathTolerance.IsApproximatelyEqual(sineOfAngle, 0.0, tolerance);
     }
+
+    /// <summary>
+    /// Returns the unsigned angle, in radians on <c>[0, pi]</c>, between two vectors, computed as
+    /// <c>atan2(|u x v|, u . v)</c>. This form stays numerically accurate across the whole range,
+    /// unlike <c>acos((u . v) / (|u| |v|))</c>, which loses precision near <c>0</c> and <c>pi</c>
+    /// where the cosine flattens. A zero vector yields an angle of <c>0</c> by convention (the angle
+    /// is otherwise undefined).
+    /// </summary>
+    /// <param name="u">First vector.</param>
+    /// <param name="v">Second vector.</param>
+    /// <returns>The angle between the vectors in radians, on <c>[0, pi]</c>.</returns>
+    public static double AngleBetween(Vector3 u, Vector3 v)
+        => Math.Atan2(Vector3.Cross(u, v).Length(), Vector3.Dot(u, v));
 
     /// <summary>
     /// Returns <see langword="true"/> when the supplied vectors are linearly independent
