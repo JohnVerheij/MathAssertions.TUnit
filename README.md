@@ -78,7 +78,7 @@ This library replaces both with a single fluent DSL that auto-imports alongside 
 dotnet add package MathAssertions.TUnit
 ```
 
-**Requirements:** TUnit 1.57.14 or later, .NET 10. `MathAssertions` (the framework-agnostic core) and TUnit's runtime + assertion deps come transitively. The package is AOT-compatible, trimmable, and uses no runtime reflection in the assertion path.
+**Requirements:** TUnit 1.58.0 or later, .NET 10. `MathAssertions` (the framework-agnostic core) and TUnit's runtime + assertion deps come transitively. The package is AOT-compatible, trimmable, and uses no runtime reflection in the assertion path.
 
 ## Package layout
 
