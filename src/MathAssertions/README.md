@@ -1,5 +1,8 @@
 # MathAssertions
 
+> Part of the **[DotNetAssertions](https://dotnetassertions.dev)** family of assertion extensions for TUnit.
+
+
 [![NuGet](https://img.shields.io/nuget/v/MathAssertions.svg)](https://www.nuget.org/packages/MathAssertions/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4.svg)](https://dotnet.microsoft.com/download/dotnet/10.0)
