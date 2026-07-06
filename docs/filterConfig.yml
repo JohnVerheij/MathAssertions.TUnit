@@ -1,5 +1,5 @@
 apiRules:
-- include:
-    uidRegex: ^MathAssertions(\.TUnit)?(\..+)?$
 - exclude:
     uidRegex: .*\.Internal\..*
+- include:
+    uidRegex: ^MathAssertions(\.TUnit)?(\..+)?$
