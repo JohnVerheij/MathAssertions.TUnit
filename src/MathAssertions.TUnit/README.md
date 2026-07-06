@@ -1,14 +1,13 @@
 # MathAssertions.TUnit
 
-> Part of the **[DotNetAssertions](https://dotnetassertions.dev)** family of assertion extensions for TUnit.
-
-
 [![NuGet](https://img.shields.io/nuget/v/MathAssertions.TUnit.svg)](https://www.nuget.org/packages/MathAssertions.TUnit/)
 [![Downloads](https://img.shields.io/nuget/dt/MathAssertions.TUnit.svg)](https://www.nuget.org/packages/MathAssertions.TUnit/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4.svg)](https://dotnet.microsoft.com/download/dotnet/10.0)
 
 > **Scope:** Test projects only. Not intended for production code.
+
+> Part of the **[DotNetAssertions](https://dotnetassertions.dev)** family of assertion extensions for TUnit.
 
 TUnit-native math assertion library for .NET. Covers tolerance comparisons, sequences, statistics, linear algebra, number theory, and 3D geometry. NaN-aware, infinity-aware, AOT-compatible, no runtime reflection in the assertion path.
 

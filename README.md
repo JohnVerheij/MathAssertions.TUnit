@@ -1,8 +1,5 @@
 # MathAssertions.TUnit
 
-> Part of the **[DotNetAssertions](https://dotnetassertions.dev)** family of assertion extensions for TUnit.
-
-
 [![CI](https://github.com/JohnVerheij/MathAssertions.TUnit/actions/workflows/ci.yml/badge.svg)](https://github.com/JohnVerheij/MathAssertions.TUnit/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/JohnVerheij/MathAssertions.TUnit/actions/workflows/codeql.yml/badge.svg)](https://github.com/JohnVerheij/MathAssertions.TUnit/actions/workflows/codeql.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/JohnVerheij/MathAssertions.TUnit/badge)](https://scorecard.dev/viewer/?uri=github.com/JohnVerheij/MathAssertions.TUnit)
@@ -15,6 +12,8 @@
 TUnit-native math assertion library for .NET. Covers tolerance comparisons (scalar, `System.Numerics` compounds, spans, tensors), sequences, statistics, linear algebra, number theory, and 3D geometry. Source-generated entry points integrate with TUnit's `Assert.That(...)` pipeline. NaN-aware, infinity-aware, AOT-compatible, reflection-free in the assertion path.
 
 > **Scope:** Test projects only. Not intended for production code.
+
+> Part of the **[DotNetAssertions](https://dotnetassertions.dev)** family of assertion extensions for TUnit.
 
 ---
 
