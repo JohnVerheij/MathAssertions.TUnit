@@ -160,7 +160,7 @@ This precision-preserving cast is locked behavior. Tests pin it; v0.1.0 additive
 
 ## Entry points
 
-~85 fluent entry points across twelve adapter classes cover scalar, `System.Numerics` compounds, `double[]`/`float[]`, sequences, statistics, linear algebra, integer number theory, and a complete 3D-geometry surface. v0.2.0 adds `HasAxisAngleApproximately` on `Quaternion` and per-component delta rendering in every compound failure message. The exhaustive method listing lives in the [package README](src/MathAssertions.TUnit/README.md#entry-points); the examples below are representative.
+~85 fluent entry points across twelve adapter classes cover scalar, `System.Numerics` compounds, `double[]`/`float[]`, sequences, statistics, linear algebra, integer number theory, and a complete 3D-geometry surface. v0.2.0 adds `HasAxisAngleApproximately` on `Quaternion` and per-component delta rendering in every compound failure message. The exhaustive method listing lives in the [package README](https://github.com/JohnVerheij/MathAssertions.TUnit/blob/main/src/MathAssertions.TUnit/README.md#entry-points); the examples below are representative.
 
 ### Vector3 component-wise
 
