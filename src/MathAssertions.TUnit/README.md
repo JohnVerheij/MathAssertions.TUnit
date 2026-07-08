@@ -7,6 +7,8 @@
 
 > **Scope:** Test projects only. Not intended for production code.
 
+> Part of the **[DotNetAssertions](https://dotnetassertions.dev)** family of assertion extensions for TUnit.
+
 TUnit-native math assertion library for .NET. Covers tolerance comparisons, sequences, statistics, linear algebra, number theory, and 3D geometry. NaN-aware, infinity-aware, AOT-compatible, no runtime reflection in the assertion path.
 
 > **Full documentation, "Why component-wise rather than Euclidean", cookbook, design notes, and roadmap:** [github.com/JohnVerheij/MathAssertions.TUnit](https://github.com/JohnVerheij/MathAssertions.TUnit)
