@@ -165,7 +165,7 @@
       "mathassertions": {
         "type": "Project",
         "dependencies": {
-          "System.Numerics.Tensors": "[10.0.9, )"
+          "System.Numerics.Tensors": "[10.0.10, )"
         }
       },
       "mathassertions.tunit": {
@@ -178,9 +178,9 @@
       },
       "System.Numerics.Tensors": {
         "type": "CentralTransitive",
-        "requested": "[10.0.9, )",
-        "resolved": "10.0.9",
-        "contentHash": "Rb71S3gggYVwEce9ugNw91vbr4vC4gThtx/imSJtLBW3AupEKujJPPQL6xF9q0DcNm6+z7hnYk7XqXaUpA4wDg=="
+        "requested": "[10.0.10, )",
+        "resolved": "10.0.10",
+        "contentHash": "9Ildb4Y9maDztB0ZRGxsNShbpCQ2Tjv2dr4IjskBxpTGhH7aIz1+oC+Hl833ASs/htWwsH6myNe+sRpeyCzeMQ=="
       },
       "TUnit.Assertions": {
         "type": "CentralTransitive",
