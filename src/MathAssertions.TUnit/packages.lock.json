@@ -63,15 +63,15 @@
       },
       "TUnit.Assertions": {
         "type": "Direct",
-        "requested": "[1.65.0, )",
-        "resolved": "1.65.0",
-        "contentHash": "HHczI/o5Ji+aWmSSbxMdP7nUp4CtyQFdb6ijtakXKU7rWIk2iHfmu3VWTga8smygzAWz7LDHJX+SfytovE+FWg=="
+        "requested": "[1.65.31, )",
+        "resolved": "1.65.31",
+        "contentHash": "Jwu8qbhi1HC94JTCDnjnHFWxg6OetHDDz/HeQVnVlH7sVjw08sWvBWJcnGL1wY1XPskZKz+XHkFBEWMRWMWjoQ=="
       },
       "TUnit.Core": {
         "type": "Direct",
-        "requested": "[1.65.0, )",
-        "resolved": "1.65.0",
-        "contentHash": "l1BS6dUQzbHF+y2VtO6REZzZwP30kOA62+s21htByauqXRK/3046FRNWJFTyS0Hk6afSnYcAYEMDY6hpUHMwPQ=="
+        "requested": "[1.65.31, )",
+        "resolved": "1.65.31",
+        "contentHash": "QhkHy3oKJVbrSAwPhyVllnCE9WNs2Yef/ANysT/J3Bf/ARgjVmqEwT3sGde4kv5mChMjbQoxr/aqN2vCvus+xA=="
       },
       "Microsoft.Build.Tasks.Git": {
         "type": "Transitive",
