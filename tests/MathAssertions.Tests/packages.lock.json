@@ -123,14 +123,14 @@
       "mathassertions": {
         "type": "Project",
         "dependencies": {
-          "System.Numerics.Tensors": "[10.0.11, )"
+          "System.Numerics.Tensors": "[10.0.12, )"
         }
       },
       "System.Numerics.Tensors": {
         "type": "CentralTransitive",
-        "requested": "[10.0.11, )",
-        "resolved": "10.0.11",
-        "contentHash": "4jNNt67NhCqf3bf2FN0mrsC+EH60L7Sny6poqVeiviB27Kw7TQzMmgn8HIaPc8E9EcuGusUyfeu21gLfzcBpDA=="
+        "requested": "[10.0.12, )",
+        "resolved": "10.0.12",
+        "contentHash": "17brFrnQHV/XMMazXNqFq4GkvzWy8yzDPo5Gb8TT8zJtMFbUqDycOCyPCp9F+eMc4L75kcCKRZqaeBHMwLCL9Q=="
       },
       "TUnit.Assertions": {
         "type": "CentralTransitive",
