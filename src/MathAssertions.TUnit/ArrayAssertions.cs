@@ -9,7 +9,7 @@ namespace MathAssertions.TUnit;
 /// Fluent <see cref="double"/>[] / <see cref="float"/>[] array assertions delegating to
 /// the <see cref="MathTolerance"/> span overloads. Arrays are used at the
 /// adapter surface rather than spans because TUnit's assertion-builder infrastructure
-/// cannot capture ref-struct values across an <c>await</c> boundary;
+/// cannot capture ref-struct values across an <see langword="await"/> boundary;
 /// <see cref="ReadOnlySpan{T}"/> remains accessible to callers via
 /// <c>MathTolerance.IsApproximatelyEqual</c> directly when zero-allocation matters.
 /// </summary>

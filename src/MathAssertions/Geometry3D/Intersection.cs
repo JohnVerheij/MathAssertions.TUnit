@@ -56,9 +56,7 @@ public static class Intersection
         return t >= 0;
     }
 
-    /// <summary>
-    /// Boolean shorthand for the <see cref="Intersects(Ray3D, Plane, out float)"/> overload.
-    /// </summary>
+    /// <summary>Boolean shorthand for the <see cref="Intersects(Ray3D, Plane, out float)"/> overload.</summary>
     public static bool Intersects(Ray3D ray, Plane plane) => Intersects(ray, plane, out _);
 
     /// <summary>
@@ -66,9 +64,7 @@ public static class Intersection
     /// solid <paramref name="sphere"/>. Geometric solution: project the sphere center
     /// onto the ray, then compare squared perpendicular distance to squared radius.
     /// </summary>
-    /// <remarks>
-    /// Reference: Akenine-Möller, Haines, Hoffman, <i>Real-Time Rendering</i> 4th ed., §22.6.
-    /// </remarks>
+    /// <remarks>Reference: Akenine-Möller, Haines, Hoffman, <i>Real-Time Rendering</i> 4th ed., §22.6.</remarks>
     public static bool Intersects(Ray3D ray, Sphere sphere)
     {
         var l = sphere.Center - ray.Origin;
@@ -88,9 +84,7 @@ public static class Intersection
     /// Möller-Trumbore algorithm. A ray parallel to the triangle plane returns
     /// <see langword="false"/> with <c>t == 0</c>.
     /// </summary>
-    /// <remarks>
-    /// Reference: Akenine-Möller, Haines, Hoffman, <i>Real-Time Rendering</i> 4th ed., §22.8.
-    /// </remarks>
+    /// <remarks>Reference: Akenine-Möller, Haines, Hoffman, <i>Real-Time Rendering</i> 4th ed., §22.8.</remarks>
     public static bool Intersects(Ray3D ray, Triangle3D triangle, out float t)
     {
         var edge1 = triangle.B - triangle.A;
@@ -121,18 +115,14 @@ public static class Intersection
         return t > ParallelEpsilon;
     }
 
-    /// <summary>
-    /// Boolean shorthand for the <see cref="Intersects(Ray3D, Triangle3D, out float)"/> overload.
-    /// </summary>
+    /// <summary>Boolean shorthand for the <see cref="Intersects(Ray3D, Triangle3D, out float)"/> overload.</summary>
     public static bool Intersects(Ray3D ray, Triangle3D triangle) => Intersects(ray, triangle, out _);
 
     /// <summary>
     /// Returns <see langword="true"/> when <paramref name="ray"/> intersects
     /// <paramref name="box"/>. Slab-test implementation.
     /// </summary>
-    /// <remarks>
-    /// Reference: Akenine-Möller, Haines, Hoffman, <i>Real-Time Rendering</i> 4th ed., §22.7.
-    /// </remarks>
+    /// <remarks>Reference: Akenine-Möller, Haines, Hoffman, <i>Real-Time Rendering</i> 4th ed., §22.7.</remarks>
     public static bool Intersects(Ray3D ray, AxisAlignedBox box)
     {
         var tMin = float.NegativeInfinity;
