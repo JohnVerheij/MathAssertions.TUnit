@@ -112,9 +112,7 @@ public static class MathTolerance
             && IsApproximatelyEqual(a.Y, b.Y, tolerance);
     }
 
-    /// <summary>
-    /// Component-wise tolerance comparison for two <see cref="Vector3"/> values.
-    /// </summary>
+    /// <summary>Component-wise tolerance comparison for two <see cref="Vector3"/> values.</summary>
     /// <remarks>
     /// Component values widen to <see cref="double"/> before the per-axis comparison so the
     /// caller's <see langword="double"/> tolerance is honored at full precision. Casting the tolerance

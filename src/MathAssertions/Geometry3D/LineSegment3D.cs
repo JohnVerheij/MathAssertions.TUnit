@@ -3,9 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace MathAssertions.Geometry3D;
 
-/// <summary>
-/// Finite line segment from <see cref="Start"/> to <see cref="End"/>.
-/// </summary>
+/// <summary>Finite line segment from <see cref="Start"/> to <see cref="End"/>.</summary>
 /// <param name="Start">Starting endpoint of the segment.</param>
 /// <param name="End">Ending endpoint of the segment.</param>
 [StructLayout(LayoutKind.Auto)]

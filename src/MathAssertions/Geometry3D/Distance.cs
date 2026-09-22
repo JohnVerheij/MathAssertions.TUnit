@@ -30,9 +30,7 @@ public static class Distance
     /// <paramref name="seg"/>. The closest point is either an interior projection (when
     /// the projection parameter is in <c>[0, 1]</c>) or the nearer endpoint (otherwise).
     /// </summary>
-    /// <remarks>
-    /// Reference: Ericson, <i>Real-Time Collision Detection</i>, §5.1.2.
-    /// </remarks>
+    /// <remarks>Reference: Ericson, <i>Real-Time Collision Detection</i>, §5.1.2.</remarks>
     /// <param name="point">Point to measure from.</param>
     /// <param name="seg">Segment to measure to.</param>
     /// <returns>The unsigned closest-point distance.</returns>

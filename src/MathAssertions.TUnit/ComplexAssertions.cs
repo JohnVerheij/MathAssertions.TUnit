@@ -5,9 +5,7 @@ using TUnit.Assertions.Core;
 
 namespace MathAssertions.TUnit;
 
-/// <summary>
-/// Fluent <see cref="Complex"/> assertions delegating to <see cref="MathTolerance"/>.
-/// </summary>
+/// <summary>Fluent <see cref="Complex"/> assertions delegating to <see cref="MathTolerance"/>.</summary>
 /// <remarks>
 /// v0.2.0 enriches the failure message with Real / Imaginary delta rendering via
 /// <see cref="MathFailureMessage"/>.
