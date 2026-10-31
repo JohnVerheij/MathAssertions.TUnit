@@ -62,6 +62,10 @@
              skipped -> build fails with CS0103/CS1061 on MathAssertions.TUnit types, signalling
              clearly that you need to pack first. -->
     <ArtifactsLocalFeedExists Condition="Exists('$(MSBuildThisFileDirectory)..\..\artifacts')">true</ArtifactsLocalFeedExists>
+
+    <!-- CI passes the exact version it just packed (-p:SmokePackageVersion=...). Without it, the
+         highest version in the local feed is used, including pre-releases. -->
+    <SmokePackageVersion Condition="'$(SmokePackageVersion)' == ''">*-*</SmokePackageVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -69,10 +73,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(ArtifactsLocalFeedExists)' == 'true'">
-    <!-- Floating version: consumes whatever 0.4.x preview was packed into the local feed at
-         ../../artifacts. The 0.4.1-* prefix matches both prereleases (0.4.1-rc.x) and the
-         eventual stable 0.4.1 nupkg, so the smoke test resolves cleanly against either. -->
-    <PackageReference Include="MathAssertions.TUnit" Version="0.4.1-*" />
+    <PackageReference Include="MathAssertions.TUnit" Version="$(SmokePackageVersion)" />
   </ItemGroup>
 
 </Project>
