@@ -15,6 +15,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-11-01: cookbook for the geometric checks, SPDX 3.0 SBOM
+
+Patch release. No API or behavior change.
+
+### Changed
+
+- **README:** copy-paste examples for `HasAngleBetweenApproximately`, the scale-invariant `IsParallelTo`, `IsNormalized` (vector and quaternion), and `IsRotation`; a note that only `PoseRenderer` needs `using MathAssertions.Render;`; and a corrected sentence that still called per-axis delta rendering future work, although it shipped in 0.2.0.
+- **SBOM:** both packages embed an SPDX 3.0 software bill of materials (SPDX 2.2 before), like the other packages of the family.
+- **`TUnit.Assertions`** and **`TUnit.Core`** minimum versions raised from 1.54.0 to 1.77.0, and **`System.Numerics.Tensors`** from 10.0.9 to 10.0.14.
+
 ## [0.5.0] - 2026-06-14: scale-invariant parallelism, angle and rotation assertions
 
 Minor release. Fixes the scale-dependence of the parallel check and adds an angle-between assertion and a proper-rotation matrix assertion.
@@ -197,7 +207,8 @@ The 0.0.1 scope is intentionally narrow. The release exists to establish the rep
 - All helpers validate `tolerance` (rejects NaN and negative values via `ArgumentOutOfRangeException`).
 - `Vector3.IsApproximatelyEqualTo(expected, tolerance)`: fluent component-wise assertion entry point, generated via TUnit's `[GenerateAssertion]`. Calls `MathTolerance.IsApproximatelyEqual(Vector3, Vector3, double)` internally.
 
-[unreleased]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.5.0...HEAD
+[unreleased]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.4.3...v0.5.0
 [0.4.3]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.4.1...v0.4.2

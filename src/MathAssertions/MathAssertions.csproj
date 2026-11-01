@@ -11,12 +11,12 @@
     <IsPackable>true</IsPackable>
     <PackageId>MathAssertions</PackageId>
     <ProductName>MathAssertions</ProductName>
-    <Version>0.5.0</Version>
+    <Version>0.5.1</Version>
     <Authors>John Verheij</Authors>
     <Copyright>Copyright (c) 2026 John Verheij</Copyright>
     <Description>Framework-agnostic core of the MathAssertions package family. Math assertion helpers for .NET tests, spanning tolerance comparisons (scalar / Vector2-4 / Quaternion + rotational equivalence / Matrix4x4 / Plane + geometric equivalence / Complex / ReadOnlySpan and ReadOnlyTensorSpan / ULP-distance / relative+absolute combined), Sequences (monotonicity / boundedness / progressions / convergence), Statistics (Welford's mean+variance / median / percentile / sigma bounds), LinearAlgebra (matrix invariants and vector pair properties), NumberTheory (long-integer predicates), and Geometry3D (eight primitive types with property predicates / containment / closest-point distance / intersection / pointcloud aggregates). NaN-aware, infinity-aware, AOT-compatible. Test-framework-specific entry points live in adapter packages, starting with MathAssertions.TUnit.</Description>
     <PackageTags>assertions;testing;math;numerics;geometry;statistics;linear-algebra;number-theory;tolerance;dotnet;aot</PackageTags>
-    <PackageProjectUrl>https://github.com/JohnVerheij/MathAssertions.TUnit</PackageProjectUrl>
+    <PackageProjectUrl>https://mathassertions.dev</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <!-- Fallback: nuget.org renders this as a clickable link to the matching GitHub release.
@@ -34,7 +34,7 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <EnablePackageValidation>true</EnablePackageValidation>
-    <PackageValidationBaselineVersion>0.4.3</PackageValidationBaselineVersion>
+    <PackageValidationBaselineVersion>0.5.0</PackageValidationBaselineVersion>
     <EnableStrictModeForCompatibleFrameworksInPackage>true</EnableStrictModeForCompatibleFrameworksInPackage>
     <EnableStrictModeForBaselineValidation>true</EnableStrictModeForBaselineValidation>
     <ApiCompatGenerateSuppressionFile>true</ApiCompatGenerateSuppressionFile>
@@ -44,6 +44,7 @@
 
     <!-- SBOM generation per dpfa Proj0243 (Microsoft.Sbom.Targets pack-time generation) -->
     <GenerateSBOM>true</GenerateSBOM>
+    <SbomGenerationManifestInfo>SPDX:3.0</SbomGenerationManifestInfo>
 
     <!-- AOT / trimming - core code uses no reflection, safe for AOT-mode test contexts -->
     <IsAotCompatible>true</IsAotCompatible>

@@ -202,6 +202,8 @@ Part of an assertion family for TUnit:
 - [JsonAssertions.TUnit](https://github.com/JohnVerheij/JsonAssertions.TUnit)
 - [SseAssertions.TUnit](https://github.com/JohnVerheij/SseAssertions.TUnit)
 - [GrpcAssertions.TUnit](https://github.com/JohnVerheij/GrpcAssertions.TUnit)
+- [TracingAssertions.TUnit](https://github.com/JohnVerheij/TracingAssertions.TUnit)
+- [MetricsAssertions.TUnit](https://github.com/JohnVerheij/MetricsAssertions.TUnit)
 
 ## License
 

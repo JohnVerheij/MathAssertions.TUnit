@@ -11,12 +11,12 @@
     <IsPackable>true</IsPackable>
     <PackageId>MathAssertions.TUnit</PackageId>
     <ProductName>MathAssertions.TUnit</ProductName>
-    <Version>0.5.0</Version>
+    <Version>0.5.1</Version>
     <Authors>John Verheij</Authors>
     <Copyright>Copyright (c) 2026 John Verheij</Copyright>
     <Description>TUnit-native math assertions for .NET tests. Fluent .Method(...) entry points (generated via TUnit's [GenerateAssertion]) covering tolerance comparisons (scalar, vector, quaternion, matrix, plane, complex, double[]/float[]), sequences, statistics, Vector3 linear algebra, long-integer number theory, and the Geometry3D primitive surface (containment, distance, intersection, pointcloud aggregates). Extensible: consumers add tolerance assertions for their own domain types via [GenerateAssertion] extensions calling MathTolerance helpers. AOT-compatible, trimmable, no reflection.</Description>
     <PackageTags>tunit;assertions;testing;math;numerics;geometry;statistics;tolerance;dotnet;aot</PackageTags>
-    <PackageProjectUrl>https://github.com/JohnVerheij/MathAssertions.TUnit</PackageProjectUrl>
+    <PackageProjectUrl>https://mathassertions.dev</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <!-- Fallback: nuget.org renders this as a clickable link to the matching GitHub release.
@@ -42,7 +42,7 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <EnablePackageValidation>true</EnablePackageValidation>
-    <PackageValidationBaselineVersion>0.4.3</PackageValidationBaselineVersion>
+    <PackageValidationBaselineVersion>0.5.0</PackageValidationBaselineVersion>
     <EnableStrictModeForCompatibleFrameworksInPackage>true</EnableStrictModeForCompatibleFrameworksInPackage>
     <EnableStrictModeForBaselineValidation>true</EnableStrictModeForBaselineValidation>
     <ApiCompatGenerateSuppressionFile>true</ApiCompatGenerateSuppressionFile>
@@ -52,6 +52,7 @@
 
     <!-- SBOM generation per dpfa Proj0243 (Microsoft.Sbom.Targets pack-time generation) -->
     <GenerateSBOM>true</GenerateSBOM>
+    <SbomGenerationManifestInfo>SPDX:3.0</SbomGenerationManifestInfo>
 
     <!-- AOT / trimming. Lib code uses no reflection, safe for AOT-mode test contexts -->
     <IsAotCompatible>true</IsAotCompatible>
