@@ -319,6 +319,8 @@ public async Task PoseMatchesBaseline(CancellationToken ct)
 
 `PoseRenderer` lives in the framework-agnostic `MathAssertions` core and takes no dependency on a snapshot framework; `MatchesSnapshot()` is from the sibling [`SnapshotAssertions.TUnit`](https://www.nuget.org/packages/SnapshotAssertions.TUnit/) package. The two-line composition is deliberate: the renderer never hard-depends on a snapshot framework. The quaternion is rendered verbatim (the sign is not canonicalized), so a `q` / `-q` flip is caught; the tolerance is recorded into the output, so a tolerance silently loosened during a refactor also shows up as a diff. The `Render(position, tolerance)` and `Render(orientation, tolerance)` overloads pin the position or orientation alone.
 
+Only `PoseRenderer` lives in `MathAssertions.Render`. The assertions, the quaternion ones included, auto-import with `Assert.That`, so `using MathAssertions.Render;` is needed only in files that call `PoseRenderer`.
+
 ### Pattern: assert a pose whose orientation comes from a protobuf message
 
 The pose assertions take `System.Numerics` types (`Vector3` and `Quaternion`). A pose delivered over the wire as a protobuf message usually carries its own position and orientation message types with `double` (or `float`) fields. Project the protobuf pose to `System.Numerics` first, then assert. Keeping the projection in one small mapping helper (here `ToVector3()` / `ToQuaternion()`) means the assertion reads the same whether the pose came from a solver or a deserialized message.
@@ -381,7 +383,7 @@ using (Assert.Multiple())
 }
 ```
 
-Both axes report; the failure message names the failing one explicitly. A built-in per-axis-difference renderer that brings this granularity into the single `IsApproximatelyEqualTo` call is candidate work for a later release.
+Each axis reports as its own assertion. A single `IsApproximatelyEqualTo` call already names every component that exceeded the tolerance, with its delta (v0.2.0+, see [Failure diagnostics](#failure-diagnostics)); use the per-axis form when each axis should be a separate, individually named check.
 
 ### Pattern: comparing quaternions
 
@@ -453,6 +455,26 @@ await Assert.That(MathTolerance.HasRoundtripIdentity(
 ```
 
 When the round-trip needs typed inputs (vector / quaternion / serializer pair), compose `[GenerateAssertion]` on your own type rather than chaining `HasRoundtripIdentity`: the primitive is intentionally `double`-only so the family does not lock in a particular cross-type roundtrip surface.
+
+### Pattern: geometric checks on vectors and rotations (v0.5.0+)
+
+```csharp
+// The unsigned angle between two directions, in radians (0..pi):
+await Assert.That(forward).HasAngleBetweenApproximately(target, expectedRadians: Math.PI / 2, tolerance: 1e-6);
+
+// Parallel or antiparallel, whatever the lengths: the tolerance is the sine of the allowed deviation,
+// so 1e-3 admits about a milliradian.
+await Assert.That(axis).IsParallelTo(new Vector3(0, 0, 10), tolerance: 1e-3);
+
+// A unit vector, and a unit quaternion:
+await Assert.That(Vector3.Normalize(direction)).IsNormalized(tolerance: 1e-6);
+await Assert.That(orientation).IsNormalized(tolerance: 1e-6);
+
+// A proper rotation: orthogonal with determinant +1, so a reflection, a scale, or a translation fails.
+await Assert.That(Matrix4x4.CreateFromQuaternion(orientation)).IsRotation(tolerance: 1e-5);
+```
+
+For two quaternions that should describe the same rotation, see [comparing quaternions](#pattern-comparing-quaternions): `IsRotationallyEquivalentTo` accepts both signs of the double cover.
 
 ### Pattern: detecting an unpopulated zero quaternion
 
