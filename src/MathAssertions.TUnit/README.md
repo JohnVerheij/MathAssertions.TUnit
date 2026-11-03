@@ -9,13 +9,13 @@
 
 > Part of the **[DotNetAssertions](https://dotnetassertions.dev)** family of assertion extensions for TUnit.
 
-TUnit-native math assertion library for .NET. Covers tolerance comparisons, sequences, statistics, linear algebra, number theory, and 3D geometry. NaN-aware, infinity-aware, AOT-compatible, no runtime reflection in the assertion path.
+TUnit-native math assertion library for .NET. Covers tolerance comparisons, sequences, statistics, linear algebra, number theory, and 3D geometry. The tolerance comparisons handle NaN and infinity explicitly. AOT-compatible, no runtime reflection in the assertion path.
 
 > **Full documentation, "Why component-wise rather than Euclidean", cookbook, design notes, and roadmap:** [github.com/JohnVerheij/MathAssertions.TUnit](https://github.com/JohnVerheij/MathAssertions.TUnit)
 
 ## Status
 
-The mathematical-assertion surface is exposed as fluent extensions over TUnit's `Assert.That(value).Method(...)`. ~85 fluent entry points across twelve adapter classes covering scalar tolerance comparisons, the `System.Numerics` compound types (vector / quaternion / matrix / plane / complex), `double[]` / `float[]` element-wise comparison with null-array guards, sequence properties, descriptive statistics, linear-algebra invariants, integer number theory, and a complete 3D-geometry primitive surface (containment / closest-point distance / intersection / pointcloud aggregates). v0.2.0 adds rich per-component / per-cell delta rendering to every compound `IsApproximatelyEqualTo` failure message plus `HasAxisAngleApproximately` on `Quaternion`. v0.3.0 adds the `MathAssertions.Render` namespace with `PoseRenderer` for turning a position / orientation pose into deterministic, snapshot-friendly text. v0.4.0 adds `IsPoseApproximatelyEqualTo` (and the `Matrix4x4` overload `IsRigidTransformApproximatelyEqualTo`), comparing a pose's position and orientation in one call with separate position (Euclidean distance) and rotation (geodesic degrees) tolerances and a combined failure diagnostic.
+The mathematical-assertion surface is exposed as fluent extensions over TUnit's `Assert.That(value).Method(...)`. ~85 fluent entry points across thirteen adapter classes covering scalar tolerance comparisons, the `System.Numerics` compound types (vector / quaternion / matrix / plane / complex), `double[]` / `float[]` element-wise comparison with null-array guards, sequence properties, descriptive statistics, linear-algebra invariants, integer number theory, and a 3D-geometry surface covering containment, closest-point distance, ray intersection, and pointcloud aggregates. v0.2.0 adds rich per-component / per-cell delta rendering to every compound `IsApproximatelyEqualTo` failure message plus `HasAxisAngleApproximately` on `Quaternion`. v0.3.0 adds the `MathAssertions.Render` namespace with `PoseRenderer` for turning a position / orientation pose into deterministic, snapshot-friendly text. v0.4.0 adds `IsPoseApproximatelyEqualTo` (and the `Matrix4x4` overload `IsRigidTransformApproximatelyEqualTo`), comparing a pose's position and orientation in one call with separate position (Euclidean distance) and rotation (geodesic degrees) tolerances and a combined failure diagnostic.
 
 ## Install
 
@@ -25,7 +25,7 @@ dotnet add package MathAssertions.TUnit
 
 `MathAssertions` (the framework-agnostic core) comes transitively. **Requirements:** TUnit 1.77.0 or later, .NET 10.
 
-The source-generated entry point (`IsApproximatelyEqualTo` on `Vector3`) auto-imports via `TUnit.Assertions.Extensions`. The only additional `using` you typically need is `System.Numerics` for the value type itself. If you call `MathTolerance.IsApproximatelyEqual` directly from a `[GenerateAssertion]` extension on a private domain type, add `MathAssertions` to your `GlobalUsings.cs`:
+The source-generated entry point (`IsApproximatelyEqualTo` on `Vector3`) auto-imports via `TUnit.Assertions.Extensions`. The additional `using` you typically need is `System.Numerics` for the value type itself, plus `MathAssertions.Geometry3D` when you construct the geometry primitives (`Sphere`, `Ray3D`, ...). If you call `MathTolerance.IsApproximatelyEqual` directly from a `[GenerateAssertion]` extension on a private domain type, add `MathAssertions` to your `GlobalUsings.cs`:
 
 ```csharp
 global using MathAssertions;
@@ -52,7 +52,7 @@ The fluent surface, organized by adapter class:
 
 | Class | Coverage |
 |---|---|
-| `ScalarAssertions` | `IsApproximatelyEqualTo`, `IsCloseInUlpsTo`, `IsRelativelyAndAbsolutelyCloseTo`, `IsNonNegativeFinite`, `IsProbability`, `IsPercentage`, `HasRoundtripIdentity` for `double`/`float`. |
+| `ScalarAssertions` | `IsApproximatelyEqualTo` and `IsCloseInUlpsTo` for `double` and `float`; `IsRelativelyAndAbsolutelyCloseTo`, `IsNonNegativeFinite`, `IsProbability`, `IsPercentage`, and `HasRoundtripIdentity` for `double` only. |
 | `VectorAssertions` | `IsApproximatelyEqualTo` for `Vector2`/`Vector3`/`Vector4`; `Vector3.HasMagnitudeApproximately`, `IsNormalized`. |
 | `QuaternionAssertions` | `IsApproximatelyEqualTo`, `IsRotationallyEquivalentTo` (SO(3) double-cover), `HasAxisAngleApproximately` (axis-angle form; v0.2.0+), `IsIdentity`, `IsNormalized`. |
 | `PoseAssertions` | `(Vector3, Quaternion).IsPoseApproximatelyEqualTo` and `Matrix4x4.IsRigidTransformApproximatelyEqualTo`: pose / rigid-transform equality with separate position (Euclidean distance) and rotation (geodesic degrees) tolerances, plus a combined failure diagnostic (v0.4.0+). `rotationToleranceDegrees` is an angle, not a per-component quaternion delta; do not port a component epsilon into it (see the migration note in the main README). |
@@ -151,14 +151,14 @@ The fluent extensions match the underlying `MathTolerance` semantics, which matc
 
 | Both | Comparison | Result |
 |---|---|---|
-| NaN | NaN | `true` (under any tolerance) |
+| NaN | NaN | `true` (under any valid tolerance) |
 | One NaN, other not | (anything) | `false` |
 | Same-sign infinity | (anything) | `true` |
 | Opposite-sign infinity | (anything) | `false` |
 | Finite | `Math.Abs(a - b) <= tolerance` | as expected |
 | Tolerance is NaN or negative | (anything) | `ArgumentOutOfRangeException` at call time |
 
-For compound types (`Vector2`/`Vector3`/`Vector4`, `Quaternion`, `Matrix4x4`, `Plane`, `Complex`), every component pair is evaluated against this table; the assertion passes iff every pair passes.
+For compound types (`Vector2`/`Vector3`/`Vector4`, `Quaternion`, `Matrix4x4`, `Plane`, `Complex`), every component pair is evaluated against this table; the assertion passes iff every pair passes. This table describes the tolerance comparisons; other checks (pose position, pointcloud on-plane and on-sphere, convex-hull containment, monotonic sequences) do not define NaN handling, so assert finiteness separately when it matters.
 
 ## Extending to your own types
 
@@ -180,15 +180,7 @@ file static class PositionAssertions
 
 ## Failure diagnostics
 
-On a failed assertion, the exception message renders the actual `Vector3` against the expected and the supplied tolerance:
-
-```text
-Expected:
-  to be approximately equal to <1, 2, 99> component-wise within tolerance 0.001
-
-Actual:
-  <1, 2, 3>
-```
+A failed assertion is reported by TUnit as `Expected {expectation}` followed by `but {message}`. The compound `IsApproximatelyEqualTo` assertions have no fixed expectation text of their own, so TUnit uses "to satisfy" plus the method and its arguments. The message carries the detail: for a `Vector3` it contains the expected value, the tolerance, the actual value, the per-component delta (full `G` precision, not rounded), and the components that exceeded the tolerance. Matrices, arrays, rotation, plane, axis-angle, and pose assertions use their own layouts.
 
 [Full failure-diagnostics examples, design notes, stability intent, and roadmap on GitHub.](https://github.com/JohnVerheij/MathAssertions.TUnit#failure-diagnostics)
 

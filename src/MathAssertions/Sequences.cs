@@ -127,13 +127,14 @@ public static class Sequences
     }
 
     /// <summary>
-    /// Returns <see langword="true"/> when adjacent differences are equal within
-    /// <paramref name="tolerance"/>; that is, the sequence is an arithmetic progression
-    /// with a common difference. Empty and single-element spans are vacuously progressions.
+    /// Returns <see langword="true"/> when every adjacent difference equals the first
+    /// difference within <paramref name="tolerance"/>; that is, the sequence is an arithmetic
+    /// progression with a common difference. Empty and single-element spans are vacuously
+    /// progressions.
     /// </summary>
     /// <param name="values">Sequence to inspect.</param>
-    /// <param name="tolerance">Maximum allowed deviation between adjacent differences.
-    /// Must be non-negative and not NaN.</param>
+    /// <param name="tolerance">Maximum allowed deviation of each adjacent difference from the
+    /// first difference (not from the previous one). Must be non-negative and not NaN.</param>
     /// <returns><see langword="true"/> if the sequence has a (tolerance-stable) common difference.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
     public static bool IsArithmeticProgression(ReadOnlySpan<double> values, double tolerance)
@@ -153,14 +154,14 @@ public static class Sequences
     }
 
     /// <summary>
-    /// Returns <see langword="true"/> when adjacent ratios are equal within
-    /// <paramref name="tolerance"/>; that is, the sequence is a geometric progression
+    /// Returns <see langword="true"/> when every adjacent ratio equals the first ratio
+    /// within <paramref name="tolerance"/>; that is, the sequence is a geometric progression
     /// with a common ratio. Returns <see langword="false"/> when any divisor is zero
     /// (the ratio is undefined). Empty and single-element spans are vacuously progressions.
     /// </summary>
     /// <param name="values">Sequence to inspect.</param>
-    /// <param name="tolerance">Maximum allowed deviation between adjacent ratios. Must
-    /// be non-negative and not NaN.</param>
+    /// <param name="tolerance">Maximum allowed deviation of each adjacent ratio from the
+    /// first ratio (not from the previous one). Must be non-negative and not NaN.</param>
     /// <returns><see langword="true"/> if the sequence has a (tolerance-stable) common ratio.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
     public static bool IsGeometricProgression(ReadOnlySpan<double> values, double tolerance)

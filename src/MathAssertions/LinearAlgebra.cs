@@ -185,15 +185,16 @@ public static class LinearAlgebra
     /// Returns <see langword="true"/> when the two vectors are parallel (or anti-parallel):
     /// the sine of the angle between their directions, <c>|u x v| / (|u| |v|)</c>, is within
     /// <paramref name="tolerance"/> of zero. The measure is scale-invariant, so parallelism
-    /// depends only on direction, not on the vectors' magnitudes. A zero (or shorter-than-tolerance)
-    /// vector is treated as parallel to every other vector, both because <c>0 x v = 0</c> and to
+    /// depends only on direction for vectors longer than <paramref name="tolerance"/>. A zero (or
+    /// shorter-than-tolerance) vector is treated as parallel to every other vector, both because <c>0 x v = 0</c> and to
     /// avoid dividing by a zero length.
     /// </summary>
     /// <remarks>
     /// The tolerance is an angular measure (the sine of the maximum permitted deviation from exactly
     /// parallel), not an absolute cross-product magnitude. For small angles <c>sin(theta) ~ theta</c>,
     /// so a tolerance of <c>1e-3</c> admits directions within roughly a milliradian of parallel
-    /// regardless of how long the vectors are.
+    /// regardless of how long the vectors are, as long as both are longer than the tolerance.
+    /// A vector of length <c>&lt;= tolerance</c> counts as parallel to anything.
     /// </remarks>
     /// <param name="u">First vector.</param>
     /// <param name="v">Second vector.</param>

@@ -15,8 +15,8 @@ namespace MathAssertions.TUnit;
 /// <remarks>
 /// The orientation comparison is on the SO(3) rotation metric, so a quaternion and its negation
 /// (<c>q</c> and <c>-q</c>) are treated as the same rotation. The <see cref="Matrix4x4"/> overload
-/// decomposes each transform into its translation and rotation and compares those; scale is not
-/// part of a rigid transform and is ignored.
+/// decomposes each transform into its translation and rotation and compares those; the methods
+/// assume a rigid transform (orthonormal rotation, unit scale), and scale is not checked.
 /// </remarks>
 public static class PoseAssertions
 {

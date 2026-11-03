@@ -202,8 +202,9 @@ public static class Statistics
     /// <summary>
     /// Returns <see langword="true"/> when the percentile-<paramref name="percentile"/>
     /// value of <paramref name="values"/> is within <paramref name="tolerance"/> of
-    /// <paramref name="expected"/>. Linear interpolation between adjacent ranks per the
-    /// NIST/SEMATECH e-Handbook of Statistical Methods §1.3.5.6.
+    /// <paramref name="expected"/>. Linear interpolation between adjacent ranks at fractional
+    /// rank <c>p/100 * (N - 1)</c> (the NumPy "linear" method, equal to Excel
+    /// <c>PERCENTILE.INC</c>).
     /// </summary>
     /// <remarks>
     /// <para>
