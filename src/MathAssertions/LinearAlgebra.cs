@@ -48,9 +48,10 @@ public static class LinearAlgebra
     /// determinant <c>+/- 1</c>.
     /// </summary>
     /// <remarks>
-    /// A translation makes <c>M * M^T</c> deviate from the identity in the last row and column
-    /// (by the translation and its squared length), so a translation larger than the tolerance is
-    /// not orthogonal. A pure rotation is orthogonal; composed with a uniform scale <c>s</c> it is
+    /// A translation shows up in the last row and column of <c>M * M^T</c>: its components,
+    /// multiplied by the upper 3x3 block, off the diagonal, and <c>1</c> plus its squared length on
+    /// the diagonal. The matrix stays orthogonal only while all of those are within the tolerance of
+    /// the identity. A pure rotation is orthogonal; composed with a uniform scale <c>s</c> it is
     /// orthogonal only when <c>s^2</c> is <c>1</c> within the tolerance (the diagonal of
     /// <c>M * M^T</c> picks up <c>s^2</c>), so a scale of <c>-1</c> keeps it orthogonal. The check
     /// covers the whole 4x4 matrix and does not check the affine form (last column
@@ -72,13 +73,14 @@ public static class LinearAlgebra
     }
 
     /// <summary>
-    /// Returns <see langword="true"/> when the matrix is a proper rotation: orthogonal
-    /// (<c>M * M^T = I</c>, so it preserves lengths and angles) <em>and</em> has determinant
-    /// <c>+1</c> within tolerance. The determinant condition rules out reflections (an improper
-    /// orthogonal matrix has determinant <c>-1</c>). An affine matrix (last column
-    /// <c>0, 0, 0, 1</c>) with a translation, or with a scale factor other than <c>+1</c> or
-    /// <c>-1</c>, fails once it moves <c>M * M^T</c> away from the identity by more than the
-    /// tolerance; within the tolerance it passes. A sign-flip scale such as
+    /// Returns <see langword="true"/> when the matrix is a proper rotation: two checks that must both
+    /// pass, each within tolerance. It is orthogonal (<c>M * M^T = I</c>, so it preserves lengths
+    /// and angles) <em>and</em> has determinant <c>+1</c>. The determinant check rules out
+    /// reflections (an improper orthogonal matrix has determinant <c>-1</c>) under any tolerance
+    /// below <c>2</c>. An affine matrix (last column <c>0, 0, 0, 1</c>) with a translation, or with
+    /// a scale factor other than <c>+1</c> or <c>-1</c>, fails unless both checks stay within the
+    /// tolerance: <c>Matrix4x4.CreateScale(2)</c> passes the orthogonality check at a tolerance of
+    /// <c>3</c> and fails the determinant check (<c>8</c>). A sign-flip scale such as
     /// <c>Matrix4x4.CreateScale(-1, -1, 1)</c> is a 180-degree rotation and passes. The check covers
     /// the whole 4x4 matrix and does not check the affine form: a 4D rotation that mixes W with X,
     /// Y or Z passes although its translation slots (<c>M41</c> to <c>M43</c>) are not zero. Assert

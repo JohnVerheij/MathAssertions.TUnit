@@ -421,6 +421,21 @@ internal sealed class LinearAlgebraTests
     }
 
     [Test]
+    public async Task IsRotation_BothChecksMustPassWithinTolerance(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // CreateScale(2): M * M^T is diag(4, 4, 4, 1), within 3 of the identity, but the determinant
+        // is 8, so IsRotation fails at a tolerance of 3. A reflection has determinant -1, within 2
+        // of +1, so it passes at a tolerance of 2 and fails below it. A translation of 0.4 per axis
+        // (length about 0.69) stays orthogonal at 0.5: M * M^T holds 0.4 and 1 + 0.48.
+        await Assert.That(LinearAlgebra.IsOrthogonal(Matrix4x4.CreateScale(2f), 3.0)).IsTrue();
+        await Assert.That(LinearAlgebra.IsRotation(Matrix4x4.CreateScale(2f), 3.0)).IsFalse();
+        await Assert.That(LinearAlgebra.IsRotation(Matrix4x4.CreateScale(-1f, 1f, 1f), 2.0)).IsTrue();
+        await Assert.That(LinearAlgebra.IsRotation(Matrix4x4.CreateScale(-1f, 1f, 1f), 1.99)).IsFalse();
+        await Assert.That(LinearAlgebra.IsOrthogonal(Matrix4x4.CreateTranslation(0.4f, 0.4f, 0.4f), 0.5)).IsTrue();
+    }
+
+    [Test]
     public async Task IsRotation_NonAffineRotationInXW_True(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();

@@ -477,9 +477,10 @@ await Assert.That(axis).IsParallelTo(new Vector3(0, 0, 10), tolerance: 1e-3);
 await Assert.That(Vector3.Normalize(direction)).IsNormalized(tolerance: 1e-6);
 await Assert.That(orientation).IsNormalized(tolerance: 1e-6);
 
-// A proper rotation: M * M^T = I and determinant +1, within the tolerance. A reflection fails, and
-// so does an affine matrix (last column 0, 0, 0, 1) with a translation or a scale factor other than
-// +1 or -1 beyond the tolerance. CreateScale(-1, -1, 1) is a 180-degree rotation about Z and passes.
+// A proper rotation: two checks that must both pass, M * M^T = I and determinant +1, each within the
+// tolerance. A reflection (determinant -1) fails under any tolerance below 2. An affine matrix (last
+// column 0, 0, 0, 1) with a translation or a scale factor other than +1 or -1 fails unless both
+// checks stay within the tolerance. CreateScale(-1, -1, 1) is a 180-degree rotation about Z and passes.
 // The whole 4x4 matrix is checked, not the affine form: a 4D rotation that mixes W with X, Y or Z passes.
 await Assert.That(Matrix4x4.CreateFromQuaternion(orientation)).IsRotation(tolerance: 1e-5);
 ```
