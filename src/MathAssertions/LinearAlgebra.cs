@@ -51,7 +51,10 @@ public static class LinearAlgebra
     /// Translation matrices are not orthogonal because the translation column makes the
     /// product <c>M * M^T</c> deviate from identity in the off-diagonals. A pure rotation
     /// is orthogonal; rotations composed with uniform scaling are not (the diagonal of
-    /// <c>M * M^T</c> picks up the squared scale).
+    /// <c>M * M^T</c> picks up the squared scale). The check covers the whole 4x4 matrix and
+    /// does not check the affine form (last column <c>0, 0, 0, 1</c>), so these rules hold for
+    /// affine matrices: a 4D rotation that mixes W with X, Y or Z is orthogonal although its
+    /// translation slots (<c>M41</c> to <c>M43</c>) are not zero.
     /// </remarks>
     /// <param name="m">Matrix to test.</param>
     /// <param name="tolerance">Maximum allowed absolute difference between
@@ -71,8 +74,12 @@ public static class LinearAlgebra
     /// Returns <see langword="true"/> when the matrix is a proper rotation: orthogonal
     /// (<c>M * M^T = I</c>, so it preserves lengths and angles) <em>and</em> has determinant
     /// <c>+1</c> within tolerance. The determinant condition rules out reflections (an improper
-    /// orthogonal matrix has determinant <c>-1</c>). A matrix carrying a non-zero translation is not
-    /// orthogonal and so is not a rotation under this definition.
+    /// orthogonal matrix has determinant <c>-1</c>). An affine matrix (last column
+    /// <c>0, 0, 0, 1</c>) carrying a non-zero translation or a scale is not orthogonal and so is not
+    /// a rotation under this definition. The check covers the whole 4x4 matrix and does not check
+    /// the affine form: a 4D rotation that mixes W with X, Y or Z passes although its translation
+    /// slots (<c>M41</c> to <c>M43</c>) are not zero. Assert the affine form separately when the
+    /// input may not be affine.
     /// </summary>
     /// <param name="m">Matrix to test.</param>
     /// <param name="tolerance">Maximum allowed absolute deviation, applied to both the
@@ -193,7 +200,10 @@ public static class LinearAlgebra
     /// The tolerance is an angular measure (the sine of the maximum permitted deviation from exactly
     /// parallel), not an absolute cross-product magnitude. For small angles <c>sin(theta) ~ theta</c>,
     /// so a tolerance of <c>1e-3</c> admits directions within roughly a milliradian of parallel
-    /// regardless of how long the vectors are, as long as both are longer than the tolerance.
+    /// regardless of how long the vectors are, as long as both are longer than the tolerance
+    /// and the computation stays within <see langword="float"/> range: both lengths and their
+    /// product below about <c>1.8e19</c>. The lengths and the cross product are computed in
+    /// <see langword="float"/>; beyond that range they overflow and the result can be wrong.
     /// A vector of length <c>&lt;= tolerance</c> counts as parallel to anything.
     /// </remarks>
     /// <param name="u">First vector.</param>

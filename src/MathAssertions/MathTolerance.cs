@@ -310,6 +310,12 @@ public static class MathTolerance
     /// returns <see langword="false"/> for non-floating-point representations.
     /// </para>
     /// <para>
+    /// Infinity handling does not follow the scalar overloads: infinities are compared through
+    /// <c>T.Abs(a - b) &gt; tolerance</c>. Under a finite tolerance the results match the scalar
+    /// overloads; under a tolerance of positive infinity, opposite-sign infinities and an
+    /// infinity against a finite value count as equal.
+    /// </para>
+    /// <para>
     /// Iteration uses the tensor span's own enumerator so strided (non-dense) shapes
     /// produced by tensor slicing work correctly.
     /// </para>

@@ -1111,6 +1111,30 @@ internal sealed class MathToleranceTests
         await Assert.That(result).IsFalse();
     }
 
+    /// <summary>Pins the tensor overload's infinity results next to the scalar overload's: the
+    /// tensor compares through <c>T.Abs(a - b) &gt; tolerance</c>, so the two agree under a finite
+    /// tolerance and differ under a tolerance of positive infinity, where the tensor returns
+    /// <see langword="true"/> for opposite-sign infinities and for an infinity against a finite value.</summary>
+    [Test]
+    [Arguments(double.PositiveInfinity, double.PositiveInfinity, 1.0, true, true)]
+    [Arguments(double.PositiveInfinity, double.NegativeInfinity, 1.0, false, false)]
+    [Arguments(double.PositiveInfinity, 1.0, 1.0, false, false)]
+    [Arguments(double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity, true, true)]
+    [Arguments(double.NegativeInfinity, double.NegativeInfinity, double.PositiveInfinity, true, true)]
+    [Arguments(double.PositiveInfinity, double.NegativeInfinity, double.PositiveInfinity, true, false)]
+    [Arguments(double.PositiveInfinity, 1.0, double.PositiveInfinity, true, false)]
+    public async Task IsApproximatelyEqual_TensorDouble_Infinity_ComparedToScalar(
+        double a, double b, double tolerance, bool expectedTensor, bool expectedScalar, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var tensor = MathTolerance.IsApproximatelyEqual(
+            new ReadOnlyTensorSpan<double>(new[] { a }, Shape1, default),
+            new ReadOnlyTensorSpan<double>(new[] { b }, Shape1, default),
+            tolerance);
+        await Assert.That(tensor).IsEqualTo(expectedTensor);
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, tolerance)).IsEqualTo(expectedScalar);
+    }
+
     [Test]
     public async Task IsApproximatelyEqual_TensorInt_WithinTolerance_True(CancellationToken ct)
     {

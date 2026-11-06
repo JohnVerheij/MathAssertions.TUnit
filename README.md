@@ -238,6 +238,8 @@ await Assert.That(ToNumerics(actual))
         positionTolerance: 1e-3, rotationToleranceDegrees: 0.5);
 ```
 
+The cast to `float` loses precision, so distinct `double` positions can become the same `Vector3`: `16777216` and `16777217` both become `16777216f`, and the assertion passes despite a position error of 1. When the `double` precision matters, compare the original `double` fields instead, for example per axis with the scalar `IsApproximatelyEqualTo`.
+
 ### Statistics on a sample
 
 ```csharp
@@ -347,7 +349,7 @@ public async Task DecodedPoseMatchesExpected(CancellationToken ct)
 }
 ```
 
-A protobuf orientation is rarely a unit quaternion to the bit, and a default-initialized message leaves it as `(0, 0, 0, 0)`. Both are handled: the orientation comparison normalizes before measuring the geodesic angle, and a non-normalizable `(0, 0, 0, 0)` falls back to a componentwise comparison, so a default-pose round-trip passes while a real mismatch still fails.
+A protobuf orientation is rarely a unit quaternion to the bit, and a default-initialized message leaves it as `(0, 0, 0, 0)`. Both are handled: the orientation comparison normalizes before measuring the geodesic angle, and a non-normalizable `(0, 0, 0, 0)` falls back to a componentwise comparison, so a default-pose round-trip passes while a real mismatch still fails. The `float` casts lose precision for `double` fields; see [Projecting a non-`System.Numerics` pose](#projecting-a-non-systemnumerics-pose).
 
 ### Pattern: extend the same DSL to your own domain types
 
@@ -465,15 +467,19 @@ When the round-trip needs typed inputs (vector / quaternion / serializer pair), 
 // The unsigned angle between two directions, in radians (0..pi):
 await Assert.That(forward).HasAngleBetweenApproximately(target, expectedRadians: Math.PI / 2, tolerance: 1e-6);
 
-// Parallel or antiparallel, whatever the lengths (as long as both are longer than the tolerance):
-// the tolerance is the sine of the allowed deviation, so 1e-3 admits about a milliradian.
+// Parallel or antiparallel, whatever the lengths within float range: both lengths above the
+// tolerance, and both lengths and their product below about 1.8e19. The lengths and the cross
+// product are computed in float; beyond that range they overflow and the result can be wrong.
+// The tolerance is the sine of the allowed deviation, so 1e-3 admits about a milliradian.
 await Assert.That(axis).IsParallelTo(new Vector3(0, 0, 10), tolerance: 1e-3);
 
 // A unit vector, and a unit quaternion:
 await Assert.That(Vector3.Normalize(direction)).IsNormalized(tolerance: 1e-6);
 await Assert.That(orientation).IsNormalized(tolerance: 1e-6);
 
-// A proper rotation: orthogonal with determinant +1, so a reflection, a scale, or a translation fails.
+// A proper rotation: orthogonal with determinant +1, so a reflection fails, and so does an affine
+// matrix (last column 0, 0, 0, 1) with a scale or a translation. The whole 4x4 matrix is checked,
+// not the affine form: a 4D rotation that mixes W with X, Y or Z passes.
 await Assert.That(Matrix4x4.CreateFromQuaternion(orientation)).IsRotation(tolerance: 1e-5);
 ```
 
@@ -518,6 +524,8 @@ Match TUnit's `IsCloseTo` primitive semantics:
 | Tolerance is NaN or negative | (anything) | `ArgumentOutOfRangeException` at call time |
 
 For the Vector3 overload, every component pair is evaluated against this table; the assertion passes iff all three pairs pass.
+
+The generic `ReadOnlyTensorSpan<T>` overload follows the NaN rows but not the infinity rows: it compares infinities through `T.Abs(a - b) > tolerance`. Under a finite tolerance the results match the table; under a tolerance of positive infinity it returns `true` for opposite-sign infinities and for an infinity against a finite value.
 
 This table describes the tolerance comparisons. Other checks do not define NaN handling: NaN input can pass the pose position comparison, the pointcloud on-plane and on-sphere checks, convex-hull containment, and the monotonic-sequence checks. Assert finiteness separately when it matters.
 
