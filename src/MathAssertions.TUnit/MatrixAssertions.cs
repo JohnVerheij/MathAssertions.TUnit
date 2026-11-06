@@ -38,9 +38,11 @@ public static class MatrixAssertions
         => LinearAlgebra.IsOrthogonal(value, tolerance);
 
     /// <summary>Asserts the matrix is a proper rotation (orthogonal with determinant <c>+1</c>)
-    /// within tolerance. Reflections (determinant <c>-1</c>) and affine matrices carrying a
-    /// translation or scale are rejected. The whole 4x4 matrix is checked, not the affine form
-    /// (last column <c>0, 0, 0, 1</c>): a 4D rotation that mixes W with X, Y or Z passes.</summary>
+    /// within tolerance. Reflections (determinant <c>-1</c>) are rejected, and so are affine matrices
+    /// with a translation or a scale factor other than <c>+1</c> or <c>-1</c> beyond the tolerance;
+    /// <c>Matrix4x4.CreateScale(-1, -1, 1)</c> is a 180-degree rotation and passes. The whole 4x4
+    /// matrix is checked, not the affine form (last column <c>0, 0, 0, 1</c>): a 4D rotation that
+    /// mixes W with X, Y or Z passes.</summary>
     [GenerateAssertion(
         ExpectationMessage = "to be a proper rotation within tolerance {tolerance}",
         InlineMethodBody = true)]

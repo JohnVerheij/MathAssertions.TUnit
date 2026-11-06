@@ -11,8 +11,9 @@ namespace MathAssertions.Geometry3D;
 /// The parallel tests use an absolute epsilon of <c>1e-7</c>: ray-plane on
 /// <c>|direction . normal|</c> (so a near-zero direction counts as parallel, exactly for a
 /// unit-length normal), ray-triangle on <c>|direction . (edge2 x edge1)|</c> (the cutoff scales
-/// with the triangle size), and ray-AABB per direction component (a near-zero direction hits
-/// only when the origin is inside the box).
+/// with the triangle size), and ray-AABB per direction component (a near-zero component requires
+/// the origin to lie inside that axis's slab, so a near-zero direction hits only when the origin
+/// is inside the box).
 /// </summary>
 /// <param name="Origin">Starting point of the ray.</param>
 /// <param name="Direction">Direction the ray extends in. Should be a unit vector for

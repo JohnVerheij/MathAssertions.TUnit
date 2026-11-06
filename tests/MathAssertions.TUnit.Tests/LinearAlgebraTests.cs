@@ -408,6 +408,19 @@ internal sealed class LinearAlgebraTests
     }
 
     [Test]
+    public async Task IsRotation_SignFlipScaleOrTranslationWithinTolerance(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // CreateScale(-1, -1, 1) is a 180-degree rotation about Z, exactly orthogonal with
+        // determinant +1. A uniform scale of -1 is orthogonal but a reflection (determinant -1).
+        // A translation within the tolerance keeps M * M^T within the tolerance of the identity.
+        await Assert.That(LinearAlgebra.IsRotation(Matrix4x4.CreateScale(-1f, -1f, 1f), 0.0)).IsTrue();
+        await Assert.That(LinearAlgebra.IsOrthogonal(Matrix4x4.CreateScale(-1f), 0.0)).IsTrue();
+        await Assert.That(LinearAlgebra.IsRotation(Matrix4x4.CreateScale(-1f), 0.0)).IsFalse();
+        await Assert.That(LinearAlgebra.IsRotation(Matrix4x4.CreateTranslation(1e-7f, 0f, 0f), Tol)).IsTrue();
+    }
+
+    [Test]
     public async Task IsRotation_NonAffineRotationInXW_True(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();

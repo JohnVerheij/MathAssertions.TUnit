@@ -48,13 +48,14 @@ public static class LinearAlgebra
     /// determinant <c>+/- 1</c>.
     /// </summary>
     /// <remarks>
-    /// Translation matrices are not orthogonal because the translation column makes the
-    /// product <c>M * M^T</c> deviate from identity in the off-diagonals. A pure rotation
-    /// is orthogonal; rotations composed with uniform scaling are not (the diagonal of
-    /// <c>M * M^T</c> picks up the squared scale). The check covers the whole 4x4 matrix and
-    /// does not check the affine form (last column <c>0, 0, 0, 1</c>), so these rules hold for
-    /// affine matrices: a 4D rotation that mixes W with X, Y or Z is orthogonal although its
-    /// translation slots (<c>M41</c> to <c>M43</c>) are not zero.
+    /// A translation makes <c>M * M^T</c> deviate from the identity in the last row and column
+    /// (by the translation and its squared length), so a translation larger than the tolerance is
+    /// not orthogonal. A pure rotation is orthogonal; composed with a uniform scale <c>s</c> it is
+    /// orthogonal only when <c>s^2</c> is <c>1</c> within the tolerance (the diagonal of
+    /// <c>M * M^T</c> picks up <c>s^2</c>), so a scale of <c>-1</c> keeps it orthogonal. The check
+    /// covers the whole 4x4 matrix and does not check the affine form (last column
+    /// <c>0, 0, 0, 1</c>), so these rules hold for affine matrices: a 4D rotation that mixes W with
+    /// X, Y or Z is orthogonal although its translation slots (<c>M41</c> to <c>M43</c>) are not zero.
     /// </remarks>
     /// <param name="m">Matrix to test.</param>
     /// <param name="tolerance">Maximum allowed absolute difference between
@@ -75,11 +76,13 @@ public static class LinearAlgebra
     /// (<c>M * M^T = I</c>, so it preserves lengths and angles) <em>and</em> has determinant
     /// <c>+1</c> within tolerance. The determinant condition rules out reflections (an improper
     /// orthogonal matrix has determinant <c>-1</c>). An affine matrix (last column
-    /// <c>0, 0, 0, 1</c>) carrying a non-zero translation or a scale is not orthogonal and so is not
-    /// a rotation under this definition. The check covers the whole 4x4 matrix and does not check
-    /// the affine form: a 4D rotation that mixes W with X, Y or Z passes although its translation
-    /// slots (<c>M41</c> to <c>M43</c>) are not zero. Assert the affine form separately when the
-    /// input may not be affine.
+    /// <c>0, 0, 0, 1</c>) with a translation, or with a scale factor other than <c>+1</c> or
+    /// <c>-1</c>, fails once it moves <c>M * M^T</c> away from the identity by more than the
+    /// tolerance; within the tolerance it passes. A sign-flip scale such as
+    /// <c>Matrix4x4.CreateScale(-1, -1, 1)</c> is a 180-degree rotation and passes. The check covers
+    /// the whole 4x4 matrix and does not check the affine form: a 4D rotation that mixes W with X,
+    /// Y or Z passes although its translation slots (<c>M41</c> to <c>M43</c>) are not zero. Assert
+    /// the affine form separately when the input may not be affine.
     /// </summary>
     /// <param name="m">Matrix to test.</param>
     /// <param name="tolerance">Maximum allowed absolute deviation, applied to both the

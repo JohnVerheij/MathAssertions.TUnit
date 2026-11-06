@@ -308,6 +308,16 @@ internal sealed class Geometry3DIntersectionPointcloudTests
     }
 
     [Test]
+    public async Task Ray_AABB_ZeroDirection_HitsOnlyFromInside(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // Every component is below the 1e-7 cutoff, so each one only requires the origin to lie
+        // inside that axis's slab: the ray hits from inside the box and misses from outside it.
+        await Assert.That(Intersection.Intersects(new Ray3D(new Vector3(0.5f, 0.5f, 0.5f), Vector3.Zero), UnitBox)).IsTrue();
+        await Assert.That(Intersection.Intersects(new Ray3D(new Vector3(0.5f, 0.5f, 2f), Vector3.Zero), UnitBox)).IsFalse();
+    }
+
+    [Test]
     public async Task Ray_AABB_SlabsInconsistent_False(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
