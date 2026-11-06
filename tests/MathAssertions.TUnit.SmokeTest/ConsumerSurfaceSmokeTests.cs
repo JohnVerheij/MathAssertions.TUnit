@@ -151,6 +151,27 @@ internal sealed class ConsumerSurfaceSmokeTests
     private static readonly double[] StatsReference = [1.0, 2.0, 3.0, 4.0, 5.0];
     private static readonly double[] Ascending = [1.0, 2.0, 3.0];
     private static readonly double[] ArrayHappy = [1.0, 2.0, 3.0];
+    /// <summary>
+    /// Pins the README's geometric-checks cookbook (v0.5.1) for an external consumer: every snippet compiles against
+    /// the packed package and passes on concrete values, and the Native AOT gate runs it ahead of time.
+    /// </summary>
+    [Test]
+    public async Task CookbookGeometricChecksResolveAndPassAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var forward = Vector3.UnitX;
+        var target = Vector3.UnitY;
+        var axis = Vector3.UnitZ;
+        var direction = new Vector3(3, 4, 0);
+        var orientation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, 0.5f);
+
+        await Assert.That(forward).HasAngleBetweenApproximately(target, expectedRadians: double.Pi / 2, tolerance: 1e-6);
+        await Assert.That(axis).IsParallelTo(new Vector3(0, 0, 10), tolerance: 1e-3);
+        await Assert.That(Vector3.Normalize(direction)).IsNormalized(tolerance: 1e-6);
+        await Assert.That(orientation).IsNormalized(tolerance: 1e-6);
+        await Assert.That(Matrix4x4.CreateFromQuaternion(orientation)).IsRotation(tolerance: 1e-5);
+    }
+
     private static readonly double[] ArrayHappyShifted = [1.0001, 2.0001, 3.0001];
 
     private static double D(double v) => v;

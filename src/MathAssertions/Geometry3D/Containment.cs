@@ -95,7 +95,7 @@ public static class Containment
     /// <para>
     /// 0.1.0 implementation: tests half-space inclusion against each computed face
     /// triangle. Hulls supplied with arbitrary winding produce undefined containment.
-    /// Automatic triangulation from a point cloud is deferred to 0.2.0.
+    /// Automatic triangulation from a point cloud is not provided.
     /// </para>
     /// <para>
     /// The half-space deviation is normalized by the face normal's length before being

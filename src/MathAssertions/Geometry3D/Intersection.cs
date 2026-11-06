@@ -6,8 +6,10 @@ namespace MathAssertions.Geometry3D;
 /// <summary>
 /// Boolean intersection predicates and parametric ray-intersection results for the
 /// <see cref="Geometry3D"/> primitives plus <see cref="Plane"/>. Each ray-intersection
-/// pair offers both a boolean overload (for tests that only care whether the ray hits)
-/// and a parametric overload that exposes the hit-distance <c>t</c> along the ray.
+/// pair offers a boolean overload (for tests that only care whether the ray hits). Only
+/// ray-plane and ray-triangle also have a parametric overload with an <c>out float t</c>,
+/// the ray parameter of the hit point <c>origin + t * direction</c> (a distance only for a
+/// unit direction); ray-sphere and ray-AABB are boolean only.
 /// </summary>
 public static class Intersection
 {
@@ -35,14 +37,18 @@ public static class Intersection
 
     /// <summary>
     /// Returns <see langword="true"/> when <paramref name="ray"/> hits
-    /// <paramref name="plane"/> at a non-negative distance along the ray, and outputs
-    /// the hit-distance parameter <paramref name="t"/>. A ray parallel to the plane
-    /// returns <see langword="false"/> with <c>t == 0</c>.
+    /// <paramref name="plane"/> at a ray parameter <c>t &gt;= 0</c>, and outputs
+    /// <paramref name="t"/>. A ray parallel to the plane
+    /// (<c>|direction . normal| &lt; 1e-7</c>) returns <see langword="false"/> with <c>t == 0</c>.
+    /// A plane behind the ray returns <see langword="false"/> with the computed, negative
+    /// <c>t</c>.
     /// </summary>
     /// <param name="ray">Ray to test.</param>
     /// <param name="plane">Plane to test against.</param>
-    /// <param name="t">Hit-distance along <paramref name="ray"/> on success;
-    /// <c>0</c> when the method returns <see langword="false"/>.</param>
+    /// <param name="t">Ray parameter of the hit on success: the hit point is
+    /// <c>origin + t * direction</c>, so <c>t</c> is a distance only for a unit direction. When
+    /// the method returns <see langword="false"/>: <c>0</c> if the ray is parallel to the plane,
+    /// or the computed negative <c>t</c> if the plane is behind the ray.</param>
     /// <returns><see langword="true"/> if the ray crosses the plane in front of its origin.</returns>
     public static bool Intersects(Ray3D ray, Plane plane, out float t)
     {
@@ -64,7 +70,8 @@ public static class Intersection
     /// solid <paramref name="sphere"/>. Geometric solution: project the sphere center
     /// onto the ray, then compare squared perpendicular distance to squared radius.
     /// </summary>
-    /// <remarks>Reference: Akenine-Möller, Haines, Hoffman, <i>Real-Time Rendering</i> 4th ed., §22.6.</remarks>
+    /// <remarks>The ray direction must be a unit vector; the projection math assumes it.
+    /// Reference: Akenine-Möller, Haines, Hoffman, <i>Real-Time Rendering</i> 4th ed., §22.6.</remarks>
     public static bool Intersects(Ray3D ray, Sphere sphere)
     {
         var l = sphere.Center - ray.Origin;
@@ -79,10 +86,14 @@ public static class Intersection
 
     /// <summary>
     /// Returns <see langword="true"/> when <paramref name="ray"/> hits
-    /// <paramref name="triangle"/> at a non-negative distance along the ray, and
-    /// outputs the hit-distance parameter <paramref name="t"/>. Implemented via the
-    /// Möller-Trumbore algorithm. A ray parallel to the triangle plane returns
-    /// <see langword="false"/> with <c>t == 0</c>.
+    /// <paramref name="triangle"/> at a ray parameter <c>t &gt; 1e-7</c> (a ray origin lying on
+    /// the triangle does not count as a hit), and outputs <paramref name="t"/>, the ray parameter
+    /// of the hit point <c>origin + t * direction</c>. The threshold applies to the parameter, not
+    /// to a distance: for a non-unit direction the hit lies <c>t * |direction|</c> from the origin.
+    /// Implemented via the Möller-Trumbore algorithm. <paramref name="t"/> is <c>0</c> when the
+    /// method returns <see langword="false"/> because the ray is parallel to the triangle plane or
+    /// misses the triangle; when the triangle lies behind the ray (or at the origin),
+    /// <see langword="false"/> is returned with the computed <c>t</c>, which is at most <c>1e-7</c>.
     /// </summary>
     /// <remarks>Reference: Akenine-Möller, Haines, Hoffman, <i>Real-Time Rendering</i> 4th ed., §22.8.</remarks>
     public static bool Intersects(Ray3D ray, Triangle3D triangle, out float t)

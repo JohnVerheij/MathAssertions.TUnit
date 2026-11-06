@@ -87,6 +87,19 @@ internal sealed class MathFailureMessageTests
     }
 
     [Test]
+    public async Task Matrix4x4_TwoCellsExceeded_ListsBothSeparatedByComma(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        Matrix4x4 actual = Matrix4x4.Identity;
+        actual.M23 = 0.5f;
+        actual.M41 = 0.25f;
+        Matrix4x4 expected = Matrix4x4.Identity;
+        string message = MathFailureMessage.ApproximatelyEqual(actual, expected, tolerance: 1e-6);
+
+        await Assert.That(message).Contains("exceeded: [1,2] (0.5 > 1E-06), [3,0] (0.25 > 1E-06)");
+    }
+
+    [Test]
     public async Task Plane_NormalAxisAndDistanceDeltasShown(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();

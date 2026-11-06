@@ -331,9 +331,9 @@ internal static class MathFailureMessage
     /// <see cref="MathTolerance.ExtractAxisAngle"/>, sign-aligned with the normalized
     /// <paramref name="expectedAxis"/>.</param>
     /// <param name="extractedAngleDegrees">The angle extracted from <paramref name="actual"/>, in
-    /// degrees, sign-aligned with <paramref name="expectedAngleDegrees"/>. The value is unwrapped
-    /// from <see cref="Math.Atan2(double, double)"/> output and lies in the open interval
-    /// <c>(-360, 360)</c>.</param>
+    /// degrees. The value lies in <c>[-180, 180]</c>; its sign is aligned with the axis, which is
+    /// flipped (and the angle negated) when its dot product with the normalized
+    /// <paramref name="expectedAxis"/> is negative.</param>
     /// <param name="tolerance">The tolerance the comparison was performed against.</param>
     /// <returns>The rendered failure-message text.</returns>
     public static string AxisAngleApproximately(Quaternion actual, Vector3 expectedAxis, double expectedAngleDegrees, Vector3 extractedAxis, double extractedAngleDegrees, double tolerance)

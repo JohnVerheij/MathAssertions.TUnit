@@ -25,6 +25,8 @@ public static class NumberTheory
     /// <param name="divisor">Divisor. Must not be zero.</param>
     /// <returns><see langword="true"/> if <c>value % divisor == 0</c>.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="divisor"/> is zero.</exception>
+    /// <exception cref="OverflowException"><paramref name="value"/> is <see cref="long.MinValue"/>
+    /// and <paramref name="divisor"/> is <c>-1</c> (the remainder operation overflows on .NET).</exception>
     public static bool IsDivisibleBy(long value, long divisor)
     {
         if (divisor == 0)

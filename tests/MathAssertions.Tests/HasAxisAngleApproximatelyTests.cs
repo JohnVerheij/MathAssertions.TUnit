@@ -72,6 +72,26 @@ internal sealed class HasAxisAngleApproximatelyTests
             negated, Vector3.UnitY, 60.0, tolerance: 1e-4)).IsTrue();
     }
 
+    /// <summary>Pins that the axis-angle extraction used by the failure message reports the same
+    /// pair for <c>q</c> and <c>-q</c>: the negated form has a negative W, so its raw angle is
+    /// negated, and the axis alignment with the expected axis flips both back.</summary>
+    [Test]
+    public async Task ExtractAxisAngle_NegatedQuaternion_YieldsSamePair(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        Quaternion q = Quaternion.CreateFromAxisAngle(Vector3.UnitY, (float)(Math.PI / 2.0));
+        Quaternion negated = new(-q.X, -q.Y, -q.Z, -q.W);
+        MathTolerance.ExtractAxisAngle(q, Vector3.UnitY, out Vector3 axis, out double angle, out _, out bool identity);
+        MathTolerance.ExtractAxisAngle(negated, Vector3.UnitY, out Vector3 negatedAxis, out double negatedAngle, out _, out bool negatedIdentity);
+
+        await Assert.That(identity).IsFalse();
+        await Assert.That(negatedIdentity).IsFalse();
+        await Assert.That(MathTolerance.IsApproximatelyEqual(axis, Vector3.UnitY, 1e-6)).IsTrue();
+        await Assert.That(MathTolerance.IsApproximatelyEqual(negatedAxis, Vector3.UnitY, 1e-6)).IsTrue();
+        await Assert.That(angle).IsEqualTo(90.0).Within(1e-4);
+        await Assert.That(negatedAngle).IsEqualTo(90.0).Within(1e-4);
+    }
+
     [Test]
     public async Task WrongAxis_Fails(CancellationToken cancellationToken)
     {

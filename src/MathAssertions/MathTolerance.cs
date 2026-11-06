@@ -6,7 +6,8 @@ namespace MathAssertions;
 
 /// <summary>
 /// Tolerance-comparison helpers for floating-point primitives and selected
-/// <see cref="System.Numerics"/> types. NaN-aware, infinity-aware, allocation-free.
+/// <see cref="System.Numerics"/> types. The scalar and component-wise comparisons are NaN-aware and
+/// infinity-aware. Allocation-free.
 /// Callable from any test framework or production code.
 /// </summary>
 /// <remarks>
@@ -115,10 +116,10 @@ public static class MathTolerance
     /// <summary>Component-wise tolerance comparison for two <see cref="Vector3"/> values.</summary>
     /// <remarks>
     /// Component values widen to <see cref="double"/> before the per-axis comparison so the
-    /// caller's <see langword="double"/> tolerance is honored at full precision. Casting the tolerance
-    /// down to <see langword="float"/> instead would discard up to 22 bits of mantissa for tight
-    /// tolerances such as <c>1e-9</c> and produce surprising near-equal-on-every-component
-    /// results; the fix is a load-bearing semantic for the rest of the assertion family.
+    /// caller's <see langword="double"/> tolerance is kept as is and each component difference is
+    /// computed in <see langword="double"/>, so tight tolerances such as <c>1e-9</c> are not lost
+    /// to <see langword="float"/> rounding. This is a load-bearing semantic for the rest of the
+    /// assertion family.
     /// </remarks>
     /// <param name="a">First vector.</param>
     /// <param name="b">Second vector.</param>
@@ -309,6 +310,12 @@ public static class MathTolerance
     /// returns <see langword="false"/> for non-floating-point representations.
     /// </para>
     /// <para>
+    /// Infinity handling does not follow the scalar overloads: infinities are compared through
+    /// <c>T.Abs(a - b) &gt; tolerance</c>. Under a finite tolerance the results match the scalar
+    /// overloads; under a tolerance of positive infinity, opposite-sign infinities and an
+    /// infinity against a finite value count as equal.
+    /// </para>
+    /// <para>
     /// Iteration uses the tensor span's own enumerator so strided (non-dense) shapes
     /// produced by tensor slicing work correctly.
     /// </para>
@@ -365,12 +372,14 @@ public static class MathTolerance
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ULP ("unit in the last place") distance is the count of representable floats between
-    /// two values. It is the natural metric for "as close as floating-point can express,"
+    /// ULP ("unit in the last place") distance is the number of steps between two values on the
+    /// ordered list of representable floating-point numbers; adjacent representable values are
+    /// at distance 1. It is the natural metric for "as close as floating-point can express,"
     /// scaling with the magnitude of the values without the caller picking an absolute
-    /// tolerance. Values with opposite signs are never within any finite ULP distance and
-    /// always compare as <see langword="false"/>; positive and negative zero are treated
-    /// as equal.
+    /// tolerance. Values with opposite signs always compare as <see langword="false"/>, even
+    /// tiny ones such as <see cref="double.Epsilon"/> and its negation, because the comparison
+    /// is only made between same-signed values. Positive and negative zero are treated as
+    /// equal.
     /// </para>
     /// <para>
     /// Reference: Goldberg, <i>What Every Computer Scientist Should Know About
@@ -379,10 +388,12 @@ public static class MathTolerance
     /// </remarks>
     /// <param name="a">First value.</param>
     /// <param name="b">Second value.</param>
-    /// <param name="ulpDistance">Maximum allowed number of representable doubles between
-    /// <paramref name="a"/> and <paramref name="b"/>. Must be non-negative.</param>
+    /// <param name="ulpDistance">Maximum allowed distance in representable doubles, counted as
+    /// steps between adjacent representable values (adjacent values are at distance 1).
+    /// Must be non-negative.</param>
     /// <returns><see langword="true"/> if both NaN, both zero (regardless of sign), or
-    /// within <paramref name="ulpDistance"/> ULPs and same-signed.</returns>
+    /// same-signed and within <paramref name="ulpDistance"/> ULPs; <see langword="false"/> for
+    /// values of opposite sign (other than the two zeros).</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="ulpDistance"/> is negative.</exception>
     public static bool IsCloseInUlps(double a, double b, long ulpDistance)
     {
@@ -419,10 +430,12 @@ public static class MathTolerance
     /// </summary>
     /// <param name="a">First value.</param>
     /// <param name="b">Second value.</param>
-    /// <param name="ulpDistance">Maximum allowed number of representable floats between
-    /// <paramref name="a"/> and <paramref name="b"/>. Must be non-negative.</param>
+    /// <param name="ulpDistance">Maximum allowed distance in representable floats, counted as
+    /// steps between adjacent representable values (adjacent values are at distance 1).
+    /// Must be non-negative.</param>
     /// <returns><see langword="true"/> if both NaN, both zero (regardless of sign), or
-    /// within <paramref name="ulpDistance"/> ULPs and same-signed.</returns>
+    /// same-signed and within <paramref name="ulpDistance"/> ULPs; <see langword="false"/> for
+    /// values of opposite sign (other than the two zeros).</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="ulpDistance"/> is negative.</exception>
     public static bool IsCloseInUlps(float a, float b, int ulpDistance)
     {
@@ -632,7 +645,7 @@ public static class MathTolerance
     /// spurious non-zero angle (so <c>d(q, q)</c> measured as non-zero for nearly every real
     /// quaternion). The relative quaternion is formed in <see cref="double"/> precision after a
     /// double-precision normalization, so the metric is symmetric and a quaternion compared with
-    /// itself yields exactly <c>0</c>.
+    /// itself yields zero or a value within about <c>1e-14</c> degrees (float/double rounding).
     /// </para>
     /// <para>
     /// A quaternion that is not normalizable (squared magnitude underflows to zero, e.g.
@@ -923,8 +936,7 @@ public static class MathTolerance
     /// <paramref name="extractedAngleDegrees"/> is <c>0</c>.</param>
     /// <remarks>
     /// When <paramref name="isIdentityRotation"/> is <see langword="false"/>, the extracted
-    /// angle is unwrapped from <see cref="Math.Atan2(double, double)"/> and lies in the open
-    /// interval <c>(-360, 360)</c> in degrees. The sign-alignment step (axis flip when the
+    /// angle lies in <c>[-180, 180]</c> degrees. The sign-alignment step (axis flip when the
     /// dot product with <paramref name="normalizedExpectedAxis"/> is negative) negates the
     /// angle alongside the axis so the extracted pair compares directly against the caller's
     /// expected pair.

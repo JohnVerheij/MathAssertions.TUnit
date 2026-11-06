@@ -331,6 +331,22 @@ internal sealed class LinearAlgebraTests
     }
 
     [Test]
+    public async Task AreParallel_BeyondFloatRange_Overflows(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // The lengths and the cross product are computed in float. The same direction pair
+        // (sine of the angle 1e-3) passes while |u| |v| stays below about 1.8e19 and fails once
+        // the squared cross-product length overflows. At 1e20 the lengths themselves overflow,
+        // so even exactly parallel vectors fail.
+        var inRange = LinearAlgebra.AreParallel(new Vector3(1e9f, 0f, 0f), new Vector3(1e9f, 1e6f, 0f), 1e-2);
+        var crossOverflow = LinearAlgebra.AreParallel(new Vector3(1e15f, 0f, 0f), new Vector3(1e15f, 1e12f, 0f), 1e-2);
+        var lengthOverflow = LinearAlgebra.AreParallel(new Vector3(1e20f, 1e20f, 0f), new Vector3(2e20f, 2e20f, 0f), 1e-2);
+        await Assert.That(inRange).IsTrue();
+        await Assert.That(crossOverflow).IsFalse();
+        await Assert.That(lengthOverflow).IsFalse();
+    }
+
+    [Test]
     public async Task AreParallel_SecondVectorZero_True(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
@@ -389,6 +405,48 @@ internal sealed class LinearAlgebraTests
         ct.ThrowIfCancellationRequested();
         await Assert.That(LinearAlgebra.IsRotation(Matrix4x4.CreateTranslation(1f, 2f, 3f), Tol)).IsFalse();
         await Assert.That(LinearAlgebra.IsRotation(Matrix4x4.CreateScale(2f), Tol)).IsFalse();
+    }
+
+    [Test]
+    public async Task IsRotation_SignFlipScaleOrTranslationWithinTolerance(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // CreateScale(-1, -1, 1) is a 180-degree rotation about Z, exactly orthogonal with
+        // determinant +1. A uniform scale of -1 is orthogonal but a reflection (determinant -1).
+        // A translation within the tolerance keeps M * M^T within the tolerance of the identity.
+        await Assert.That(LinearAlgebra.IsRotation(Matrix4x4.CreateScale(-1f, -1f, 1f), 0.0)).IsTrue();
+        await Assert.That(LinearAlgebra.IsOrthogonal(Matrix4x4.CreateScale(-1f), 0.0)).IsTrue();
+        await Assert.That(LinearAlgebra.IsRotation(Matrix4x4.CreateScale(-1f), 0.0)).IsFalse();
+        await Assert.That(LinearAlgebra.IsRotation(Matrix4x4.CreateTranslation(1e-7f, 0f, 0f), Tol)).IsTrue();
+    }
+
+    [Test]
+    public async Task IsRotation_BothChecksMustPassWithinTolerance(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // CreateScale(2): M * M^T is diag(4, 4, 4, 1), within 3 of the identity, but the determinant
+        // is 8, so IsRotation fails at a tolerance of 3. A reflection has determinant -1, within 2
+        // of +1, so it passes at a tolerance of 2 and fails below it. A translation of 0.4 per axis
+        // (length about 0.69) stays orthogonal at 0.5: M * M^T holds 0.4 and 1 + 0.48.
+        await Assert.That(LinearAlgebra.IsOrthogonal(Matrix4x4.CreateScale(2f), 3.0)).IsTrue();
+        await Assert.That(LinearAlgebra.IsRotation(Matrix4x4.CreateScale(2f), 3.0)).IsFalse();
+        await Assert.That(LinearAlgebra.IsRotation(Matrix4x4.CreateScale(-1f, 1f, 1f), 2.0)).IsTrue();
+        await Assert.That(LinearAlgebra.IsRotation(Matrix4x4.CreateScale(-1f, 1f, 1f), 1.99)).IsFalse();
+        await Assert.That(LinearAlgebra.IsOrthogonal(Matrix4x4.CreateTranslation(0.4f, 0.4f, 0.4f), 0.5)).IsTrue();
+    }
+
+    [Test]
+    public async Task IsRotation_NonAffineRotationInXW_True(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // A rotation in the X-W plane is orthogonal with determinant +1, so it passes although
+        // M41 (the translation slot of an affine matrix) is not zero: the affine form is not checked.
+        var c = MathF.Cos(0.5f);
+        var s = MathF.Sin(0.5f);
+        var xw = new Matrix4x4(c, 0, 0, s, 0, 1, 0, 0, 0, 0, 1, 0, -s, 0, 0, c);
+        await Assert.That(xw.M41).IsLessThan(-0.4f);
+        await Assert.That(LinearAlgebra.IsOrthogonal(xw, Tol)).IsTrue();
+        await Assert.That(LinearAlgebra.IsRotation(xw, Tol)).IsTrue();
     }
 
     [Test]
