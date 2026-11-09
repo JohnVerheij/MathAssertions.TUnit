@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.5.1] - 2026-11-07: cookbook for the geometric checks, SPDX 3.0 SBOM
+## [0.5.1] - 2026-11-09: cookbook for the geometric checks, SPDX 3.0 SBOM
 
 Patch release. No API or behavior change.
 
@@ -23,7 +23,7 @@ Patch release. No API or behavior change.
 
 - **README:** copy-paste examples for `HasAngleBetweenApproximately`, the scale-invariant `IsParallelTo`, `IsNormalized` (vector and quaternion), and `IsRotation`; a note that only `PoseRenderer` needs `using MathAssertions.Render;`; and a corrected sentence that still called per-axis delta rendering future work, although it shipped in 0.2.0.
 - **SBOM:** both packages embed an SPDX 3.0 software bill of materials (SPDX 2.2 before), like the other packages of the family.
-- **`TUnit.Assertions`** and **`TUnit.Core`** minimum versions raised from 1.54.0 to 1.81.0, and **`System.Numerics.Tensors`** from 10.0.9 to 10.0.14.
+- **`TUnit.Assertions`** and **`TUnit.Core`** minimum versions raised from 1.54.0 to 1.81.10, and **`System.Numerics.Tensors`** from 10.0.9 to 10.0.14.
 - **Package metadata:** the project URL of both packages now points to `https://mathassertions.dev`, and the NuGet tags now include `testing` and `dotnet`.
 - **README:** now says that adapters for other test frameworks (NUnit, xUnit, MSTest) are not planned; the family targets TUnit.
 - **Core README:** now says that adapters for other test frameworks (NUnit, xUnit, MSTest) are not planned; the family targets TUnit.
