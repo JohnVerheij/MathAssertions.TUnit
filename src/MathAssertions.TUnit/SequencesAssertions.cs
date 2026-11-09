@@ -59,7 +59,7 @@ public static class SequencesAssertions
         return Sequences.IsBounded(value, min, max);
     }
 
-    /// <summary>Asserts adjacent differences are equal within tolerance (arithmetic progression).</summary>
+    /// <summary>Asserts every adjacent difference is within tolerance of the first difference (arithmetic progression).</summary>
     [GenerateAssertion(
         ExpectationMessage = "to be an arithmetic progression within tolerance {tolerance}",
         InlineMethodBody = false)]
@@ -69,7 +69,7 @@ public static class SequencesAssertions
         return Sequences.IsArithmeticProgression(value, tolerance);
     }
 
-    /// <summary>Asserts adjacent ratios are equal within tolerance (geometric progression).</summary>
+    /// <summary>Asserts every adjacent ratio is within tolerance of the first ratio (geometric progression).</summary>
     [GenerateAssertion(
         ExpectationMessage = "to be a geometric progression within tolerance {tolerance}",
         InlineMethodBody = false)]

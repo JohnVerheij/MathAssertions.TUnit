@@ -15,6 +15,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-11-09: cookbook for the geometric checks, SPDX 3.0 SBOM
+
+Patch release. No API or behavior change.
+
+### Changed
+
+- **README:** copy-paste examples for `HasAngleBetweenApproximately`, the scale-invariant `IsParallelTo`, `IsNormalized` (vector and quaternion), and `IsRotation`; a note that only `PoseRenderer` needs `using MathAssertions.Render;`; and a corrected sentence that still called per-axis delta rendering future work, although it shipped in 0.2.0.
+- **SBOM:** both packages embed an SPDX 3.0 software bill of materials (SPDX 2.2 before), like the other packages of the family.
+- **`TUnit.Assertions`** and **`TUnit.Core`** minimum versions raised from 1.54.0 to 1.81.10, and **`System.Numerics.Tensors`** from 10.0.9 to 10.0.14.
+- **Package metadata:** the project URL of both packages now points to `https://mathassertions.dev`, and the NuGet tags now include `testing` and `dotnet`.
+- **README:** now says that adapters for other test frameworks (NUnit, xUnit, MSTest) are not planned; the family targets TUnit.
+- **Core README:** now says that adapters for other test frameworks (NUnit, xUnit, MSTest) are not planned; the family targets TUnit.
+- **README (namespaces):** now lists the real namespaces (`MathAssertions.TUnit`, `TUnit.Assertions.Extensions`, `MathAssertions`, `MathAssertions.Geometry3D`, `MathAssertions.Render`).
+- **README (`using` directives):** now says that the geometry samples need `using MathAssertions.Geometry3D;`, and no longer says that `System.Numerics` is the only extra `using`. The package README says the same.
+- **README (adapter classes):** now counts thirteen adapter classes instead of twelve, in the README and the package README, and no longer calls the geometry surface "complete".
+- **README (`IsCloseTo` samples):** the `Vector3.Distance` and per-axis samples now cast the `float` values to `double` so they compile.
+- **README (protobuf sample):** the projection now casts its fields to `float`.
+- **README (pose projection):** now warns that the cast from `double` to `float` can turn distinct positions into the same `Vector3`, so a pose assertion can pass despite a position error, and says to compare the original `double` fields when that precision matters.
+- **README (failure diagnostics):** now describes what the failure messages contain, per compound type, instead of showing an exact layout. The package README says the same.
+- **README (failure diagnostics, TUnit wrapper):** now says that TUnit prints `Expected ...` and `but ...` around the message, with "to satisfy" plus the method as the expectation.
+- **README (NaN scope):** the NaN and infinity claims are now scoped to the tolerance comparisons, and the README says that pose position, pointcloud on-plane and on-sphere, convex-hull containment, and monotonic-sequence checks do not reject NaN. The package and core READMEs say the same.
+- **README (NaN table):** now documents `NaN` vs `NaN` as `true` under any valid tolerance, in the README and the package README.
+- **README (infinity table):** now says that the generic `ReadOnlyTensorSpan<T>` overload does not follow the infinity rows: under a tolerance of positive infinity it returns `true` for opposite-sign infinities and for an infinity against a finite value. The core README says the same.
+- **README (tolerance precision):** now says that the `double` tolerance is kept and the component difference is computed in `double`, instead of claiming that a cast to `float` would round `1e-9` to zero.
+- **README (scalar assertions):** now says that `ScalarAssertions` has fluent `IsApproximatelyEqualTo` for `double` and `float`.
+- **Package README (`ScalarAssertions`):** now says that only `IsApproximatelyEqualTo` and `IsCloseInUlpsTo` have `float` overloads.
+- **README (`IsParallelTo`):** now says that the scale-invariant check applies to vectors longer than the tolerance, that a shorter vector counts as parallel to anything, and that the check holds only while both lengths and their product stay below about `1.8e19`, because the lengths and the cross product are computed in `float`.
+- **README (`IsRotation`):** the cookbook comment now says that two checks must both pass, `M * M^T = I` and determinant `+1`, each within the tolerance: a reflection fails under any tolerance below `2`; in an affine matrix (last column `0, 0, 0, 1`) a translation or a scale factor other than `+1` or `-1` fails unless both checks stay within the tolerance; `CreateScale(-1, -1, 1)` passes as a 180-degree rotation; and the whole 4x4 matrix is checked, not the affine form, so a 4D rotation that mixes W with X, Y or Z passes.
+- **README (number theory):** now says that `IsDivisibleBy(long.MinValue, -1)` throws `OverflowException`, next to the `long.MinValue`-aware GCD and LCM claim.
+- **Core README (static classes):** now lists `PoseRenderer` (`MathAssertions.Render`) next to the five static classes, and no longer says "six static classes" followed by five names.
+- **Core README (stability):** now says that breaking changes before 1.0 bump the minor version, like the README.
+- **Core README (failure messages):** now describes the failure-message renderer as internal and unstable.
+- **`MathTolerance.IsApproximatelyEqual`:** the `Vector3` XML docs now say that the `double` tolerance is kept and the difference is computed in `double`.
+- **`MathTolerance.IsApproximatelyEqual<T>` (`ReadOnlyTensorSpan<T>`):** the XML docs now say that infinities are compared through `T.Abs(a - b) > tolerance` instead of the scalar infinity rules, which differs from the scalar overloads under a tolerance of positive infinity.
+- **`MathTolerance.IsCloseInUlps`:** the XML docs now say that the distance counts steps between adjacent representable values (adjacent values are distance 1) and that values of opposite sign, even `double.Epsilon` and its negation, return `false`.
+- **`MathTolerance.RotationAngleDegrees`:** the XML docs now say that a quaternion compared with itself yields zero or a value within about `1e-14` degrees, instead of exactly zero.
+- **`MathTolerance.ExtractAxisAngle`:** the XML docs now say that the extracted angle lies in `[-180, 180]` degrees and that its sign is aligned by the axis dot product. The internal failure-message renderer docs say the same.
+- **`Sequences.IsArithmeticProgression`:** the XML docs, and those of the adapter method, now say that every difference is compared with the first one, not with the adjacent one.
+- **`Sequences.IsGeometricProgression`:** the XML docs, and those of the adapter method, now say that every ratio is compared with the first one, not with the adjacent one.
+- **`LinearAlgebra.AreParallel`:** the XML docs now say that the check is scale-invariant only for vectors longer than the tolerance, and only while both lengths and their product stay below about `1.8e19` (`float` range).
+- **`LinearAlgebra.IsRotation` and `LinearAlgebra.IsOrthogonal`:** the XML docs, and those of the adapter method `IsRotation`, now say that both checks of `IsRotation` must pass within the tolerance, that a reflection fails only under a tolerance below `2`, that in an affine matrix a translation or a scale fails only once one of the checks exceeds the tolerance, that a scale of `-1` keeps a matrix orthogonal (so `CreateScale(-1, -1, 1)` is a rotation), and that the affine form is not checked, so a 4D rotation that mixes W with X, Y or Z passes.
+- **`NumberTheory.IsDivisibleBy`:** the XML docs now say that `long.MinValue` with a divisor of `-1` throws `OverflowException`.
+- **`Intersection` (class):** the XML docs now say that only ray-plane and ray-triangle have an `out float t` overload, that ray-sphere and ray-AABB are boolean only, and that `t` is the ray parameter of the hit point `origin + t * direction`, a distance only for a unit direction.
+- **`Intersection.Intersects(Ray3D, Plane, out float)`:** the XML docs now say that `t` is `0` for a parallel ray and the computed negative `t` when the plane is behind the ray.
+- **`Intersection.Intersects(Ray3D, Triangle3D, out float)`:** the XML docs now say that the hit requires the ray parameter `t > 1e-7` (a threshold on the parameter, not on a distance), so an origin on the triangle is not a hit, and what `t` is in each `false` case.
+- **`Intersection.Intersects(Ray3D, Sphere)`:** the XML docs now say that the ray direction must be a unit vector.
+- **`Ray3D`:** the XML docs now say that ray-sphere needs a unit direction and that the parallel tests use an absolute epsilon of `1e-7` (ray-plane on `|direction . normal|`, ray-triangle on `|direction . (edge2 x edge1)|`, ray-AABB per direction component, where a near-zero component only requires the origin to lie inside that axis's slab).
+- **`PoseAssertions`:** the XML docs now say that the `Matrix4x4` overload assumes unit scale instead of saying that scale is ignored.
+- **`Containment.ConvexHullContains`:** the XML docs no longer promise automatic triangulation in 0.2.0.
+- **`Statistics.HasPercentileApproximately`:** the XML docs now describe the rank `p/100 * (N - 1)` (NumPy "linear", Excel `PERCENTILE.INC`) instead of citing NIST/SEMATECH.
+
 ## [0.5.0] - 2026-06-14: scale-invariant parallelism, angle and rotation assertions
 
 Minor release. Fixes the scale-dependence of the parallel check and adds an angle-between assertion and a proper-rotation matrix assertion.
@@ -197,7 +248,8 @@ The 0.0.1 scope is intentionally narrow. The release exists to establish the rep
 - All helpers validate `tolerance` (rejects NaN and negative values via `ArgumentOutOfRangeException`).
 - `Vector3.IsApproximatelyEqualTo(expected, tolerance)`: fluent component-wise assertion entry point, generated via TUnit's `[GenerateAssertion]`. Calls `MathTolerance.IsApproximatelyEqual(Vector3, Vector3, double)` internally.
 
-[unreleased]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.5.0...HEAD
+[unreleased]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.4.3...v0.5.0
 [0.4.3]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.4.1...v0.4.2

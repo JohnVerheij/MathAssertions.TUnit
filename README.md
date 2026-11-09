@@ -10,7 +10,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4.svg)](https://dotnet.microsoft.com/download/dotnet/10.0)
 
-TUnit-native math assertion library for .NET. Covers tolerance comparisons (scalar, `System.Numerics` compounds, spans, tensors), sequences, statistics, linear algebra, number theory, and 3D geometry. Source-generated entry points integrate with TUnit's `Assert.That(...)` pipeline. NaN-aware, infinity-aware, AOT-compatible, reflection-free in the assertion path.
+TUnit-native math assertion library for .NET. Covers tolerance comparisons (scalar, `System.Numerics` compounds, spans, tensors), sequences, statistics, linear algebra, number theory, and 3D geometry. Source-generated entry points integrate with TUnit's `Assert.That(...)` pipeline. The tolerance comparisons handle NaN and infinity explicitly (see [NaN and infinity semantics](#nan-and-infinity-semantics)). AOT-compatible, reflection-free in the assertion path.
 
 > **Scope:** Test projects only. Not intended for production code.
 
@@ -29,10 +29,10 @@ The framework-agnostic core is feature-complete across seven topical clusters an
 | Sequences | Monotonicity (strict and non-strict), sortedness, boundedness with NaN-aware element check, arithmetic / geometric progressions, single-step Cauchy convergence, generic length predicates |
 | Statistics | Welford's mean + variance, median, percentile (overflow-safe), standard deviation, sum, sigma-bound checks |
 | Linear algebra | `Matrix4x4` invariants (symmetric, orthogonal, proper rotation, identity, determinant, trace, invertible); `Vector3` pair properties (orthogonality, scale-invariant parallelism, angle between, linear independence) |
-| Number theory | `long` predicates: divisibility, primality (overflow-safe), coprimality, GCD/LCM (`long.MinValue`-aware, `OverflowException`-on-LCM-overflow), powers of base, perfect square (overflow-safe successor check), modular congruence (canonical-residue form) |
+| Number theory | `long` predicates: divisibility, primality (overflow-safe), coprimality, GCD/LCM (`long.MinValue`-aware, `OverflowException`-on-LCM-overflow; `IsDivisibleBy(long.MinValue, -1)` also throws `OverflowException`), powers of base, perfect square (overflow-safe successor check), modular congruence (canonical-residue form) |
 | Geometry3D | Eight primitive `record struct` types (`Sphere`, `AxisAlignedBox`, `OrientedBox`, `Ray3D`, `LineSegment3D`, `Triangle3D`, `Capsule`, `Cylinder`); property predicates (`IsDegenerate`, `IsCollinear`, `AreCoplanar`); containment (point/box/sphere/OBB/convex hull); closest-point distance (point->plane/segment/triangle, citing Ericson, *Real-Time Collision Detection* §§5.1.2, 5.1.5); intersection (sphere-sphere, AABB-AABB, ray-plane/sphere/triangle/AABB, citing Akenine-Möller, Haines, Hoffman, *Real-Time Rendering* 4th ed. §§22.6, 22.7, 22.8); pointcloud aggregates (boundedness, centroid, on-plane, on-sphere) |
 
-`MathAssertions.TUnit` ships ~85 fluent extensions across twelve adapter classes; `MathAssertions` (the framework-agnostic core) ships the underlying static helpers. See the per-package READMEs and CHANGELOG for the exhaustive method listings.
+`MathAssertions.TUnit` ships ~85 fluent extensions across thirteen adapter classes; `MathAssertions` (the framework-agnostic core) ships the underlying static helpers. See the per-package READMEs and CHANGELOG for the exhaustive method listings.
 
 `ReadOnlyTensorSpan<T>` is exposed only at the static `MathTolerance` level, not as a fluent assertion: TUnit's `[GenerateAssertion]` assertion-builder cannot capture ref-struct values across an `await`. Tensor-fluent integration is candidate work for a later release.
 
@@ -92,18 +92,21 @@ This repo ships **two** NuGet packages:
 | [`MathAssertions`](https://www.nuget.org/packages/MathAssertions/) | Framework-agnostic core: `MathTolerance`, `Sequences`, `Statistics`, `LinearAlgebra`, `NumberTheory`, and the `Geometry3D` namespace (~85 static methods plus eight primitive `record struct` types) | BCL + `System.Numerics.Tensors` |
 | [`MathAssertions.TUnit`](https://www.nuget.org/packages/MathAssertions.TUnit/) | TUnit-specific fluent entry points generated via `[GenerateAssertion]`: ~85 `Assert.That(value).Method(...)` extensions covering the whole core surface | `MathAssertions` + `TUnit.Assertions` + `TUnit.Core` |
 
-You install `MathAssertions.TUnit`; `MathAssertions` comes transitively. Adapters for other test frameworks (NUnit, xUnit, MSTest) are *not* shipped today; they would reuse the `MathAssertions` core. Open a feature request if you need one.
+You install `MathAssertions.TUnit`; `MathAssertions` comes transitively. Adapters for other test frameworks (NUnit, xUnit, MSTest) are not planned; the family targets TUnit.
 
 ## Namespaces (and a `GlobalUsings.cs` recommendation)
 
-The two packages place types in two namespaces with deliberately-different scopes:
+The two packages place types in several namespaces with deliberately-different scopes:
 
 | Type / member | Namespace | Auto-imported? |
 |---|---|---|
-| `IsApproximatelyEqualTo()` on Vector3 (source-generated entry) | `TUnit.Assertions.Extensions` | **Yes** (TUnit auto-imports) |
-| `MathTolerance` (the framework-agnostic helpers) | `MathAssertions` | **No** (needed at the call site only when invoking helpers directly, e.g. from a `[GenerateAssertion]` extension on a private type) |
+| Source-generated fluent entry points, e.g. `IsApproximatelyEqualTo()` on `Vector3` | `TUnit.Assertions.Extensions` | **Yes** (TUnit auto-imports) |
+| Adapter classes (`ScalarAssertions`, `VectorAssertions`, ...) that hold the entry-point source methods | `MathAssertions.TUnit` | **No** (you do not normally name them) |
+| `MathTolerance`, `Sequences`, `Statistics`, `LinearAlgebra`, `NumberTheory` (the framework-agnostic helpers) | `MathAssertions` | **No** (needed at the call site only when invoking helpers directly, e.g. from a `[GenerateAssertion]` extension on a private type) |
+| `Sphere`, `AxisAlignedBox`, `Ray3D`, `Triangle3D` and the other Geometry3D primitives, plus `Containment`, `Distance`, `Intersection`, `Pointcloud`, `Properties` | `MathAssertions.Geometry3D` | **No** (add `using MathAssertions.Geometry3D;` in files that construct the primitives) |
+| `PoseRenderer` | `MathAssertions.Render` | **No** (add `using MathAssertions.Render;` in files that call it) |
 
-The Vector3 fluent assertion auto-imports via `TUnit.Assertions.Extensions`; no extra `using` directive is needed if your test project already uses TUnit. For test projects that consume `MathTolerance` directly (as in the [extending to your own types](#cookbook-common-patterns) cookbook entry below), put the namespace into a single `GlobalUsings.cs` so every test file sees it without ceremony:
+The fluent assertions auto-import via `TUnit.Assertions.Extensions`; no extra `using` directive is needed for them if your test project already uses TUnit. The value types and primitives need their own `using` (`System.Numerics` for `Vector3` and friends, `MathAssertions.Geometry3D` for the geometry samples below). For test projects that consume `MathTolerance` directly (as in the [extending to your own types](#cookbook-common-patterns) cookbook entry below), put the namespace into a single `GlobalUsings.cs` so every test file sees it without ceremony:
 
 ```csharp
 // tests/MyApp.Tests/GlobalUsings.cs
@@ -125,7 +128,7 @@ public async Task ComputedPositionIsApproximatelyAtTarget(CancellationToken ct)
 }
 ```
 
-That's the canonical use. The fluent extension auto-imports; `using System.Numerics;` is the only additional thing you need beyond standard TUnit usings.
+That's the canonical use. The fluent extension auto-imports; `using System.Numerics;` is the only additional thing this sample needs beyond standard TUnit usings (the Geometry3D samples also need `using MathAssertions.Geometry3D;`).
 
 ---
 
@@ -148,12 +151,12 @@ NOT Euclidean distance (`(a - b).Length() <= tolerance`). Reasons:
 If you want Euclidean-distance assertions, compose with TUnit's primitive `IsCloseTo`:
 
 ```csharp
-await Assert.That(Vector3.Distance(a, b)).IsCloseTo(0, tolerance);
+await Assert.That((double)Vector3.Distance(a, b)).IsCloseTo(0.0, tolerance);
 ```
 
 ## Tolerance precision
 
-Component values widen to `double` before the per-axis comparison so the caller's `double` tolerance is honored at full precision. Casting the tolerance down to `float` instead would discard up to 22 bits of mantissa and silently round tight tolerances such as `1e-9` to zero, producing surprising "every-component-equal" results for inputs that visibly differ.
+Component values widen to `double` before the per-axis comparison so the caller's `double` tolerance is kept as is and each component difference is computed in `double`. Tight tolerances such as `1e-9` are therefore not lost to `float` rounding.
 
 This precision-preserving cast is locked behavior. Tests pin it; v0.1.0 additive overloads (Vector2, Vector4, Quaternion, Matrix4x4, etc.) inherit it.
 
@@ -161,7 +164,7 @@ This precision-preserving cast is locked behavior. Tests pin it; v0.1.0 additive
 
 ## Entry points
 
-~85 fluent entry points across twelve adapter classes cover scalar, `System.Numerics` compounds, `double[]`/`float[]`, sequences, statistics, linear algebra, integer number theory, and a complete 3D-geometry surface. v0.2.0 adds `HasAxisAngleApproximately` on `Quaternion` and per-component delta rendering in every compound failure message. The exhaustive method listing lives in the [package README](https://github.com/JohnVerheij/MathAssertions.TUnit/blob/main/src/MathAssertions.TUnit/README.md#entry-points); the examples below are representative.
+~85 fluent entry points across thirteen adapter classes cover scalar, `System.Numerics` compounds, `double[]`/`float[]`, sequences, statistics, linear algebra, integer number theory, and a 3D-geometry surface covering property predicates, containment, closest-point distance, ray intersection, and pointcloud aggregates. v0.2.0 adds `HasAxisAngleApproximately` on `Quaternion` and per-component delta rendering in every compound failure message. The exhaustive method listing lives in the [package README](https://github.com/JohnVerheij/MathAssertions.TUnit/blob/main/src/MathAssertions.TUnit/README.md#entry-points); the examples below are representative.
 
 ### Vector3 component-wise
 
@@ -227,13 +230,15 @@ The orientation comparison uses the SO(3) metric, so `q` and `-q` are the same r
 
 ```csharp
 static (Vector3 Position, Quaternion Orientation) ToNumerics(ProtoPose p) =>
-    (new Vector3(p.Position.X, p.Position.Y, p.Position.Z),
-     new Quaternion(p.Orientation.X, p.Orientation.Y, p.Orientation.Z, p.Orientation.W));
+    (new Vector3((float)p.Position.X, (float)p.Position.Y, (float)p.Position.Z),
+     new Quaternion((float)p.Orientation.X, (float)p.Orientation.Y, (float)p.Orientation.Z, (float)p.Orientation.W));
 
 await Assert.That(ToNumerics(actual))
     .IsPoseApproximatelyEqualTo(ToNumerics(expected),
         positionTolerance: 1e-3, rotationToleranceDegrees: 0.5);
 ```
+
+The cast to `float` loses precision, so distinct `double` positions can become the same `Vector3`: `16777216` and `16777217` both become `16777216f`, and the assertion passes despite a position error of 1. When the `double` precision matters, compare the original `double` fields instead, for example per axis with the scalar `IsApproximatelyEqualTo`.
 
 ### Statistics on a sample
 
@@ -248,6 +253,8 @@ await Assert.That(sample).HasPercentileApproximately(50.0, expected: 3.0, tolera
 ### 3D-geometry containment / intersection
 
 ```csharp
+using MathAssertions.Geometry3D;
+
 var sphere = new Sphere(Vector3.Zero, 1f);
 await Assert.That(sphere).ContainsPoint(new Vector3(0.3f, 0.3f, 0.3f));
 
@@ -259,29 +266,27 @@ await Assert.That(ray).IntersectsSphere(sphere);
 
 ## Failure diagnostics
 
-Failures render the actual value against the expected value with the supplied tolerance, with no extra `Console.WriteLine` calls needed.
+A failed assertion is reported by TUnit as `Expected {expectation}` followed by `but {message}`. The compound `IsApproximatelyEqualTo` assertions have no fixed expectation text of their own, so TUnit uses "to satisfy" plus the method and its arguments as the expectation. The detail comes from the message, which this package builds so the failure can be diagnosed without extra `Console.WriteLine` calls.
 
-**`IsApproximatelyEqualTo` mismatch:**
+For a compound `IsApproximatelyEqualTo` (`Vector2`/`Vector3`/`Vector4`, `Quaternion`, `Plane`, `Complex`) the message contains:
 
-```text
-Expected:
-  to be approximately equal to <1, 2, 99> component-wise within tolerance 0.001
+- the expected value and the tolerance;
+- the actual value;
+- the per-component delta;
+- the components that exceeded the tolerance, each with its delta.
 
-Actual:
-  <1, 2, 3>
-```
+The `delta` and `exceeded` values use general (`G`) numeric formatting with `CultureInfo.InvariantCulture`, so the numbers carry full precision (including any float-to-double widening residue) rather than a rounded display form.
 
-v0.2.0+ enriches the rendering with per-axis delta information directly in the failure message:
+Other compound types have their own layouts:
 
-```text
-Expected:
-  to be approximately equal to <1, 2, 3.001> component-wise within tolerance 1E-06
-    actual:   <1, 2, 3>
-    delta:    (0, 0, 0.0009999275)
-    exceeded: Z (0.0009999275 > 1E-06)
-```
+- **`Matrix4x4`:** the actual matrix and the `[row,col]` cells that exceeded the tolerance, each with its delta.
+- **`double[]` and `float[]`:** the actual length and either a length mismatch or the first mismatching index with actual, expected, and delta.
+- **`IsRotationallyEquivalentTo`:** the actual quaternion, the absolute dot product of the normalized quaternions against its threshold, and both normalized quaternions.
+- **`IsGeometricallyEquivalentTo`:** the actual plane and the deltas against both the expected plane and its sign-flipped form.
+- **`HasAxisAngleApproximately`:** the actual quaternion, the extracted axis and angle, and the angle delta.
+- **`IsPoseApproximatelyEqualTo` and `IsRigidTransformApproximatelyEqualTo`:** both poses, plus the position and rotation deltas, each flagged as within or over its tolerance.
 
-The `delta` and `exceeded` values use general (`G`) numeric formatting with `CultureInfo.InvariantCulture`, so the rendered numbers carry full precision (including any float-to-double widening residue) rather than a rounded display form. The same pattern applies to every compound type (`Vector2`/`Vector4`/`Quaternion`/`Matrix4x4`/`Plane`/`Complex`/`double[]`/`float[]`) plus `IsRotationallyEquivalentTo`, `IsGeometricallyEquivalentTo`, and `HasAxisAngleApproximately`. The exact text format is not stable; see the [Stability intent](#stability-intent-pre-10) section.
+The exact text format is not stable; see the [Stability intent](#stability-intent-pre-10) section.
 
 ---
 
@@ -319,6 +324,8 @@ public async Task PoseMatchesBaseline(CancellationToken ct)
 
 `PoseRenderer` lives in the framework-agnostic `MathAssertions` core and takes no dependency on a snapshot framework; `MatchesSnapshot()` is from the sibling [`SnapshotAssertions.TUnit`](https://www.nuget.org/packages/SnapshotAssertions.TUnit/) package. The two-line composition is deliberate: the renderer never hard-depends on a snapshot framework. The quaternion is rendered verbatim (the sign is not canonicalized), so a `q` / `-q` flip is caught; the tolerance is recorded into the output, so a tolerance silently loosened during a refactor also shows up as a diff. The `Render(position, tolerance)` and `Render(orientation, tolerance)` overloads pin the position or orientation alone.
 
+Only `PoseRenderer` lives in `MathAssertions.Render`. The assertions, the quaternion ones included, auto-import with `Assert.That`, so `using MathAssertions.Render;` is needed only in files that call `PoseRenderer`.
+
 ### Pattern: assert a pose whose orientation comes from a protobuf message
 
 The pose assertions take `System.Numerics` types (`Vector3` and `Quaternion`). A pose delivered over the wire as a protobuf message usually carries its own position and orientation message types with `double` (or `float`) fields. Project the protobuf pose to `System.Numerics` first, then assert. Keeping the projection in one small mapping helper (here `ToVector3()` / `ToQuaternion()`) means the assertion reads the same whether the pose came from a solver or a deserialized message.
@@ -342,7 +349,7 @@ public async Task DecodedPoseMatchesExpected(CancellationToken ct)
 }
 ```
 
-A protobuf orientation is rarely a unit quaternion to the bit, and a default-initialized message leaves it as `(0, 0, 0, 0)`. Both are handled: the orientation comparison normalizes before measuring the geodesic angle, and a non-normalizable `(0, 0, 0, 0)` falls back to a componentwise comparison, so a default-pose round-trip passes while a real mismatch still fails.
+A protobuf orientation is rarely a unit quaternion to the bit, and a default-initialized message leaves it as `(0, 0, 0, 0)`. Both are handled: the orientation comparison normalizes before measuring the geodesic angle, and a non-normalizable `(0, 0, 0, 0)` falls back to a componentwise comparison, so a default-pose round-trip passes while a real mismatch still fails. The `float` casts lose precision for `double` fields; see [Projecting a non-`System.Numerics` pose](#projecting-a-non-systemnumerics-pose).
 
 ### Pattern: extend the same DSL to your own domain types
 
@@ -375,13 +382,13 @@ When per-axis diagnostics matter more than the package's failure-message format,
 ```csharp
 using (Assert.Multiple())
 {
-    await Assert.That(actual.X).IsCloseTo(target.X, 1e-3);
-    await Assert.That(actual.Y).IsCloseTo(target.Y, 1e-3);
-    await Assert.That(actual.Z).IsCloseTo(target.Z, 1e-3);
+    await Assert.That((double)actual.X).IsCloseTo(target.X, 1e-3);
+    await Assert.That((double)actual.Y).IsCloseTo(target.Y, 1e-3);
+    await Assert.That((double)actual.Z).IsCloseTo(target.Z, 1e-3);
 }
 ```
 
-Both axes report; the failure message names the failing one explicitly. A built-in per-axis-difference renderer that brings this granularity into the single `IsApproximatelyEqualTo` call is candidate work for a later release.
+Each axis reports as its own assertion. A single `IsApproximatelyEqualTo` call already names every component that exceeded the tolerance, with its delta (v0.2.0+, see [Failure diagnostics](#failure-diagnostics)); use the per-axis form when each axis should be a separate, individually named check.
 
 ### Pattern: comparing quaternions
 
@@ -454,6 +461,32 @@ await Assert.That(MathTolerance.HasRoundtripIdentity(
 
 When the round-trip needs typed inputs (vector / quaternion / serializer pair), compose `[GenerateAssertion]` on your own type rather than chaining `HasRoundtripIdentity`: the primitive is intentionally `double`-only so the family does not lock in a particular cross-type roundtrip surface.
 
+### Pattern: geometric checks on vectors and rotations (v0.5.0+)
+
+```csharp
+// The unsigned angle between two directions, in radians (0..pi):
+await Assert.That(forward).HasAngleBetweenApproximately(target, expectedRadians: Math.PI / 2, tolerance: 1e-6);
+
+// Parallel or antiparallel, whatever the lengths within float range: both lengths above the
+// tolerance, and both lengths and their product below about 1.8e19. The lengths and the cross
+// product are computed in float; beyond that range they overflow and the result can be wrong.
+// The tolerance is the sine of the allowed deviation, so 1e-3 admits about a milliradian.
+await Assert.That(axis).IsParallelTo(new Vector3(0, 0, 10), tolerance: 1e-3);
+
+// A unit vector, and a unit quaternion:
+await Assert.That(Vector3.Normalize(direction)).IsNormalized(tolerance: 1e-6);
+await Assert.That(orientation).IsNormalized(tolerance: 1e-6);
+
+// A proper rotation: two checks that must both pass, M * M^T = I and determinant +1, each within the
+// tolerance. A reflection (determinant -1) fails under any tolerance below 2. An affine matrix (last
+// column 0, 0, 0, 1) with a translation or a scale factor other than +1 or -1 fails unless both
+// checks stay within the tolerance. CreateScale(-1, -1, 1) is a 180-degree rotation about Z and passes.
+// The whole 4x4 matrix is checked, not the affine form: a 4D rotation that mixes W with X, Y or Z passes.
+await Assert.That(Matrix4x4.CreateFromQuaternion(orientation)).IsRotation(tolerance: 1e-5);
+```
+
+For two quaternions that should describe the same rotation, see [comparing quaternions](#pattern-comparing-quaternions): `IsRotationallyEquivalentTo` accepts both signs of the double cover.
+
 ### Pattern: detecting an unpopulated zero quaternion
 
 A zero-valued quaternion (all four components zero, length zero) is a valid in-memory state but not a valid rotation. Common cases: a protobuf default for an unpopulated `Quaternion` field, an in-construction calibration output that has not yet been written, an explicit "no rotation set" sentinel.
@@ -476,8 +509,8 @@ This reads as "the quaternion is approximately the zero quaternion" and fails fo
 
 ## Design notes
 
-- **`IsApproximatelyEqualTo`, not `IsCloseTo`.** TUnit core's `IsCloseTo` is for scalar `double` / `float`; reusing the name on compound types would imply the same scalar-distance semantics and cause bugs. `IsApproximatelyEqualTo` names the compound, component-wise, NaN/infinity-aware comparison. There is no primitive fluent `IsApproximatelyEqualTo` (TUnit's `IsCloseTo` already covers scalars); the core `MathTolerance.IsApproximatelyEqual(double, double, double)` is available to `[GenerateAssertion]` authors.
-- **Components widen to `double`; tolerance is not narrowed to `float`.** A `double` tolerance must be honored at full precision: casting it to `float` silently rounds tight tolerances to zero and yields wrong "equal-to-itself" results. See [Tolerance precision](#tolerance-precision).
+- **`IsApproximatelyEqualTo`, not `IsCloseTo`.** TUnit core's `IsCloseTo` is for scalar `double` / `float`; reusing the name on compound types would imply the same scalar-distance semantics and cause bugs. `IsApproximatelyEqualTo` names the compound, component-wise, NaN/infinity-aware comparison. `ScalarAssertions` does provide a scalar `IsApproximatelyEqualTo` for `double` and `float` that follows the same NaN and infinity rules; TUnit's own `IsCloseTo` remains the idiom for scalar distance checks. The core `MathTolerance.IsApproximatelyEqual(double, double, double)` is available to `[GenerateAssertion]` authors.
+- **Components widen to `double`; tolerance is not narrowed to `float`.** A `double` tolerance is kept at full precision and the component difference is computed in `double`, so tight tolerances are not lost to `float` rounding. See [Tolerance precision](#tolerance-precision).
 
 ## NaN and infinity semantics
 
@@ -485,7 +518,7 @@ Match TUnit's `IsCloseTo` primitive semantics:
 
 | Both | Comparison | Result |
 |---|---|---|
-| NaN | NaN | `true` (under any tolerance) |
+| NaN | NaN | `true` (under any valid tolerance) |
 | One NaN, other not | (anything) | `false` |
 | Same-sign infinity | (anything) | `true` |
 | Opposite-sign infinity | (anything) | `false` |
@@ -493,6 +526,10 @@ Match TUnit's `IsCloseTo` primitive semantics:
 | Tolerance is NaN or negative | (anything) | `ArgumentOutOfRangeException` at call time |
 
 For the Vector3 overload, every component pair is evaluated against this table; the assertion passes iff all three pairs pass.
+
+The generic `ReadOnlyTensorSpan<T>` overload follows the NaN rows but not the infinity rows: it compares infinities through `T.Abs(a - b) > tolerance`. Under a finite tolerance the results match the table; under a tolerance of positive infinity it returns `true` for opposite-sign infinities and for an infinity against a finite value.
+
+This table describes the tolerance comparisons. Other checks do not define NaN handling: NaN input can pass the pose position comparison, the pointcloud on-plane and on-sphere checks, convex-hull containment, and the monotonic-sequence checks. Assert finiteness separately when it matters.
 
 ## Stability intent (pre-1.0)
 

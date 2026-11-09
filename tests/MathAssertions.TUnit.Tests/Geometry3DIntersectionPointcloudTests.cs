@@ -247,6 +247,21 @@ internal sealed class Geometry3DIntersectionPointcloudTests
     }
 
     [Test]
+    public async Task Ray_Triangle_ThresholdIsOnTheRayParameter(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // The triangle lies 5e-8 below the origin. With a unit direction t = 5e-8, not above
+        // the 1e-7 threshold; with a direction of length 0.1 the same hit has t = 5e-7.
+        var t = new Triangle3D(Vector3.Zero, new Vector3(2, 0, 0), new Vector3(0, 2, 0));
+        var origin = new Vector3(0.5f, 0.5f, 5e-8f);
+        var unitHit = Intersection.Intersects(new Ray3D(origin, -Vector3.UnitZ), t, out _);
+        var shortHit = Intersection.Intersects(new Ray3D(origin, new Vector3(0, 0, -0.1f)), t, out var tShort);
+        await Assert.That(unitHit).IsFalse();
+        await Assert.That(shortHit).IsTrue();
+        await Assert.That((double)tShort).IsEqualTo(5e-7).Within(1e-9);
+    }
+
+    [Test]
     public async Task Ray_Triangle_BooleanShorthand(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
@@ -290,6 +305,16 @@ internal sealed class Geometry3DIntersectionPointcloudTests
         // check, distinct from the origin > max branch.
         var ray = new Ray3D(new Vector3(-2, -5, 0.5f), Vector3.UnitX);
         await Assert.That(Intersection.Intersects(ray, UnitBox)).IsFalse();
+    }
+
+    [Test]
+    public async Task Ray_AABB_ZeroDirection_HitsOnlyFromInside(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // Every component is below the 1e-7 cutoff, so each one only requires the origin to lie
+        // inside that axis's slab: the ray hits from inside the box and misses from outside it.
+        await Assert.That(Intersection.Intersects(new Ray3D(new Vector3(0.5f, 0.5f, 0.5f), Vector3.Zero), UnitBox)).IsTrue();
+        await Assert.That(Intersection.Intersects(new Ray3D(new Vector3(0.5f, 0.5f, 2f), Vector3.Zero), UnitBox)).IsFalse();
     }
 
     [Test]
