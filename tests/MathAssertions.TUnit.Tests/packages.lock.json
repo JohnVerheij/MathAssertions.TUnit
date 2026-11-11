@@ -10,9 +10,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.322, )",
-        "resolved": "3.0.322",
-        "contentHash": "aaynUqEHHeD0v1/RDW/Rq3d/gRkF8bRKJcvblhvuvyTAB+hGuzgFl4pBD9g6jGu+VqMWPinEGqu4hzG12TtnqQ=="
+        "requested": "[3.0.324, )",
+        "resolved": "3.0.324",
+        "contentHash": "aWoLvUTC9b2H/KgVmu9bzzvd87kPx19Ow3UMznTqun146Ql7pUqCtgQox1iItWNEUlpIqZeKy7I7v9OHOBRjmw=="
       },
       "Microsoft.VisualStudio.Threading.Analyzers": {
         "type": "Direct",
@@ -135,7 +135,7 @@
       "mathassertions.tunit": {
         "type": "Project",
         "dependencies": {
-          "MathAssertions": "[0.5.0, )",
+          "MathAssertions": "[0.5.1, )",
           "TUnit.Assertions": "[1.81.10, )",
           "TUnit.Core": "[1.81.10, )"
         }
