@@ -160,22 +160,22 @@
       "mathassertions": {
         "type": "Project",
         "dependencies": {
-          "System.Numerics.Tensors": "[10.0.14, )"
+          "System.Numerics.Tensors": "[10.0.15, )"
         }
       },
       "mathassertions.tunit": {
         "type": "Project",
         "dependencies": {
-          "MathAssertions": "[0.5.0, )",
+          "MathAssertions": "[0.5.1, )",
           "TUnit.Assertions": "[1.81.10, )",
           "TUnit.Core": "[1.81.10, )"
         }
       },
       "System.Numerics.Tensors": {
         "type": "CentralTransitive",
-        "requested": "[10.0.14, )",
-        "resolved": "10.0.14",
-        "contentHash": "88DUO9lZZ/PfBwO51YKTd5TdVb+Cl31kd6imLKHUZxNXjnPU2V4mHIVT4f8rVK3T+sXXfDbHInzclnOHrK4azw=="
+        "requested": "[10.0.15, )",
+        "resolved": "10.0.15",
+        "contentHash": "GNcPxDGivHbS2EPzDD3wdVyB740+iJqODdpLeAtaTYP6OhIqyw1TLpo8qSRfEo3z1xfv3/OcmAQg28/htqpSCQ=="
       },
       "TUnit.Assertions": {
         "type": "CentralTransitive",
