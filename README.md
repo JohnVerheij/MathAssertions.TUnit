@@ -309,7 +309,8 @@ public async Task ComputedPositionIsApproximatelyAtTarget(CancellationToken ct)
 
 `IsApproximatelyEqualTo` checks one numeric value against a literal expected within tolerance. To pin a *whole pose* (position and orientation together) as a snapshot baseline, render it to deterministic text with `MathAssertions.Render.PoseRenderer` and pin the result. A regression that flips a quaternion sign or swaps two pose fields then surfaces as a snapshot diff, even when each component still passes its own tolerance check.
 
-```csharp
+```csharp no-compile
+using System.Numerics;
 using MathAssertions.Render;
 
 [Test]
@@ -331,6 +332,8 @@ Only `PoseRenderer` lives in `MathAssertions.Render`. The assertions, the quater
 The pose assertions take `System.Numerics` types (`Vector3` and `Quaternion`). A pose delivered over the wire as a protobuf message usually carries its own position and orientation message types with `double` (or `float`) fields. Project the protobuf pose to `System.Numerics` first, then assert. Keeping the projection in one small mapping helper (here `ToVector3()` / `ToQuaternion()`) means the assertion reads the same whether the pose came from a solver or a deserialized message.
 
 ```csharp
+using System.Numerics;
+
 // MyProtoPose is your generated protobuf message; ToVector3() / ToQuaternion()
 // are your own one-line projections from its fields onto System.Numerics types.
 private static Vector3 ToVector3(MyProtoPosition p) => new((float)p.X, (float)p.Y, (float)p.Z);

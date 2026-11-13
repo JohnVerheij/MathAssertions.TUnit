@@ -1,4 +1,4 @@
-# Default behaviour: normalize text files to LF on commit, restore native on checkout
+# Default behavior: normalize text files to LF on commit, restore native on checkout
 * text=auto eol=lf
 
 # Explicit text files (always normalize)
@@ -15,6 +15,11 @@
 *.editorconfig text eol=lf
 *.gitignore    text eol=lf
 *.gitattributes text eol=lf
+
+# Snapshot baselines and transient diff output: always LF so cross-platform runs don't
+# produce false-positive trailing-CRLF diffs.
+*.expected.txt text eol=lf
+*.actual.txt   text eol=lf
 
 # Binary files (do not modify)
 *.png      binary

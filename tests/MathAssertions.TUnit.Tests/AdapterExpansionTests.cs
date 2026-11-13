@@ -12,7 +12,7 @@ namespace MathAssertions.TUnit.Tests;
 /// End-to-end smoke tests for the 0.1.0 adapter-expansion surface. Each adapter method
 /// gets a happy-path call through <c>Assert.That(value).Method(...)</c> to verify the
 /// <c>[GenerateAssertion]</c> source generator wired the wrapper correctly. Underlying
-/// behaviour is exhaustively covered by the core unit tests; these tests focus on the
+/// behavior is exhaustively covered by the core unit tests; these tests focus on the
 /// fluent-call surface and the array-overload null guards (M-4).
 /// </summary>
 [Category("Smoke")]

@@ -46,8 +46,8 @@ internal sealed class ConsumerSurfaceSmokeTests
     }
 
     // ----- One representative call from each adapter file added in 0.1.0. The selection
-    // is deliberately small: the goal is to verify resolution, not exhaustive behaviour
-    // (the in-tree MathAssertions.TUnit.Tests project covers behaviour against the source
+    // is deliberately small: the goal is to verify resolution, not exhaustive behavior
+    // (the in-tree MathAssertions.TUnit.Tests project covers behavior against the source
     // tree). If a future package-resolution regression dropped or renamed any of these
     // entry points, this project would fail to compile or fail at the matching test.
 

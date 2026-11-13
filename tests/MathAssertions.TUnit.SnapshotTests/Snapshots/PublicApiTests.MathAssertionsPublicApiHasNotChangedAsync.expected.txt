@@ -3,7 +3,6 @@
 [assembly: System.Reflection.AssemblyMetadata("RepositoryUrl", "https://github.com/JohnVerheij/MathAssertions.TUnit")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("MathAssertions.TUnit")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("MathAssertions.Tests")]
-[assembly: System.Runtime.Versioning.TargetFramework(".NETCoreApp,Version=v10.0", FrameworkDisplayName=".NET 10.0")]
 namespace MathAssertions.Geometry3D
 {
     public readonly struct AxisAlignedBox : System.IEquatable<MathAssertions.Geometry3D.AxisAlignedBox>
