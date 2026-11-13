@@ -53,6 +53,22 @@ public sealed class MyProtoPoseParser
     public MyProtoPose ParseFrom(byte[] data) => new();
 }
 
+/// <summary>A pose in another shape than System.Numerics (the "Projecting a non-System.Numerics pose" sample).</summary>
+public sealed class ProtoPose
+{
+    /// <summary>The position.</summary>
+    public MyProtoPosition Position { get; set; } = new();
+
+    /// <summary>The orientation.</summary>
+    public MyProtoOrientation Orientation { get; set; } = new();
+
+    /// <summary>
+    /// Lets that sample pass the prelude's <c>actual</c> and <c>expected</c>, which the other samples need as a
+    /// <see cref="Vector3"/>; a reader's own type has no such conversion.
+    /// </summary>
+    public static implicit operator ProtoPose(Vector3 value) => new();
+}
+
 /// <summary>A domain type of the reader (the "extend the DSL to your own types" samples).</summary>
 public sealed record MyPosition(float X, float Y, float Z)
 {
@@ -80,4 +96,52 @@ public partial class Prelude
 
     /// <summary>The position under test in the domain-type sample.</summary>
     protected MyPosition actualPosition = new(0, 0, 0);
+
+    /// <summary>The input of the reader's computation.</summary>
+    protected object input = new();
+
+    /// <summary>A received message.</summary>
+    protected object message = new();
+
+    /// <summary>A computed vector.</summary>
+    protected Vector3 actual = Vector3.Zero;
+
+    /// <summary>An expected vector.</summary>
+    protected Vector3 expected = Vector3.Zero;
+
+    /// <summary>A target position.</summary>
+    protected Vector3 target = Vector3.UnitX;
+
+    /// <summary>A per-component tolerance.</summary>
+    protected float tolerance = 1e-3f;
+
+    /// <summary>Two points.</summary>
+    protected Vector3 a = Vector3.Zero, b = Vector3.Zero;
+
+    /// <summary>Directions.</summary>
+    protected Vector3 forward = Vector3.UnitY, axis = Vector3.UnitZ, direction = Vector3.UnitX;
+
+    /// <summary>An orientation.</summary>
+    protected Quaternion orientation = Quaternion.Identity;
+
+    /// <summary>Rigid transforms.</summary>
+    protected Matrix4x4 actualTransform = Matrix4x4.Identity, expectedTransform = Matrix4x4.Identity;
+
+    /// <summary>A Unix time in milliseconds.</summary>
+    protected double epochMs = 1_700_000_000_000;
+
+    /// <summary>The reader's trajectory solver.</summary>
+    protected static Vector3 SolveTrajectory(object input) => Vector3.UnitX;
+
+    /// <summary>The reader's orientation solver.</summary>
+    protected static Quaternion SolveOrientation(object input) => Quaternion.Identity;
+
+    /// <summary>The reader's pose computation.</summary>
+    protected static (Vector3 Position, Quaternion Orientation) ComputePose(object input) => (Vector3.Zero, Quaternion.Identity);
+
+    /// <summary>The reader's ground-plane fit.</summary>
+    protected static Plane ComputeGroundPlane(object input) => new(Vector3.UnitY, 0);
+
+    /// <summary>The reader's message decoding.</summary>
+    protected static Quaternion ReadRotationFromMessage(object message) => Quaternion.Identity;
 }

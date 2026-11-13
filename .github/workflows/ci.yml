@@ -20,9 +20,10 @@ jobs:
     # Shared family CI: build, tests with coverage, license gate, pack, smoke test against the packed
     # package, Native AOT gate. See https://github.com/JohnVerheij/assertions-ci for the inputs and the
     # repository contract.
-    uses: JohnVerheij/assertions-ci/.github/workflows/package-ci.yml@f70f060b63f0d03b6aaa9d655050283771cc330a # v1.4.0-trial
+    uses: JohnVerheij/assertions-ci/.github/workflows/package-ci.yml@a41642e9c024448adeaa656e1dc3565df76aad38 # feat/net11-leg
     with:
       package: MathAssertions
+      readme-samples: enforce
     permissions:
       contents: read
       id-token: write   # Codecov upload through OIDC
@@ -31,6 +32,6 @@ jobs:
     # Submits the resolved NuGet dependencies (exact versions, transitive included) to GitHub's dependency
     # graph, so Dependabot alerts see the real versions. Pushes to main only.
     if: github.event_name == 'push'
-    uses: JohnVerheij/assertions-ci/.github/workflows/dependency-graph.yml@f70f060b63f0d03b6aaa9d655050283771cc330a # v1.4.0-trial
+    uses: JohnVerheij/assertions-ci/.github/workflows/dependency-graph.yml@a41642e9c024448adeaa656e1dc3565df76aad38 # feat/net11-leg
     permissions:
       contents: write   # dependency submission API; the detect job itself only reads

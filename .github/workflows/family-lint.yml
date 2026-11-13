@@ -10,6 +10,6 @@ permissions:
 
 jobs:
   lint:
-    uses: JohnVerheij/assertions-ci/.github/workflows/package-lint.yml@f70f060b63f0d03b6aaa9d655050283771cc330a # v1.4.0-trial
+    uses: JohnVerheij/assertions-ci/.github/workflows/package-lint.yml@a41642e9c024448adeaa656e1dc3565df76aad38 # feat/net11-leg
     permissions:
       contents: read   # checkout only

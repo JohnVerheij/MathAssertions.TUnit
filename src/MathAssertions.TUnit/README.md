@@ -164,7 +164,7 @@ For compound types (`Vector2`/`Vector3`/`Vector4`, `Quaternion`, `Matrix4x4`, `P
 
 Add tolerance assertions for your own domain types via a one-line `[GenerateAssertion]` extension calling `MathTolerance.IsApproximatelyEqual` on each component. The package never sees your private types.
 
-```csharp
+```csharp no-compile
 using MathAssertions;
 using TUnit.Assertions.Attributes;
 

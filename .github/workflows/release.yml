@@ -19,9 +19,10 @@ jobs:
     # Shared family release build: every CI gate on the exact packages that ship, plus the version gate,
     # release notes, SBOM, VEX and SHA256SUMS. It can only read the repository, so build and test code never
     # runs next to a publishing credential. See https://github.com/JohnVerheij/assertions-ci.
-    uses: JohnVerheij/assertions-ci/.github/workflows/package-ci.yml@f70f060b63f0d03b6aaa9d655050283771cc330a # v1.4.0-trial
+    uses: JohnVerheij/assertions-ci/.github/workflows/package-ci.yml@a41642e9c024448adeaa656e1dc3565df76aad38 # feat/net11-leg
     with:
       package: MathAssertions
+      readme-samples: enforce
       release: true
     permissions:
       contents: read
@@ -44,7 +45,7 @@ jobs:
       url: https://www.nuget.org/packages/MathAssertions.TUnit/
     steps:
       - name: Publish
-        uses: JohnVerheij/assertions-ci/.github/actions/package-publish@f70f060b63f0d03b6aaa9d655050283771cc330a # v1.4.0-trial
+        uses: JohnVerheij/assertions-ci/.github/actions/package-publish@a41642e9c024448adeaa656e1dc3565df76aad38 # feat/net11-leg
         with:
           package: MathAssertions
           version: ${{ needs.build.outputs.version }}
