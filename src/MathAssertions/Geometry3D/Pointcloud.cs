@@ -60,13 +60,21 @@ public static class Pointcloud
         if (cloud.Length is 0)
             return false;
 
-        var sum = Vector3.Zero;
+        // Summed in double: a float sum overflows for coordinates near float.MaxValue (the centroid of two
+        // points at 3e38 is 3e38) and loses low bits over a large cloud.
+        double sumX = 0.0;
+        double sumY = 0.0;
+        double sumZ = 0.0;
         foreach (var p in cloud)
         {
-            sum += p;
+            sumX += p.X;
+            sumY += p.Y;
+            sumZ += p.Z;
         }
-        var centroid = sum / cloud.Length;
-        return MathTolerance.IsApproximatelyEqual(centroid, expected, tolerance);
+        double count = cloud.Length;
+        return MathTolerance.IsApproximatelyEqual(sumX / count, expected.X, tolerance)
+            && MathTolerance.IsApproximatelyEqual(sumY / count, expected.Y, tolerance)
+            && MathTolerance.IsApproximatelyEqual(sumZ / count, expected.Z, tolerance);
     }
 
     /// <summary>
@@ -122,7 +130,7 @@ public static class Pointcloud
 
         foreach (var p in cloud)
         {
-            double distance = Vector3.Distance(p, center);
+            double distance = Distance.DistanceInDouble(p, center);
             var residual = Math.Abs(distance - radius);
             // Negated <=, so a NaN residual (a NaN point) fails instead of passing.
             if (!(residual <= maxResidual))

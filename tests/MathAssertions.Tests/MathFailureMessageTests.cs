@@ -147,6 +147,30 @@ internal sealed class MathFailureMessageTests
     }
 
     [Test]
+    public async Task RotationallyEquivalent_ShowsTheDotThePredicateTested(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        // The expected quaternion is (0, 0, 5e-5, 1): its float normalization rounds to exactly 1, so a float
+        // rendering said "|dot| 1" for a check that failed on a dot of 0.99999999875.
+        var expected = new Quaternion(0f, 0f, 5e-5f, 1f);
+        await Assert.That(MathTolerance.IsRotationallyEquivalent(Quaternion.Identity, expected, 1e-10)).IsFalse();
+
+        string message = MathFailureMessage.RotationallyEquivalent(Quaternion.Identity, expected, tolerance: 1e-10);
+
+        await Assert.That(message).Contains("|dot(an, en)|: 0.99999999875");
+    }
+
+    [Test]
+    public async Task RotationallyEquivalent_ZeroQuaternion_SaysItCannotBeNormalized(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        string message = MathFailureMessage.RotationallyEquivalent(default, Quaternion.Identity, tolerance: 1e-3);
+
+        await Assert.That(message).Contains("cannot be normalized");
+        await Assert.That(message).DoesNotContain("NaN");
+    }
+
+    [Test]
     public async Task GeometricallyEquivalent_RendersBothCandidates(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();

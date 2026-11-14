@@ -76,7 +76,10 @@ public static class MathTolerance
         if (float.IsInfinity(a) || float.IsInfinity(b))
             return float.IsInfinity(a) && float.IsInfinity(b) && float.IsNegative(a) == float.IsNegative(b);
 
-        return Math.Abs(a - b) <= tolerance;
+        // The difference is formed in double: a float subtraction rounds, and the rounded difference could
+        // equal the tolerance when the exact one is a little larger (2^24 against -1 is 2^24 + 1 apart).
+        double widenedA = a;
+        return Math.Abs(widenedA - b) <= tolerance;
     }
 
     /// <summary>
@@ -556,7 +559,9 @@ public static class MathTolerance
 
         var diff = Math.Abs(a - b);
         var scale = Math.Max(Math.Abs(a), Math.Abs(b));
-        return diff <= Math.Max(absoluteTolerance, relativeTolerance * scale);
+        // Two separate comparisons, not Math.Max of the two bounds: an infinite relative tolerance times a
+        // scale of zero is NaN, and Math.Max would pass the NaN on and reject two equal zeros.
+        return diff <= absoluteTolerance || diff <= relativeTolerance * scale;
     }
 
     /// <summary>
@@ -870,7 +875,7 @@ public static class MathTolerance
     /// <param name="z">Receives the normalized Z component.</param>
     /// <param name="w">Receives the normalized W component.</param>
     /// <returns><see langword="true"/> when normalization succeeded; otherwise <see langword="false"/>.</returns>
-    private static bool TryNormalizeToDouble(Quaternion q, out double x, out double y, out double z, out double w)
+    internal static bool TryNormalizeToDouble(Quaternion q, out double x, out double y, out double z, out double w)
     {
         double qx = q.X, qy = q.Y, qz = q.Z, qw = q.W;
         double lengthSquared = (qx * qx) + (qy * qy) + (qz * qz) + (qw * qw);

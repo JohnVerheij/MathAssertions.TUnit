@@ -267,16 +267,23 @@ internal static class MathFailureMessage
     /// <returns>The rendered failure-message text.</returns>
     public static string RotationallyEquivalent(Quaternion actual, Quaternion expected, double tolerance)
     {
-        Quaternion an = Quaternion.Normalize(actual);
-        Quaternion en = Quaternion.Normalize(expected);
-        double dotF = Quaternion.Dot(an, en);
-        double dot = Math.Abs(dotF);
-        double threshold = 1.0 - tolerance;
         var sb = new StringBuilder();
         sb.Append(CultureInfo.InvariantCulture, $"to be rotationally equivalent to {FormatQuaternion(expected)} within tolerance {Fmt(tolerance)}").AppendLine();
         sb.Append(CultureInfo.InvariantCulture, $"  actual:        {FormatQuaternion(actual)}").AppendLine();
+
+        // The predicate normalizes in double; so does this rendering, so the dot shown is the one that was tested
+        // (a float normalization rounds a dot near 1 to exactly 1 and the message would contradict the verdict).
+        if (!MathTolerance.TryNormalizeToDouble(actual, out var ax, out var ay, out var az, out var aw)
+            || !MathTolerance.TryNormalizeToDouble(expected, out var ex, out var ey, out var ez, out var ew))
+        {
+            sb.Append("  not comparable: a quaternion that cannot be normalized names no rotation (compared componentwise within 1e-6)");
+            return sb.ToString();
+        }
+
+        double dot = Math.Abs((ax * ex) + (ay * ey) + (az * ez) + (aw * ew));
+        double threshold = 1.0 - tolerance;
         sb.Append(CultureInfo.InvariantCulture, $"  |dot(an, en)|: {Fmt(dot)} (threshold: {Fmt(threshold)} = 1 - {Fmt(tolerance)})").AppendLine();
-        sb.Append(CultureInfo.InvariantCulture, $"  normalized:    actual={FormatQuaternion(an)}, expected={FormatQuaternion(en)}");
+        sb.Append(CultureInfo.InvariantCulture, $"  normalized:    actual={FormatQuaternion(ax, ay, az, aw)}, expected={FormatQuaternion(ex, ey, ez, ew)}");
         return sb.ToString();
     }
 
@@ -458,8 +465,9 @@ internal static class MathFailureMessage
     private static string FormatVector(Vector2 v) => v.ToString("G", CultureInfo.InvariantCulture);
     private static string FormatVector(Vector3 v) => v.ToString("G", CultureInfo.InvariantCulture);
     private static string FormatVector(Vector4 v) => v.ToString("G", CultureInfo.InvariantCulture);
-    private static string FormatQuaternion(Quaternion q) =>
-        $"{{X:{Fmt(q.X)} Y:{Fmt(q.Y)} Z:{Fmt(q.Z)} W:{Fmt(q.W)}}}";
+    private static string FormatQuaternion(Quaternion q) => FormatQuaternion(q.X, q.Y, q.Z, q.W);
+    private static string FormatQuaternion(double x, double y, double z, double w) =>
+        $"{{X:{Fmt(x)} Y:{Fmt(y)} Z:{Fmt(z)} W:{Fmt(w)}}}";
     private static string FormatMatrix(Matrix4x4 m) =>
         $"{{ {{ M11:{Fmt(m.M11)} M12:{Fmt(m.M12)} M13:{Fmt(m.M13)} M14:{Fmt(m.M14)} }} {{ M21:{Fmt(m.M21)} M22:{Fmt(m.M22)} M23:{Fmt(m.M23)} M24:{Fmt(m.M24)} }} {{ M31:{Fmt(m.M31)} M32:{Fmt(m.M32)} M33:{Fmt(m.M33)} M34:{Fmt(m.M34)} }} {{ M41:{Fmt(m.M41)} M42:{Fmt(m.M42)} M43:{Fmt(m.M43)} M44:{Fmt(m.M44)} }} }}";
     private static string FormatPlane(Plane p) =>

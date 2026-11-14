@@ -46,23 +46,33 @@ public static class Containment
     /// <returns><see langword="true"/> if every face of <paramref name="box"/> is at
     /// least <c>sphere.Radius</c> away from <paramref name="sphere"/>'s center.</returns>
     public static bool Contains(this AxisAlignedBox box, Sphere sphere)
-        => box.Min.X + sphere.Radius <= sphere.Center.X
-        && sphere.Center.X <= box.Max.X - sphere.Radius
-        && box.Min.Y + sphere.Radius <= sphere.Center.Y
-        && sphere.Center.Y <= box.Max.Y - sphere.Radius
-        && box.Min.Z + sphere.Radius <= sphere.Center.Z
-        && sphere.Center.Z <= box.Max.Z - sphere.Radius;
+    {
+        // The bounds move by the radius in double: a float sum or difference rounds, and a sphere that sticks
+        // out of the box by less than the float spacing at the face would be taken for contained.
+        double radius = sphere.Radius;
+        return box.Min.X + radius <= sphere.Center.X
+            && sphere.Center.X <= box.Max.X - radius
+            && box.Min.Y + radius <= sphere.Center.Y
+            && sphere.Center.Y <= box.Max.Y - radius
+            && box.Min.Z + radius <= sphere.Center.Z
+            && sphere.Center.Z <= box.Max.Z - radius;
+    }
 
     /// <summary>
     /// Returns <see langword="true"/> when <paramref name="point"/> lies inside or on
     /// the boundary of <paramref name="sphere"/>. Compared via squared distance so no
-    /// square root is computed.
+    /// square root is computed; both squares are computed in <see cref="double"/>, so a very large
+    /// sphere (radius near <c>1e20</c>) does not overflow into containing every point and a very
+    /// small one (radius near <c>1e-25</c>) does not underflow into containing the points around it.
     /// </summary>
     /// <param name="sphere">Sphere to test against.</param>
     /// <param name="point">Point to test.</param>
     /// <returns><see langword="true"/> if <c>|point - center|^2 &lt;= radius^2</c>.</returns>
     public static bool Contains(this Sphere sphere, Vector3 point)
-        => Vector3.DistanceSquared(point, sphere.Center) <= sphere.Radius * sphere.Radius;
+    {
+        double radius = sphere.Radius;
+        return Distance.SquaredDistanceInDouble(point, sphere.Center) <= radius * radius;
+    }
 
     /// <summary>
     /// Returns <see langword="true"/> when <paramref name="point"/> lies inside the
@@ -185,7 +195,7 @@ public static class Containment
     /// <param name="to">The end point.</param>
     /// <param name="from">The start point.</param>
     /// <returns>The difference in <see cref="double"/> precision.</returns>
-    private static (double X, double Y, double Z) DifferenceInDouble(Vector3 to, Vector3 from)
+    internal static (double X, double Y, double Z) DifferenceInDouble(Vector3 to, Vector3 from)
     {
         double toX = to.X;
         double toY = to.Y;
