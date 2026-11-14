@@ -40,6 +40,18 @@ internal sealed class AngleComparisonTests
     }
 
     [Test]
+    public async Task AngleDifferenceDegrees_TinyDifferenceAcrossTheHalfTurn_IsKept(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // 180 - (-179.99999999999997) rounds to 360, which the wrap used to turn into 0, so the two angles
+        // compared equal at tolerance 0. They are one ulp of 180 apart.
+        var justAboveMinusHalfTurn = -Math.BitDecrement(180.0);
+        await Assert.That(MathTolerance.AngleDifferenceDegrees(180.0, justAboveMinusHalfTurn))
+            .IsEqualTo(Math.BitIncrement(180.0) - 180.0);
+        await Assert.That(MathTolerance.IsAngleApproximatelyEqual(180.0, justAboveMinusHalfTurn, 0.0)).IsFalse();
+    }
+
+    [Test]
     [Arguments(double.NaN, 0.0, DisplayName = "Difference_NaNFirst")]
     [Arguments(0.0, double.NaN, DisplayName = "Difference_NaNSecond")]
     [Arguments(double.NaN, double.NaN, DisplayName = "Difference_BothNaN")]

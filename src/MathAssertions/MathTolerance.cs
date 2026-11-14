@@ -663,8 +663,9 @@ public static class MathTolerance
     /// <see cref="IsPoseApproximatelyEqual(Vector3, Quaternion, Vector3, Quaternion, double, double)"/>,
     /// the comparison then falls back to a componentwise check against a tight fixed tolerance
     /// of <c>1e-6</c> that ignores <paramref name="tolerance"/>: the zero quaternion matches
-    /// itself and no real rotation. A quaternion with a NaN or infinite component never matches,
-    /// not even itself.
+    /// itself and any quaternion within <c>1e-6</c> of zero in every component (noise, not a
+    /// rotation), and no unit-length rotation. A quaternion with a NaN or infinite component never
+    /// matches, not even itself.
     /// </para>
     /// <para>
     /// Reference: Hanson, <i>Visualizing Quaternions</i>, §4.6.
@@ -734,10 +735,12 @@ public static class MathTolerance
     /// <c>2</c> degrees apart, and <c>180</c> and <c>-180</c> are <c>0</c> degrees apart.
     /// </summary>
     /// <remarks>
-    /// Each angle is first reduced modulo <c>360</c> (an exact operation), so huge angles such as
-    /// <c>1e7</c> degrees keep their precision and a difference of two huge angles of opposite sign
-    /// cannot overflow. A NaN or infinite angle has no position on the circle: the result is
-    /// <see cref="double.NaN"/>.
+    /// Each angle is first reduced to <c>[-180, 180]</c> (the IEEE remainder of a division by
+    /// <c>360</c>, an exact operation), so huge angles such as <c>1e7</c> degrees keep their precision
+    /// and a difference of two huge angles of opposite sign cannot overflow. Two angles on both sides
+    /// of <c>180</c> are compared after the negative one moves up a full turn, so their difference is
+    /// formed near zero, not near <c>360</c> where a tiny difference would round to a full turn.
+    /// A NaN or infinite angle has no position on the circle: the result is <see cref="double.NaN"/>.
     /// </remarks>
     /// <param name="a">First angle in degrees.</param>
     /// <param name="b">Second angle in degrees.</param>
@@ -748,8 +751,13 @@ public static class MathTolerance
         if (!double.IsFinite(a) || !double.IsFinite(b))
             return double.NaN;
 
-        var difference = Math.Abs((a % 360.0) - (b % 360.0)) % 360.0;
-        return Math.Min(difference, 360.0 - difference);
+        var reducedA = Math.IEEERemainder(a, 360.0);
+        var reducedB = Math.IEEERemainder(b, 360.0);
+        if (reducedA - reducedB > 180.0)
+            reducedB += 360.0;
+        else if (reducedB - reducedA > 180.0)
+            reducedA += 360.0;
+        return Math.Abs(reducedA - reducedB);
     }
 
     /// <summary>
@@ -908,7 +916,7 @@ public static class MathTolerance
     /// Fallback comparison for orientations of which at least one cannot be normalized: both must be finite
     /// (a NaN or infinite component names no rotation and never matches, not even itself), and then they match
     /// componentwise within <see cref="DegenerateOrientationComponentTolerance"/>, so the zero quaternion matches
-    /// itself and no real rotation.
+    /// itself and any quaternion within that tolerance of zero, and no unit-length rotation.
     /// </summary>
     /// <param name="a">First quaternion.</param>
     /// <param name="b">Second quaternion.</param>

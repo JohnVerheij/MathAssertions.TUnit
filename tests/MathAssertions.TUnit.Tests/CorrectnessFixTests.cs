@@ -331,6 +331,21 @@ internal sealed class CorrectnessFixTests
     }
 
     [Test]
+    public async Task ConvexHullContains_TinyValidHull_ContainsItsInterior(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // Sides of 1e-12: in float the squared length of each face normal (about 1e-48) underflowed to zero, every
+        // face was skipped, and the hull counted as degenerate.
+        const float Side = 1e-12f;
+        var x = new Vector3(Side, 0, 0);
+        var y = new Vector3(0, Side, 0);
+        var z = new Vector3(0, 0, Side);
+        Vector3[] hull = [Vector3.Zero, y, x, Vector3.Zero, x, z, Vector3.Zero, z, y, x, y, z];
+        await Assert.That(Containment.ConvexHullContains(hull, new Vector3(Side / 4, Side / 4, Side / 4), 0.0)).IsTrue();
+        await Assert.That(Containment.ConvexHullContains(hull, new Vector3(Side, Side, Side), 0.0)).IsFalse();
+    }
+
+    [Test]
     public async Task HasMedianApproximately_DenormalPair_KeepsTheValue(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
@@ -338,6 +353,18 @@ internal sealed class CorrectnessFixTests
         double[] pair = [double.Epsilon, double.Epsilon];
         await Assert.That(Statistics.HasMedianApproximately(pair, double.Epsilon, 0.0)).IsTrue();
         await Assert.That(Statistics.HasMedianApproximately(pair, 0.0, 0.0)).IsFalse();
+    }
+
+    [Test]
+    public async Task HasMedianApproximately_UnequalNeighbors_CorrectlyRounded(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // The midpoint of eps and 2 eps is 1.5 eps, which rounds to 2 eps; lower + (upper - lower) / 2 gave eps.
+        double[] denormals = [double.Epsilon, 2 * double.Epsilon];
+        // 1 + (1e16 - 1) / 2 rounded twice, to 5000000000000001; the midpoint rounds to 5e15.
+        double[] spread = [1.0, 1e16];
+        await Assert.That(Statistics.HasMedianApproximately(denormals, 2 * double.Epsilon, 0.0)).IsTrue();
+        await Assert.That(Statistics.HasMedianApproximately(spread, 5e15, 0.0)).IsTrue();
     }
 
     [Test]

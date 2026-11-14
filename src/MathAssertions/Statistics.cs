@@ -178,12 +178,11 @@ public static class Statistics
     /// span backing store. The copy is the algorithm's only allocation.
     /// </para>
     /// <para>
-    /// The even-length median is the midpoint of the two middle values, formed so that it neither
-    /// overflows nor loses a denormal: the textbook <c>(a + b)/2</c> overflows to
-    /// <see cref="double.PositiveInfinity"/> for two large same-signed values (for example
-    /// <c>[double.MaxValue, double.MaxValue]</c>), and halving each operand first rounds the
-    /// smallest denormals to zero. Opposite-signed neighbors use the sum, same-signed neighbors use
-    /// <c>lower + (upper - lower)/2</c>, and an infinite neighbor uses the halves.
+    /// The even-length median is the correctly rounded midpoint of the two middle values: it neither
+    /// overflows nor loses a denormal. It is <c>(a + b)/2</c> whenever that sum is finite (halving
+    /// each operand first would round the smallest denormals to zero); two large same-signed values
+    /// whose sum overflows (for example <c>[double.MaxValue, double.MaxValue]</c>), and an infinite
+    /// neighbor, use the halves.
     /// </para>
     /// <para>
     /// NaN sorts first, so the median is NaN only when a NaN lands on a middle position.
@@ -355,23 +354,20 @@ public static class Statistics
     }
 
     /// <summary>
-    /// Midpoint of two sorted neighbors without the failure modes of the naive forms: halving each operand
-    /// rounds the smallest denormals to zero, and the plain sum overflows for two large same-signed values.
-    /// An infinite operand uses the halves (an infinity stays an infinity, and opposite infinities give NaN);
-    /// operands of opposite sign use the sum (it cannot overflow); same-signed operands use
-    /// <c>lower + (upper - lower) / 2</c> (the difference cannot overflow, and the half of a difference is
-    /// rounded once).
+    /// Midpoint of two sorted neighbors, correctly rounded. A finite sum is rounded once and halving it is
+    /// exact (for a denormal result, the sum of two such small values is exact and the halving is the one
+    /// rounding), so <c>(lower + upper) / 2</c> is right whenever the sum is finite. Halving each operand
+    /// instead would round the smallest denormals to zero. Only two large same-signed values overflow the
+    /// sum; they use the halves, which are exact for such values. An infinite operand uses the halves too
+    /// (an infinity stays an infinity, and opposite infinities give NaN).
     /// </summary>
     /// <param name="lower">The smaller neighbor.</param>
     /// <param name="upper">The larger neighbor.</param>
     /// <returns>The value halfway between the two.</returns>
     private static double Midpoint(double lower, double upper)
     {
-        if (double.IsInfinity(lower) || double.IsInfinity(upper))
-            return (lower / 2.0) + (upper / 2.0);
-        if (double.IsNegative(lower) != double.IsNegative(upper))
-            return (lower + upper) / 2.0;
-        return lower + ((upper - lower) / 2.0);
+        var sum = lower + upper;
+        return double.IsFinite(sum) ? sum / 2.0 : (lower / 2.0) + (upper / 2.0);
     }
 
     private static void ValidateTolerance(double tolerance)
