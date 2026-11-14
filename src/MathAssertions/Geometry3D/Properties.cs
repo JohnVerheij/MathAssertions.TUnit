@@ -147,7 +147,7 @@ public static class Properties
     /// Looks for a triple <c>points[0]</c>, <c>points[i]</c>, <c>points[j]</c> that spans a plane: the
     /// third point lies farther than <paramref name="tolerance"/> from the line through the first two
     /// (the length of the cross product divided by the length of the edge, so the measure is a distance).
-    /// Coincident points (an edge of zero length) are skipped. Computed in <see cref="double"/> precision.
+    /// An edge no longer than the tolerance (coincident or near-coincident points, as in IsCollinear) is skipped: its direction is noise. Computed in <see cref="double"/> precision.
     /// </summary>
     /// <param name="points">Finite points, at least three.</param>
     /// <param name="tolerance">Distance a point must exceed to count as off the line.</param>
@@ -175,7 +175,7 @@ public static class Properties
             double uy = ay - oy;
             double uz = az - oz;
             double edgeLength = Math.Sqrt((ux * ux) + (uy * uy) + (uz * uz));
-            if (edgeLength <= 0.0)
+            if (edgeLength <= tolerance)
                 continue;
 
             for (var j = i + 1; j < points.Length; j++)

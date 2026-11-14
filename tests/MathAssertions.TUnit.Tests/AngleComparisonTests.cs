@@ -27,6 +27,7 @@ internal sealed class AngleComparisonTests
     [Arguments(720.0, 0.0, 0.0, DisplayName = "Difference_TwoTurns")]
     [Arguments(1e7, 1e7 + 5.0, 5.0, DisplayName = "Difference_HugeAngles")]
     [Arguments(1e300, -1e300, 0.0, DisplayName = "Difference_OppositeHugeAnglesDoNotOverflow")]
+    [Arguments(1e7, -1e7, 160.0, DisplayName = "Difference_OppositeHugeAnglesWithResidue")]
     public async Task AngleDifferenceDegrees_Double_WrapsToTheShorterArc(double x, double y, double expected, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();

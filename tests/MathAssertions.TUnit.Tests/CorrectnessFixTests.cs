@@ -65,6 +65,16 @@ internal sealed class CorrectnessFixTests
         await Assert.That(Properties.AreCoplanar(points, 0.001)).IsFalse();
     }
 
+    [Test]
+    public async Task AreCoplanar_NearDuplicateFirstPoints_DoNotPickAnUnstablePlane(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // points[1] lies 1e-4 from points[0], within the 1e-3 tolerance: its direction is noise and must not define the plane.
+        // Every point is within 1e-4 of the z = 0 plane, so the set is coplanar.
+        Vector3[] points = [Vector3.Zero, new(0, 0, 1e-4f), Vector3.UnitX, Vector3.UnitY, new(1f, 1f, 0f)];
+        await Assert.That(Properties.AreCoplanar(points, 0.001)).IsTrue();
+    }
+
     // ----- NaN fails every comparison -----
 
     [Test]
@@ -168,6 +178,18 @@ internal sealed class CorrectnessFixTests
     }
 
     [Test]
+    public async Task NaNQuaternion_NeverMatches_NotEvenItself(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var nan = new Quaternion(float.NaN, 0f, 0f, 1f);
+        await Assert.That(MathTolerance.IsRotationallyEquivalent(nan, nan, 1.0)).IsFalse();
+        await Assert.That(MathTolerance.IsRotationallyEquivalent(nan, Quaternion.Identity, 1.0)).IsFalse();
+        await Assert.That(MathTolerance.IsRotationallyEquivalent(default, nan, 1.0)).IsFalse();
+        await Assert.That(MathTolerance.IsPoseApproximatelyEqual(Vector3.Zero, nan, Vector3.Zero, nan, 1.0, 1.0)).IsFalse();
+        await Assert.That(MathTolerance.HasAxisAngleApproximately(nan, Vector3.UnitX, 0.0, 1.0)).IsFalse();
+    }
+
+    [Test]
     public async Task IsRotationallyEquivalent_ZeroQuaternion_MatchesOnlyItself(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
@@ -261,6 +283,12 @@ internal sealed class CorrectnessFixTests
             new ReadOnlyTensorSpan<int>(zero, Shape2, default), new ReadOnlyTensorSpan<int>(min, Shape2, default), int.MaxValue);
         var minAgainstItself = MathTolerance.IsApproximatelyEqual(
             new ReadOnlyTensorSpan<int>(min, Shape2, default), new ReadOnlyTensorSpan<int>(min, Shape2, default), 0);
+        // Single elements, so the comparison reaches int.MaxValue against int.MinValue (a difference of -1 when wrapped).
+        var extremes = MathTolerance.IsApproximatelyEqual(
+            new ReadOnlyTensorSpan<int>(new[] { int.MaxValue }, Shape1, default),
+            new ReadOnlyTensorSpan<int>(new[] { int.MinValue }, Shape1, default),
+            int.MaxValue);
+        await Assert.That(extremes).IsFalse();
         await Assert.That(minAgainstZero).IsFalse();
         await Assert.That(maxAgainstMin).IsFalse();
         await Assert.That(minAgainstItself).IsTrue();

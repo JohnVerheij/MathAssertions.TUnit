@@ -43,7 +43,7 @@ public static class SequencesAssertions
         return Sequences.IsStrictlyMonotonicallyDecreasing(value);
     }
 
-    /// <summary>Asserts the sequence is sorted (alias for <see cref="IsMonotonicallyIncreasing"/>).</summary>
+    /// <summary>Asserts the sequence is sorted (alias for <see cref="IsMonotonicallyIncreasing"/>); a sequence that contains NaN fails.</summary>
     [GenerateAssertion(ExpectationMessage = "to be sorted ascending", InlineMethodBody = false)]
     public static bool IsSorted(this double[] value)
     {

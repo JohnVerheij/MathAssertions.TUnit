@@ -653,7 +653,7 @@ public static class MathTolerance
     /// <remarks>
     /// <para>
     /// Implementation normalizes both inputs first (in <see cref="double"/> precision, so a
-    /// non-unit quaternion compared with itself or a scaled copy passes even a tight tolerance);
+    /// non-unit quaternion compared with itself or a scaled copy passes a tolerance such as <c>1e-12</c>);
     /// the dot-product test <c>|q1 . q2| &gt;= 1 - tolerance</c> identifies the same-rotation
     /// condition robustly.
     /// </para>
@@ -663,7 +663,8 @@ public static class MathTolerance
     /// <see cref="IsPoseApproximatelyEqual(Vector3, Quaternion, Vector3, Quaternion, double, double)"/>,
     /// the comparison then falls back to a componentwise check against a tight fixed tolerance
     /// of <c>1e-6</c> that ignores <paramref name="tolerance"/>: the zero quaternion matches
-    /// itself and no real rotation.
+    /// itself and no real rotation. A quaternion with a NaN or infinite component never matches,
+    /// not even itself.
     /// </para>
     /// <para>
     /// Reference: Hanson, <i>Visualizing Quaternions</i>, §4.6.
@@ -683,7 +684,7 @@ public static class MathTolerance
         if (!TryNormalizeToDouble(a, out double ax, out double ay, out double az, out double aw)
             || !TryNormalizeToDouble(b, out double bx, out double by, out double bz, out double bw))
         {
-            return IsApproximatelyEqual(a, b, DegenerateOrientationComponentTolerance);
+            return DegenerateOrientationsMatch(a, b);
         }
 
         double dot = Math.Abs((ax * bx) + (ay * by) + (az * bz) + (aw * bw));
@@ -710,7 +711,7 @@ public static class MathTolerance
     /// itself yields zero or a value within about <c>1e-14</c> degrees (float/double rounding).
     /// </para>
     /// <para>
-    /// A quaternion that is not normalizable (squared magnitude underflows to zero, e.g.
+    /// A quaternion that is not normalizable (squared magnitude is zero or not finite, e.g.
     /// <c>default(Quaternion)</c> = <c>(0, 0, 0, 0)</c>) has no defined rotation axis, so no
     /// geodesic angle exists; this method returns <see cref="double.NaN"/> in that case. Callers
     /// that need a defined verdict for the zero quaternion (such as
@@ -816,7 +817,7 @@ public static class MathTolerance
     /// Computes the geodesic angle between two rotations in degrees using the numerically-stable
     /// <c>2 * atan2(‖imag(r)‖, |real(r)|)</c> form on the relative quaternion <c>r = a * conj(b)</c>,
     /// reporting via <paramref name="angleDegrees"/>. Returns <see langword="false"/> when either
-    /// input is not normalizable (squared magnitude underflows to zero), in which case no geodesic
+    /// input is not normalizable (squared magnitude is zero or not finite), in which case no geodesic
     /// angle is defined.
     /// </summary>
     /// <param name="a">First rotation.</param>
@@ -852,7 +853,7 @@ public static class MathTolerance
     /// <summary>
     /// Normalizes <paramref name="q"/> to unit magnitude in <see cref="double"/> precision,
     /// reporting the components through the <see langword="out"/> parameters. Returns <see langword="false"/>
-    /// when the squared magnitude is non-finite or underflows to zero (the quaternion has no
+    /// when the squared magnitude is zero or not finite (the quaternion has no
     /// defined direction and cannot be normalized).
     /// </summary>
     /// <param name="q">The quaternion to normalize.</param>
@@ -904,6 +905,36 @@ public static class MathTolerance
     private const double DegenerateOrientationComponentTolerance = 1e-6;
 
     /// <summary>
+    /// Fallback comparison for orientations of which at least one cannot be normalized: both must be finite
+    /// (a NaN or infinite component names no rotation and never matches, not even itself), and then they match
+    /// componentwise within <see cref="DegenerateOrientationComponentTolerance"/>, so the zero quaternion matches
+    /// itself and no real rotation.
+    /// </summary>
+    /// <param name="a">First quaternion.</param>
+    /// <param name="b">Second quaternion.</param>
+    /// <returns><see langword="true"/> if both are finite and componentwise equal within the fixed tolerance.</returns>
+    private static bool DegenerateOrientationsMatch(Quaternion a, Quaternion b)
+        => IsFiniteQuaternion(a)
+        && IsFiniteQuaternion(b)
+        && IsApproximatelyEqual(a, b, DegenerateOrientationComponentTolerance);
+
+    /// <summary>
+    /// Returns <see langword="true"/> when every component is finite. The components widen to
+    /// <see cref="double"/> before they are summed, so the sum of finite floats cannot overflow and is
+    /// non-finite only when a component is NaN or infinite.
+    /// </summary>
+    /// <param name="q">The quaternion to inspect.</param>
+    /// <returns><see langword="true"/> if no component is NaN or infinite.</returns>
+    private static bool IsFiniteQuaternion(Quaternion q)
+    {
+        double sum = q.X;
+        sum += q.Y;
+        sum += q.Z;
+        sum += q.W;
+        return double.IsFinite(sum);
+    }
+
+    /// <summary>
     /// Returns <see langword="true"/> when two rigid poses (a position and an orientation) match
     /// within separate tolerances: the Euclidean <see cref="PositionDistance(Vector3, Vector3)"/>
     /// is at most <paramref name="positionTolerance"/> AND the geodesic
@@ -921,8 +952,8 @@ public static class MathTolerance
     /// <returns><see langword="true"/> when both the position and the orientation are within their tolerances.</returns>
     /// <remarks>
     /// <para>
-    /// Degenerate orientation: a quaternion that is not normalizable (squared magnitude underflows
-    /// to zero, e.g. <c>default(Quaternion)</c> = <c>(0, 0, 0, 0)</c>) has no defined rotation axis,
+    /// Degenerate orientation: a quaternion that is not normalizable (squared magnitude is zero or not
+    /// finite, e.g. <c>default(Quaternion)</c> = <c>(0, 0, 0, 0)</c>) has no defined rotation axis,
     /// so the geodesic angle from
     /// <see cref="RotationAngleDegrees(Quaternion, Quaternion)"/> is undefined. Rather than fail a
     /// legitimate default-pose round-trip, the orientation half falls back to a componentwise
@@ -963,8 +994,7 @@ public static class MathTolerance
             return angleDegrees <= rotationToleranceDegrees;
         }
 
-        return IsApproximatelyEqual(
-            actualOrientation, expectedOrientation, DegenerateOrientationComponentTolerance);
+        return DegenerateOrientationsMatch(actualOrientation, expectedOrientation);
     }
 
     /// <summary>
@@ -1019,7 +1049,7 @@ public static class MathTolerance
     /// <para>
     /// A <paramref name="value"/> that cannot be normalized (for example <c>default(Quaternion)</c>)
     /// names no rotation: it is compared componentwise, at the fixed tolerance of
-    /// <c>1e-6</c> described for
+    /// <c>1e-6</c> (a NaN or infinite component never matches) described for
     /// <see cref="IsRotationallyEquivalent(Quaternion, Quaternion, double)"/>, with the expected
     /// rotation, so it never matches a real rotation.
     /// </para>
@@ -1075,7 +1105,7 @@ public static class MathTolerance
         {
             var expectedQuaternion = new Quaternion(
                 float.CreateTruncating(ex), float.CreateTruncating(ey), float.CreateTruncating(ez), float.CreateTruncating(ew));
-            return IsApproximatelyEqual(value, expectedQuaternion, DegenerateOrientationComponentTolerance);
+            return DegenerateOrientationsMatch(value, expectedQuaternion);
         }
 
         double dot = Math.Abs((vx * ex) + (vy * ey) + (vz * ez) + (vw * ew));

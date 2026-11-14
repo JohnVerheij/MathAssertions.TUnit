@@ -98,7 +98,8 @@ public static class Sequences
 
     /// <summary>
     /// Returns <see langword="true"/> when the sequence is sorted in ascending order.
-    /// Convenience alias for <see cref="IsMonotonicallyIncreasing(ReadOnlySpan{double})"/>.
+    /// Convenience alias for <see cref="IsMonotonicallyIncreasing(ReadOnlySpan{double})"/>; a span that
+    /// contains NaN returns <see langword="false"/>.
     /// </summary>
     /// <param name="values">Sequence to inspect.</param>
     /// <returns><see langword="true"/> if sorted ascending.</returns>
