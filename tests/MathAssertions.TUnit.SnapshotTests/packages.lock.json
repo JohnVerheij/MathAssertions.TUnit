@@ -38,13 +38,13 @@
       },
       "SnapshotAssertions.TUnit": {
         "type": "Direct",
-        "requested": "[0.9.0, )",
-        "resolved": "0.9.0",
-        "contentHash": "cznTEy5D66s4DljR4O5wF9al8+gwWZgYN/vZ3vz6xS+01wMaV6oiFzXT5iY9skQ3hU1Cn7RUZK2n/PETzyUlTg==",
+        "requested": "[0.10.0, )",
+        "resolved": "0.10.0",
+        "contentHash": "Bhv3p3zqRJjnLy3/WICjz8Y2tJGWXbhdmGvQ5/kX8Hcry+IuXQ7IQeolapnE3FXQpB8TA9qZ6yJ8qU/q9jYSYA==",
         "dependencies": {
-          "SnapshotAssertions": "0.9.0",
-          "TUnit.Assertions": "1.80.0",
-          "TUnit.Core": "1.80.0"
+          "SnapshotAssertions": "0.10.0",
+          "TUnit.Assertions": "1.85.0",
+          "TUnit.Core": "1.85.0"
         }
       },
       "SonarAnalyzer.CSharp": {
@@ -138,8 +138,8 @@
       },
       "SnapshotAssertions": {
         "type": "Transitive",
-        "resolved": "0.9.0",
-        "contentHash": "X+eG5hCcRHxIZXu2f6WbUnNDXTzngmDLz2Rb2XYY1BLN3tGGXI0a7CFwfFnLkp7Y5n5ExSMeh6d7NmDPTxrPRg=="
+        "resolved": "0.10.0",
+        "contentHash": "+JbMDtbAsvIXx+rSjYByDLcwW9iVyAEn7UaAU3biS5Ll8+j7bMb56HKJmqtHtNuhg3waodnvDjIf7KtU/j4uzg=="
       },
       "System.CodeDom": {
         "type": "Transitive",
@@ -227,13 +227,13 @@
       },
       "SnapshotAssertions.TUnit": {
         "type": "Direct",
-        "requested": "[0.9.0, )",
-        "resolved": "0.9.0",
-        "contentHash": "cznTEy5D66s4DljR4O5wF9al8+gwWZgYN/vZ3vz6xS+01wMaV6oiFzXT5iY9skQ3hU1Cn7RUZK2n/PETzyUlTg==",
+        "requested": "[0.10.0, )",
+        "resolved": "0.10.0",
+        "contentHash": "Bhv3p3zqRJjnLy3/WICjz8Y2tJGWXbhdmGvQ5/kX8Hcry+IuXQ7IQeolapnE3FXQpB8TA9qZ6yJ8qU/q9jYSYA==",
         "dependencies": {
-          "SnapshotAssertions": "0.9.0",
-          "TUnit.Assertions": "1.80.0",
-          "TUnit.Core": "1.80.0"
+          "SnapshotAssertions": "0.10.0",
+          "TUnit.Assertions": "1.85.0",
+          "TUnit.Core": "1.85.0"
         }
       },
       "SonarAnalyzer.CSharp": {
@@ -327,8 +327,8 @@
       },
       "SnapshotAssertions": {
         "type": "Transitive",
-        "resolved": "0.9.0",
-        "contentHash": "X+eG5hCcRHxIZXu2f6WbUnNDXTzngmDLz2Rb2XYY1BLN3tGGXI0a7CFwfFnLkp7Y5n5ExSMeh6d7NmDPTxrPRg=="
+        "resolved": "0.10.0",
+        "contentHash": "+JbMDtbAsvIXx+rSjYByDLcwW9iVyAEn7UaAU3biS5Ll8+j7bMb56HKJmqtHtNuhg3waodnvDjIf7KtU/j4uzg=="
       },
       "System.CodeDom": {
         "type": "Transitive",
