@@ -18,9 +18,9 @@
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.404" />
     <PackageVersion Include="PublicApiGenerator" Version="11.5.4" />
     <PackageVersion Include="SnapshotAssertions.TUnit" Version="0.9.0" />
-    <PackageVersion Include="TUnit" Version="1.81.10" />
-    <PackageVersion Include="TUnit.Assertions" Version="1.81.10" />
-    <PackageVersion Include="TUnit.Core" Version="1.81.10" />
+    <PackageVersion Include="TUnit" Version="1.85.0" />
+    <PackageVersion Include="TUnit.Assertions" Version="1.85.0" />
+    <PackageVersion Include="TUnit.Core" Version="1.85.0" />
   </ItemGroup>
 
   <!-- Each target framework gets the System.Numerics.Tensors version of its own .NET release. -->

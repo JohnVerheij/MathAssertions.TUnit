@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`TUnit.Assertions`** and **`TUnit.Core`** minimum versions raised from 1.81.10 to 1.85.0: 1.83.0 is the first TUnit with a `net11.0` asset, and 1.85.0 keeps TUnit's OpenTelemetry and ASP.NET Core packages on OpenTelemetry 1.20.x for `net10.0`, so a project with one version for all its TUnit packages gets no .NET 11 packages there.
 - **`MathTolerance.IsPoseApproximatelyEqual` and `IsPoseApproximatelyEqualTo`:** a position whose distance is NaN (a NaN coordinate, or infinite coordinates that cancel) now fails; it used to pass because the distance was NaN and the comparison `NaN > tolerance` is `false`.
 - **`Containment.ConvexHullContains` and `ConvexHullContainsPoint`:** a NaN point or a NaN hull vertex now fails (it passed), and a hull in which every face triangle is degenerate (zero area) now contains no point (it contained every point). The faces are computed in `double`, so a tiny but valid hull (sides near `1e-12`) is not taken for a degenerate one.
 - **`Pointcloud.IsApproximatelyOnPlane`, `IsApproximatelyOnSphere` and the adapter assertions of the same names:** a cloud with a NaN point now fails (it passed).
