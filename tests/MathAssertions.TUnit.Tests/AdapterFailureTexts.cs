@@ -189,8 +189,8 @@ internal static class AdapterFailureTexts
             "Expected to satisfy IsRotationallyEquivalentTo({X:0 Y:0 Z:0.47942555 W:0.87758255}, 0.1)\n"
             + "but to be rotationally equivalent to {X:0 Y:0 Z:0.4794255495071411 W:0.8775825500488281} within tolerance 0.1\n"
             + "  actual:        {X:0 Y:0 Z:0 W:1}\n"
-            + "  |dot(an, en)|: 0.8775825500488281 (threshold: 0.9 = 1 - 0.1)\n"
-            + "  normalized:    actual={X:0 Y:0 Z:0 W:1}, expected={X:0 Y:0 Z:0.4794255495071411 W:0.8775825500488281}",
+            + "  |dot(an, en)|: 0.8775825545813541 (threshold: 0.9 = 1 - 0.1)\n"
+            + "  normalized:    actual={X:0 Y:0 Z:0 W:1}, expected={X:0 Y:0 Z:0.47942555198327147 W:0.8775825545813541}",
         ["Quaternion.HasAxisAngleApproximately"] =
             "Expected to satisfy HasAxisAngleApproximately(<0, 0, 1>, 90, 0.001)\n"
             + "but to be a rotation of approximately 90 degrees around <0, 0, 1> within tolerance 0.001\n"

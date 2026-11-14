@@ -20,10 +20,13 @@ public static class Intersection
     /// <paramref name="a"/> and <paramref name="b"/> overlap (boundary contact counts as
     /// intersection). Compared via squared center distance to avoid the square root.
     /// </summary>
+    /// <remarks>The radii and the squares are computed in <see cref="double"/>, so spheres of radius near
+    /// <c>1e20</c> or <c>1e-25</c> neither overflow nor underflow into a wrong verdict.</remarks>
     public static bool Intersects(Sphere a, Sphere b)
     {
-        var sumRadii = a.Radius + b.Radius;
-        return Vector3.DistanceSquared(a.Center, b.Center) <= sumRadii * sumRadii;
+        double sumRadii = a.Radius;
+        sumRadii += b.Radius;
+        return Distance.SquaredDistanceInDouble(a.Center, b.Center) <= sumRadii * sumRadii;
     }
 
     /// <summary>
@@ -74,13 +77,20 @@ public static class Intersection
     /// Reference: Akenine-Möller, Haines, Hoffman, <i>Real-Time Rendering</i> 4th ed., §22.6.</remarks>
     public static bool Intersects(Ray3D ray, Sphere sphere)
     {
-        var l = sphere.Center - ray.Origin;
-        var s = Vector3.Dot(l, ray.Direction);
-        var l2 = Vector3.Dot(l, l);
-        var r2 = sphere.Radius * sphere.Radius;
+        // Computed in double, and the squared perpendicular distance is the squared length of l - s * direction,
+        // not l2 - s * s: the float squares overflow for a distant sphere, and the difference of two huge
+        // squares cancels every digit that matters (for a unit direction the two are equal).
+        var (lx, ly, lz) = Containment.DifferenceInDouble(sphere.Center, ray.Origin);
+        double s = (lx * ray.Direction.X) + (ly * ray.Direction.Y) + (lz * ray.Direction.Z);
+        double l2 = (lx * lx) + (ly * ly) + (lz * lz);
+        double radius = sphere.Radius;
+        double r2 = radius * radius;
         if (s < 0 && l2 > r2)
             return false;
-        var m2 = l2 - (s * s);
+        double px = lx - (s * ray.Direction.X);
+        double py = ly - (s * ray.Direction.Y);
+        double pz = lz - (s * ray.Direction.Z);
+        double m2 = (px * px) + (py * py) + (pz * pz);
         return m2 <= r2;
     }
 

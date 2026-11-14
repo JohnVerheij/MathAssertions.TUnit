@@ -47,33 +47,78 @@ public static class Statistics
     /// <c>N-1</c> denominator is undefined for one observation.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Welford's online algorithm. Reference: Knuth, <i>The Art of Computer Programming
     /// Vol. 2</i>, §4.2.2. Numerically more stable than the textbook two-pass
     /// <c>E[X^2] - E[X]^2</c> form, especially for long sequences with small variance
     /// relative to mean.
+    /// </para>
+    /// <para>
+    /// A sample of finite values whose largest magnitude is at or above <c>1e150</c>, or at or below
+    /// <c>1e-150</c>, is summarized on a copy scaled by a power of two (exact), so the squares neither
+    /// overflow nor underflow: the mean of <c>[double.MaxValue, -double.MaxValue]</c> is <c>0</c>, not the
+    /// infinity that the running difference would give. The variance is infinite only when it does not
+    /// fit in a <see cref="double"/>. The standard deviation checks take the square root before scaling
+    /// back, so their standard deviation is finite whenever it fits, even when the variance does not.
+    /// </para>
     /// </remarks>
     /// <param name="values">Sample to summarize.</param>
     /// <returns>A tuple of mean and unbiased sample variance.</returns>
     public static (double Mean, double Variance) MeanAndVariance(ReadOnlySpan<double> values)
     {
+        var (mean, variance, _) = Moments(values);
+        return (mean, variance);
+    }
+
+    /// <summary>
+    /// Mean, unbiased variance and standard deviation of a sample, computed by Welford's algorithm on the
+    /// sample itself, or on a power-of-two scaled copy when the largest magnitude is so large or so small
+    /// that the squares would overflow or underflow.
+    /// </summary>
+    /// <param name="values">Sample to summarize.</param>
+    /// <returns>The mean, the variance and the standard deviation; NaN for the empty sample, and a variance
+    /// and standard deviation of zero for one value.</returns>
+    private static (double Mean, double Variance, double StdDev) Moments(ReadOnlySpan<double> values)
+    {
         if (values.Length is 0)
-            return (double.NaN, double.NaN);
+            return (double.NaN, double.NaN, double.NaN);
         if (values.Length is 1)
-            return (values[0], 0.0);
+            return (values[0], 0.0, 0.0);
+
+        var largest = 0.0;
+        foreach (var v in values)
+            largest = Math.Max(largest, Math.Abs(v));
+
+        // Only a finite sample at an extreme magnitude is rescaled; NaN and infinity propagate as they are.
+        var exponent = double.IsFinite(largest) && (largest >= ScaleAboveMagnitude || (largest > 0.0 && largest <= ScaleBelowMagnitude))
+            ? Math.ILogB(largest)
+            : 0;
 
         var mean = 0.0;
         var m2 = 0.0;
         var count = 0;
-        foreach (var v in values)
+        foreach (var raw in values)
         {
+            var v = Math.ScaleB(raw, -exponent);
             count++;
             var delta = v - mean;
             mean += delta / count;
             var delta2 = v - mean;
             m2 += delta * delta2;
         }
-        return (mean, m2 / (count - 1));
+
+        var scaledVariance = m2 / (count - 1);
+        return (
+            Math.ScaleB(mean, exponent),
+            Math.ScaleB(scaledVariance, 2 * exponent),
+            Math.ScaleB(Math.Sqrt(scaledVariance), exponent));
     }
+
+    /// <summary>Largest magnitude of a finite sample at or above which <see cref="Moments"/> rescales it.</summary>
+    private const double ScaleAboveMagnitude = 1e150;
+
+    /// <summary>Largest magnitude of a finite, non-zero sample at or below which <see cref="Moments"/> rescales it.</summary>
+    private const double ScaleBelowMagnitude = 1e-150;
 
     /// <summary>
     /// Returns <see langword="true"/> when the sample mean is within
@@ -140,14 +185,16 @@ public static class Statistics
 
         if (values.Length < 2)
             return false;
-        var (_, variance) = MeanAndVariance(values);
-        return MathTolerance.IsApproximatelyEqual(Math.Sqrt(variance), expected, tolerance);
+        var (_, _, stdDev) = Moments(values);
+        return MathTolerance.IsApproximatelyEqual(stdDev, expected, tolerance);
     }
 
     /// <summary>
     /// Returns <see langword="true"/> when the sum of <paramref name="values"/> is within
     /// <paramref name="tolerance"/> of <paramref name="expected"/>. The empty span has a
-    /// sum of zero by convention, matching the identity element for addition.
+    /// sum of zero by convention, matching the identity element for addition. A sum that overflows only
+    /// part of the way (<c>[double.MaxValue, double.MaxValue, -double.MaxValue]</c>) is the exact total,
+    /// not infinity; the sum is infinite only when it does not fit in a <see cref="double"/>.
     /// </summary>
     /// <param name="values">Sample to inspect.</param>
     /// <param name="expected">Expected sum.</param>
@@ -163,7 +210,33 @@ public static class Statistics
         var sum = 0.0;
         foreach (var v in values)
             sum += v;
+        if (double.IsInfinity(sum))
+            sum = SumWithoutIntermediateOverflow(values, sum);
         return MathTolerance.IsApproximatelyEqual(sum, expected, tolerance);
+    }
+
+    /// <summary>
+    /// Re-sums a sample whose running sum overflowed. When every value is finite the overflow may be an
+    /// intermediate one (<c>[double.MaxValue, double.MaxValue, -double.MaxValue]</c> sums to
+    /// <c>double.MaxValue</c>), so the values are summed after an exact scaling by <c>2^-32</c>, which keeps
+    /// every partial sum of up to <c>2^31</c> values finite, and the total is scaled back: it is infinite
+    /// again only when the sum itself does not fit in a <see cref="double"/>.
+    /// </summary>
+    /// <param name="values">The sample.</param>
+    /// <param name="overflowedSum">The running sum, infinite.</param>
+    /// <returns>The sum; <paramref name="overflowedSum"/> when a value is NaN or infinite, as then the
+    /// infinity is the true sum.</returns>
+    private static double SumWithoutIntermediateOverflow(ReadOnlySpan<double> values, double overflowedSum)
+    {
+        const int Shift = 32;
+        var scaledSum = 0.0;
+        foreach (var v in values)
+        {
+            if (!double.IsFinite(v))
+                return overflowedSum;
+            scaledSum += Math.ScaleB(v, -Shift);
+        }
+        return Math.ScaleB(scaledSum, Shift);
     }
 
     /// <summary>
@@ -273,7 +346,9 @@ public static class Statistics
         var hi = int.CreateChecked(Math.Ceiling(rank));
         var frac = rank - lo;
 
-        var pct = lo == hi
+        // Equal neighbors have that value as their percentile exactly; the lerp of two equal values can
+        // round away from them (3.3 and 3.3 at 7 percent give 3.2999999999999994).
+        var pct = lo == hi || MathTolerance.IsCloseInUlps(sorted[lo], sorted[hi], 0L)
             ? sorted[lo]
             : (sorted[lo] * (1.0 - frac)) + (sorted[hi] * frac);
         return MathTolerance.IsApproximatelyEqual(pct, expected, tolerance);
@@ -303,8 +378,7 @@ public static class Statistics
 
         if (sample.Length < 2)
             return false;
-        var (mean, variance) = MeanAndVariance(sample);
-        var stdDev = Math.Sqrt(variance);
+        var (mean, _, stdDev) = Moments(sample);
         return Math.Abs(value - mean) <= sigmas * stdDev;
     }
 
@@ -342,8 +416,7 @@ public static class Statistics
 
         if (values.Length < 2)
             return false;
-        var (mean, variance) = MeanAndVariance(values);
-        var stdDev = Math.Sqrt(variance);
+        var (mean, _, stdDev) = Moments(values);
         var threshold = sigmas * stdDev;
         foreach (var v in values)
         {
