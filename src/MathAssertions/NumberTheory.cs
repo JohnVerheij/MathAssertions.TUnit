@@ -23,14 +23,20 @@ public static class NumberTheory
     /// </summary>
     /// <param name="value">Dividend.</param>
     /// <param name="divisor">Divisor. Must not be zero.</param>
-    /// <returns><see langword="true"/> if <c>value % divisor == 0</c>.</returns>
+    /// <returns><see langword="true"/> if <c>value % divisor == 0</c>; always
+    /// <see langword="true"/> for a divisor of <c>1</c> or <c>-1</c>, including
+    /// <see cref="long.MinValue"/>.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="divisor"/> is zero.</exception>
-    /// <exception cref="OverflowException"><paramref name="value"/> is <see cref="long.MinValue"/>
-    /// and <paramref name="divisor"/> is <c>-1</c> (the remainder operation overflows on .NET).</exception>
     public static bool IsDivisibleBy(long value, long divisor)
     {
         if (divisor == 0)
             throw new ArgumentOutOfRangeException(nameof(divisor), "divisor cannot be zero.");
+
+        // Every integer is divisible by 1 and -1. Answering here also avoids the remainder operation, which
+        // throws OverflowException for long.MinValue % -1 on .NET.
+        if (divisor is 1 or -1)
+            return true;
+
         return value % divisor == 0;
     }
 
@@ -50,19 +56,28 @@ public static class NumberTheory
     /// <returns><see langword="true"/> if <paramref name="value"/> is prime.</returns>
     public static bool IsPrime(long value)
     {
-        if (value < 2)
-            return false;
-        if (value == 2 || value == 3)
-            return true;
+        if (value < 4)
+            return value > 1;
         if (value % 2 == 0 || value % 3 == 0)
             return false;
 
+        return !HasWheelDivisor(value);
+    }
+
+    /// <summary>
+    /// Trial division of an odd value that is not a multiple of three, over the candidates
+    /// <c>6k - 1</c> and <c>6k + 1</c> up to the square root.
+    /// </summary>
+    /// <param name="value">Value greater than three, not divisible by two or three.</param>
+    /// <returns><see langword="true"/> if a candidate divides <paramref name="value"/>.</returns>
+    private static bool HasWheelDivisor(long value)
+    {
         for (var i = 5L; i <= value / i; i += 6)
         {
             if (value % i == 0 || value % (i + 2) == 0)
-                return false;
+                return true;
         }
-        return true;
+        return false;
     }
 
     /// <summary>

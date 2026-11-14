@@ -18,10 +18,18 @@
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.404" />
     <PackageVersion Include="PublicApiGenerator" Version="11.5.4" />
     <PackageVersion Include="SnapshotAssertions.TUnit" Version="0.9.0" />
-    <PackageVersion Include="System.Numerics.Tensors" Version="10.0.15" />
     <PackageVersion Include="TUnit" Version="1.81.10" />
     <PackageVersion Include="TUnit.Assertions" Version="1.81.10" />
     <PackageVersion Include="TUnit.Core" Version="1.81.10" />
+  </ItemGroup>
+
+  <!-- Each target framework gets the System.Numerics.Tensors version of its own .NET release. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PackageVersion Include="System.Numerics.Tensors" Version="10.0.15" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net11.0'">
+    <PackageVersion Include="System.Numerics.Tensors" Version="11.0.0" />
   </ItemGroup>
 
   <!-- Analyzer pack (applied to every project automatically via GlobalPackageReference) -->

@@ -18,12 +18,16 @@ public static class Sequences
     /// <summary>
     /// Returns <see langword="true"/> when every value is greater than or equal to the
     /// previous value (non-strict monotonicity; adjacent equal values are allowed).
-    /// Empty and single-element spans are vacuously monotonic.
+    /// Empty and single-element spans are vacuously monotonic. A span that contains NaN
+    /// returns <see langword="false"/>: NaN is not ordered against any value.
     /// </summary>
     /// <param name="values">Sequence to inspect.</param>
     /// <returns><see langword="true"/> if non-decreasing.</returns>
     public static bool IsMonotonicallyIncreasing(ReadOnlySpan<double> values)
     {
+        if (ContainsNaN(values))
+            return false;
+
         for (var i = 1; i < values.Length; i++)
         {
             if (values[i] < values[i - 1])
@@ -34,12 +38,16 @@ public static class Sequences
 
     /// <summary>
     /// Returns <see langword="true"/> when every value is less than or equal to the
-    /// previous value (non-strict monotonicity).
+    /// previous value (non-strict monotonicity). A span that contains NaN returns
+    /// <see langword="false"/>.
     /// </summary>
     /// <param name="values">Sequence to inspect.</param>
     /// <returns><see langword="true"/> if non-increasing.</returns>
     public static bool IsMonotonicallyDecreasing(ReadOnlySpan<double> values)
     {
+        if (ContainsNaN(values))
+            return false;
+
         for (var i = 1; i < values.Length; i++)
         {
             if (values[i] > values[i - 1])
@@ -50,12 +58,16 @@ public static class Sequences
 
     /// <summary>
     /// Returns <see langword="true"/> when every value is strictly greater than the
-    /// previous value (adjacent equal values fail).
+    /// previous value (adjacent equal values fail). A span that contains NaN returns
+    /// <see langword="false"/>.
     /// </summary>
     /// <param name="values">Sequence to inspect.</param>
     /// <returns><see langword="true"/> if strictly increasing.</returns>
     public static bool IsStrictlyMonotonicallyIncreasing(ReadOnlySpan<double> values)
     {
+        if (ContainsNaN(values))
+            return false;
+
         for (var i = 1; i < values.Length; i++)
         {
             if (values[i] <= values[i - 1])
@@ -66,12 +78,16 @@ public static class Sequences
 
     /// <summary>
     /// Returns <see langword="true"/> when every value is strictly less than the
-    /// previous value (adjacent equal values fail).
+    /// previous value (adjacent equal values fail). A span that contains NaN returns
+    /// <see langword="false"/>.
     /// </summary>
     /// <param name="values">Sequence to inspect.</param>
     /// <returns><see langword="true"/> if strictly decreasing.</returns>
     public static bool IsStrictlyMonotonicallyDecreasing(ReadOnlySpan<double> values)
     {
+        if (ContainsNaN(values))
+            return false;
+
         for (var i = 1; i < values.Length; i++)
         {
             if (values[i] >= values[i - 1])
@@ -82,7 +98,8 @@ public static class Sequences
 
     /// <summary>
     /// Returns <see langword="true"/> when the sequence is sorted in ascending order.
-    /// Convenience alias for <see cref="IsMonotonicallyIncreasing(ReadOnlySpan{double})"/>.
+    /// Convenience alias for <see cref="IsMonotonicallyIncreasing(ReadOnlySpan{double})"/>; a span that
+    /// contains NaN returns <see langword="false"/>.
     /// </summary>
     /// <param name="values">Sequence to inspect.</param>
     /// <returns><see langword="true"/> if sorted ascending.</returns>
@@ -274,6 +291,22 @@ public static class Sequences
     {
         ArgumentOutOfRangeException.ThrowIfNegative(expected);
         return values.Length >= expected;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> when any value is NaN. Every ordering comparison with NaN is
+    /// <see langword="false"/>, so a monotonicity loop would otherwise accept a NaN as ordered.
+    /// </summary>
+    /// <param name="values">Sequence to inspect.</param>
+    /// <returns><see langword="true"/> if the sequence contains NaN.</returns>
+    private static bool ContainsNaN(ReadOnlySpan<double> values)
+    {
+        foreach (var value in values)
+        {
+            if (double.IsNaN(value))
+                return true;
+        }
+        return false;
     }
 
     private static void ValidateTolerance(double tolerance)

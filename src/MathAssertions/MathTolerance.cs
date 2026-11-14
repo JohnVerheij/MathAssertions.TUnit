@@ -49,16 +49,10 @@ public static class MathTolerance
     {
         ValidateTolerance(tolerance);
 
-        if (double.IsNaN(a) && double.IsNaN(b))
-            return true;
         if (double.IsNaN(a) || double.IsNaN(b))
-            return false;
-        if (double.IsPositiveInfinity(a) && double.IsPositiveInfinity(b))
-            return true;
-        if (double.IsNegativeInfinity(a) && double.IsNegativeInfinity(b))
-            return true;
-        if (!double.IsFinite(a) || !double.IsFinite(b))
-            return false;
+            return double.IsNaN(a) && double.IsNaN(b);
+        if (double.IsInfinity(a) || double.IsInfinity(b))
+            return double.IsInfinity(a) && double.IsInfinity(b) && double.IsNegative(a) == double.IsNegative(b);
 
         return Math.Abs(a - b) <= tolerance;
     }
@@ -77,16 +71,10 @@ public static class MathTolerance
     {
         ValidateTolerance(tolerance);
 
-        if (float.IsNaN(a) && float.IsNaN(b))
-            return true;
         if (float.IsNaN(a) || float.IsNaN(b))
-            return false;
-        if (float.IsPositiveInfinity(a) && float.IsPositiveInfinity(b))
-            return true;
-        if (float.IsNegativeInfinity(a) && float.IsNegativeInfinity(b))
-            return true;
-        if (!float.IsFinite(a) || !float.IsFinite(b))
-            return false;
+            return float.IsNaN(a) && float.IsNaN(b);
+        if (float.IsInfinity(a) || float.IsInfinity(b))
+            return float.IsInfinity(a) && float.IsInfinity(b) && float.IsNegative(a) == float.IsNegative(b);
 
         return Math.Abs(a - b) <= tolerance;
     }
@@ -310,10 +298,13 @@ public static class MathTolerance
     /// returns <see langword="false"/> for non-floating-point representations.
     /// </para>
     /// <para>
-    /// Infinity handling does not follow the scalar overloads: infinities are compared through
-    /// <c>T.Abs(a - b) &gt; tolerance</c>. Under a finite tolerance the results match the scalar
-    /// overloads; under a tolerance of positive infinity, opposite-sign infinities and an
-    /// infinity against a finite value count as equal.
+    /// Infinity handling matches the scalar overloads under every tolerance, including positive
+    /// infinity: an infinity equals only the infinity of the same sign, decided before any
+    /// subtraction. The difference of two finite elements is formed as larger minus smaller in
+    /// checked arithmetic, so unsigned types do not wrap and signed integers do not overflow:
+    /// a difference beyond the range of <typeparamref name="T"/> (for example
+    /// <see cref="int.MaxValue"/> against <see cref="int.MinValue"/>) is larger than any
+    /// tolerance and compares unequal.
     /// </para>
     /// <para>
     /// Iteration uses the tensor span's own enumerator so strided (non-dense) shapes
@@ -334,11 +325,51 @@ public static class MathTolerance
         T tolerance)
         where T : INumber<T>
     {
+        ValidateTensorTolerance(tolerance);
+
+        if (!HaveSameShape(a, b))
+            return false;
+
+        try
+        {
+            var ae = a.GetEnumerator();
+            var be = b.GetEnumerator();
+            while (ae.MoveNext() && be.MoveNext())
+            {
+                if (!AreElementsApproximatelyEqual(ae.Current, be.Current, tolerance))
+                    return false;
+            }
+        }
+        catch (OverflowException)
+        {
+            // Only an integer element type throws: the pair differs by more than T can represent, which is
+            // more than any tolerance of T. Floating-point types overflow to infinity instead and never throw.
+            return false;
+        }
+        return true;
+    }
+
+    /// <summary>Validates the tolerance of the tensor overload: not NaN and not negative.</summary>
+    /// <typeparam name="T">Element type, any <see cref="INumber{TSelf}"/>.</typeparam>
+    /// <param name="tolerance">The tolerance to validate.</param>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
+    private static void ValidateTensorTolerance<T>(T tolerance)
+        where T : INumber<T>
+    {
         if (T.IsNaN(tolerance))
             throw new ArgumentOutOfRangeException(nameof(tolerance), "Tolerance cannot be NaN.");
         if (tolerance < T.Zero)
             throw new ArgumentOutOfRangeException(nameof(tolerance), "Tolerance cannot be negative.");
+    }
 
+    /// <summary>Returns <see langword="true"/> when two tensor spans have the same rank and the same length in every dimension.</summary>
+    /// <typeparam name="T">Element type, any <see cref="INumber{TSelf}"/>.</typeparam>
+    /// <param name="a">First tensor span.</param>
+    /// <param name="b">Second tensor span.</param>
+    /// <returns><see langword="true"/> if the shapes are equal.</returns>
+    private static bool HaveSameShape<T>(ReadOnlyTensorSpan<T> a, ReadOnlyTensorSpan<T> b)
+        where T : INumber<T>
+    {
         var aLengths = a.Lengths;
         var bLengths = b.Lengths;
         if (aLengths.Length != bLengths.Length)
@@ -348,21 +379,32 @@ public static class MathTolerance
             if (aLengths[i] != bLengths[i])
                 return false;
         }
-
-        var ae = a.GetEnumerator();
-        var be = b.GetEnumerator();
-        while (ae.MoveNext() && be.MoveNext())
-        {
-            var av = ae.Current;
-            var bv = be.Current;
-            if (T.IsNaN(av) && T.IsNaN(bv))
-                continue;
-            if (T.IsNaN(av) || T.IsNaN(bv))
-                return false;
-            if (T.Abs(av - bv) > tolerance)
-                return false;
-        }
         return true;
+    }
+
+    /// <summary>
+    /// Compares one element pair of the tensor overload by the scalar overloads' rules: NaN matches only NaN,
+    /// an infinity matches only the same infinity (before any subtraction, under every tolerance), and finite
+    /// values match when the larger minus the smaller is at most the tolerance. The subtraction is checked so
+    /// an integer difference beyond the range of <typeparamref name="T"/> throws instead of wrapping.
+    /// </summary>
+    /// <typeparam name="T">Element type, any <see cref="INumber{TSelf}"/>.</typeparam>
+    /// <param name="av">Element of the first tensor.</param>
+    /// <param name="bv">Element of the second tensor.</param>
+    /// <param name="tolerance">Maximum allowed difference, already validated.</param>
+    /// <returns><see langword="true"/> if the two elements are approximately equal.</returns>
+    /// <exception cref="OverflowException">The difference of two integers exceeds the range of <typeparamref name="T"/>.</exception>
+    private static bool AreElementsApproximatelyEqual<T>(T av, T bv, T tolerance)
+        where T : INumber<T>
+    {
+        if (T.IsNaN(av) || T.IsNaN(bv))
+            return T.IsNaN(av) && T.IsNaN(bv);
+        if (T.IsInfinity(av) || T.IsInfinity(bv))
+            return av == bv;
+
+        var larger = av >= bv ? av : bv;
+        var smaller = av >= bv ? bv : av;
+        return checked(larger - smaller) <= tolerance;
     }
 
     /// <summary>
@@ -404,23 +446,11 @@ public static class MathTolerance
         if (double.IsNaN(a) || double.IsNaN(b))
             return false;
 
-        var aBits = BitConverter.DoubleToInt64Bits(a);
-        var bBits = BitConverter.DoubleToInt64Bits(b);
-
-        // +0 and -0 are equal under IEEE 754 even though their bit patterns differ
-        // by 2^63. The cheap test "value is zero" is "the magnitude bits are zero,"
-        // which masking off the sign bit captures for both signs at once.
-        const long MagnitudeMask = 0x7FFF_FFFF_FFFF_FFFFL;
-        if ((aBits & MagnitudeMask) == 0 && (bBits & MagnitudeMask) == 0)
-            return true;
-
-        if (aBits == bBits)
-            return true;
-
-        if ((aBits < 0) != (bBits < 0))
-            return false;
-
-        return Math.Abs(aBits - bBits) <= ulpDistance;
+        return AreBitPatternsWithinUlps(
+            BitConverter.DoubleToInt64Bits(a),
+            BitConverter.DoubleToInt64Bits(b),
+            ulpDistance,
+            0x7FFF_FFFF_FFFF_FFFFL);
     }
 
     /// <summary>
@@ -446,11 +476,31 @@ public static class MathTolerance
         if (float.IsNaN(a) || float.IsNaN(b))
             return false;
 
-        var aBits = BitConverter.SingleToInt32Bits(a);
-        var bBits = BitConverter.SingleToInt32Bits(b);
+        return AreBitPatternsWithinUlps(
+            BitConverter.SingleToInt32Bits(a),
+            BitConverter.SingleToInt32Bits(b),
+            ulpDistance,
+            0x7FFF_FFFFL);
+    }
 
-        const int MagnitudeMask = 0x7FFF_FFFF;
-        if ((aBits & MagnitudeMask) is 0 && (bBits & MagnitudeMask) is 0)
+    /// <summary>
+    /// Decides ULP-distance equality for two non-NaN values from their IEEE 754 bit patterns, widened to
+    /// <see cref="long"/> with the sign preserved: two zeros of either sign are equal (their patterns differ
+    /// only in the sign bit), identical patterns are equal, values of opposite sign are not, and same-signed
+    /// values are equal when their patterns, which are ordered like the values, are at most
+    /// <paramref name="ulpDistance"/> apart.
+    /// </summary>
+    /// <param name="aBits">Bit pattern of the first value.</param>
+    /// <param name="bBits">Bit pattern of the second value.</param>
+    /// <param name="ulpDistance">Maximum allowed distance in representable values. Non-negative.</param>
+    /// <param name="magnitudeMask">Mask of every bit except the sign bit of the value's width.</param>
+    /// <returns><see langword="true"/> if the two values are within <paramref name="ulpDistance"/> ULPs.</returns>
+    private static bool AreBitPatternsWithinUlps(long aBits, long bBits, long ulpDistance, long magnitudeMask)
+    {
+        // +0 and -0 are equal under IEEE 754 even though their bit patterns differ by the sign bit. The
+        // cheap test "value is zero" is "the magnitude bits are zero", which masking off the sign bit
+        // captures for both signs at once.
+        if ((aBits & magnitudeMask) == 0 && (bBits & magnitudeMask) == 0)
             return true;
 
         if (aBits == bBits)
@@ -602,9 +652,20 @@ public static class MathTolerance
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Implementation normalizes both inputs first so non-unit quaternions still produce
-    /// the correct verdict; the dot-product test
-    /// <c>|q1 . q2| &gt;= 1 - tolerance</c> identifies the same-rotation condition robustly.
+    /// Implementation normalizes both inputs first (in <see cref="double"/> precision, so a
+    /// non-unit quaternion compared with itself or a scaled copy passes a tolerance such as <c>1e-12</c>);
+    /// the dot-product test <c>|q1 . q2| &gt;= 1 - tolerance</c> identifies the same-rotation
+    /// condition robustly.
+    /// </para>
+    /// <para>
+    /// A quaternion that cannot be normalized (squared magnitude zero or not finite, for example
+    /// <c>default(Quaternion)</c>) names no rotation. Like
+    /// <see cref="IsPoseApproximatelyEqual(Vector3, Quaternion, Vector3, Quaternion, double, double)"/>,
+    /// the comparison then falls back to a componentwise check against a tight fixed tolerance
+    /// of <c>1e-6</c> that ignores <paramref name="tolerance"/>: the zero quaternion matches
+    /// itself and any quaternion within <c>1e-6</c> of zero in every component (noise, not a
+    /// rotation), and no unit-length rotation. A quaternion with a NaN or infinite component never
+    /// matches, not even itself.
     /// </para>
     /// <para>
     /// Reference: Hanson, <i>Visualizing Quaternions</i>, §4.6.
@@ -621,10 +682,13 @@ public static class MathTolerance
     {
         ValidateTolerance(tolerance);
 
-        var aNormalized = Quaternion.Normalize(a);
-        var bNormalized = Quaternion.Normalize(b);
-        double dotF = Quaternion.Dot(aNormalized, bNormalized);
-        var dot = Math.Abs(dotF);
+        if (!TryNormalizeToDouble(a, out double ax, out double ay, out double az, out double aw)
+            || !TryNormalizeToDouble(b, out double bx, out double by, out double bz, out double bw))
+        {
+            return DegenerateOrientationsMatch(a, b);
+        }
+
+        double dot = Math.Abs((ax * bx) + (ay * by) + (az * bz) + (aw * bw));
         return dot >= 1.0 - tolerance;
     }
 
@@ -648,7 +712,7 @@ public static class MathTolerance
     /// itself yields zero or a value within about <c>1e-14</c> degrees (float/double rounding).
     /// </para>
     /// <para>
-    /// A quaternion that is not normalizable (squared magnitude underflows to zero, e.g.
+    /// A quaternion that is not normalizable (squared magnitude is zero or not finite, e.g.
     /// <c>default(Quaternion)</c> = <c>(0, 0, 0, 0)</c>) has no defined rotation axis, so no
     /// geodesic angle exists; this method returns <see cref="double.NaN"/> in that case. Callers
     /// that need a defined verdict for the zero quaternion (such as
@@ -666,10 +730,102 @@ public static class MathTolerance
     }
 
     /// <summary>
+    /// Returns the shorter arc between two angles given in degrees, on the circle that wraps every
+    /// <c>360</c> degrees: the result lies in <c>[0, 180]</c>, so <c>359</c> and <c>1</c> are
+    /// <c>2</c> degrees apart, and <c>180</c> and <c>-180</c> are <c>0</c> degrees apart.
+    /// </summary>
+    /// <remarks>
+    /// Each angle is first reduced to <c>[-180, 180]</c> (the IEEE remainder of a division by
+    /// <c>360</c>, an exact operation), so huge angles such as <c>1e7</c> degrees keep their precision
+    /// and a difference of two huge angles of opposite sign cannot overflow. Two angles on both sides
+    /// of <c>180</c> are compared after the negative one moves up a full turn, so their difference is
+    /// formed near zero, not near <c>360</c> where a tiny difference would round to a full turn.
+    /// A NaN or infinite angle has no position on the circle: the result is <see cref="double.NaN"/>.
+    /// </remarks>
+    /// <param name="a">First angle in degrees.</param>
+    /// <param name="b">Second angle in degrees.</param>
+    /// <returns>The wrapped difference in degrees, in <c>[0, 180]</c>; <see cref="double.NaN"/>
+    /// when either angle is NaN or infinite.</returns>
+    public static double AngleDifferenceDegrees(double a, double b)
+    {
+        if (!double.IsFinite(a) || !double.IsFinite(b))
+            return double.NaN;
+
+        var reducedA = Math.IEEERemainder(a, 360.0);
+        var reducedB = Math.IEEERemainder(b, 360.0);
+        if (reducedA - reducedB > 180.0)
+            reducedB += 360.0;
+        else if (reducedB - reducedA > 180.0)
+            reducedA += 360.0;
+        return Math.Abs(reducedA - reducedB);
+    }
+
+    /// <summary>
+    /// Returns the shorter arc between two angles given in degrees as a <see cref="float"/>: the
+    /// double-precision result of <see cref="AngleDifferenceDegrees(double, double)"/>, rounded once to
+    /// single precision, so a caller that works in single precision stays there.
+    /// </summary>
+    /// <param name="a">First angle in degrees.</param>
+    /// <param name="b">Second angle in degrees.</param>
+    /// <returns>The wrapped difference in degrees, in <c>[0, 180]</c>; <see cref="float.NaN"/>
+    /// when either angle is NaN or infinite.</returns>
+    public static float AngleDifferenceDegrees(float a, float b)
+    {
+        double widenedA = a;
+        double widenedB = b;
+        return float.CreateTruncating(AngleDifferenceDegrees(widenedA, widenedB));
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> when two angles in degrees are within
+    /// <paramref name="toleranceDegrees"/> of each other on the circle that wraps every <c>360</c>
+    /// degrees: <see cref="AngleDifferenceDegrees(double, double)"/> is at most the tolerance.
+    /// </summary>
+    /// <remarks>
+    /// Unlike <see cref="IsApproximatelyEqual(double, double, double)"/>, which compares the plain
+    /// difference, <c>179</c> and <c>-179</c> are <c>2</c> degrees apart here and <c>180</c> equals
+    /// <c>-180</c>. A NaN or infinite angle never matches, not even NaN against NaN: an angle that is
+    /// not a number has no position on the circle.
+    /// </remarks>
+    /// <param name="a">First angle in degrees.</param>
+    /// <param name="b">Second angle in degrees.</param>
+    /// <param name="toleranceDegrees">Maximum allowed wrapped difference in degrees. Must be
+    /// non-negative and not NaN.</param>
+    /// <returns><see langword="true"/> if the wrapped difference is at most
+    /// <paramref name="toleranceDegrees"/>.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="toleranceDegrees"/> is NaN or negative.</exception>
+    public static bool IsAngleApproximatelyEqual(double a, double b, double toleranceDegrees)
+    {
+        ValidateTolerance(toleranceDegrees, nameof(toleranceDegrees));
+
+        return AngleDifferenceDegrees(a, b) <= toleranceDegrees;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> when two angles in degrees are within
+    /// <paramref name="toleranceDegrees"/> of each other on the circle that wraps every <c>360</c>
+    /// degrees. Same rules as the double overload; the difference is rounded to single precision
+    /// before it is compared with the tolerance.
+    /// </summary>
+    /// <param name="a">First angle in degrees.</param>
+    /// <param name="b">Second angle in degrees.</param>
+    /// <param name="toleranceDegrees">Maximum allowed wrapped difference in degrees. Must be
+    /// non-negative and not NaN.</param>
+    /// <returns><see langword="true"/> if the wrapped difference is at most
+    /// <paramref name="toleranceDegrees"/>.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="toleranceDegrees"/> is NaN or negative.</exception>
+    public static bool IsAngleApproximatelyEqual(float a, float b, float toleranceDegrees)
+    {
+        ValidateTolerance(toleranceDegrees, nameof(toleranceDegrees));
+
+        return AngleDifferenceDegrees(a, b) <= toleranceDegrees;
+    }
+
+    /// <summary>
     /// Computes the geodesic angle between two rotations in degrees using the numerically-stable
     /// <c>2 * atan2(‖imag(r)‖, |real(r)|)</c> form on the relative quaternion <c>r = a * conj(b)</c>,
     /// reporting via <paramref name="angleDegrees"/>. Returns <see langword="false"/> when either
-    /// input is not normalizable (squared magnitude underflows to zero), in which case no geodesic
+    /// input is not normalizable (squared magnitude is zero or not finite), in which case no geodesic
     /// angle is defined.
     /// </summary>
     /// <param name="a">First rotation.</param>
@@ -705,7 +861,7 @@ public static class MathTolerance
     /// <summary>
     /// Normalizes <paramref name="q"/> to unit magnitude in <see cref="double"/> precision,
     /// reporting the components through the <see langword="out"/> parameters. Returns <see langword="false"/>
-    /// when the squared magnitude is non-finite or underflows to zero (the quaternion has no
+    /// when the squared magnitude is zero or not finite (the quaternion has no
     /// defined direction and cannot be normalized).
     /// </summary>
     /// <param name="q">The quaternion to normalize.</param>
@@ -757,6 +913,36 @@ public static class MathTolerance
     private const double DegenerateOrientationComponentTolerance = 1e-6;
 
     /// <summary>
+    /// Fallback comparison for orientations of which at least one cannot be normalized: both must be finite
+    /// (a NaN or infinite component names no rotation and never matches, not even itself), and then they match
+    /// componentwise within <see cref="DegenerateOrientationComponentTolerance"/>, so the zero quaternion matches
+    /// itself and any quaternion within that tolerance of zero, and no unit-length rotation.
+    /// </summary>
+    /// <param name="a">First quaternion.</param>
+    /// <param name="b">Second quaternion.</param>
+    /// <returns><see langword="true"/> if both are finite and componentwise equal within the fixed tolerance.</returns>
+    private static bool DegenerateOrientationsMatch(Quaternion a, Quaternion b)
+        => IsFiniteQuaternion(a)
+        && IsFiniteQuaternion(b)
+        && IsApproximatelyEqual(a, b, DegenerateOrientationComponentTolerance);
+
+    /// <summary>
+    /// Returns <see langword="true"/> when every component is finite. The components widen to
+    /// <see cref="double"/> before they are summed, so the sum of finite floats cannot overflow and is
+    /// non-finite only when a component is NaN or infinite.
+    /// </summary>
+    /// <param name="q">The quaternion to inspect.</param>
+    /// <returns><see langword="true"/> if no component is NaN or infinite.</returns>
+    private static bool IsFiniteQuaternion(Quaternion q)
+    {
+        double sum = q.X;
+        sum += q.Y;
+        sum += q.Z;
+        sum += q.W;
+        return double.IsFinite(sum);
+    }
+
+    /// <summary>
     /// Returns <see langword="true"/> when two rigid poses (a position and an orientation) match
     /// within separate tolerances: the Euclidean <see cref="PositionDistance(Vector3, Vector3)"/>
     /// is at most <paramref name="positionTolerance"/> AND the geodesic
@@ -774,8 +960,8 @@ public static class MathTolerance
     /// <returns><see langword="true"/> when both the position and the orientation are within their tolerances.</returns>
     /// <remarks>
     /// <para>
-    /// Degenerate orientation: a quaternion that is not normalizable (squared magnitude underflows
-    /// to zero, e.g. <c>default(Quaternion)</c> = <c>(0, 0, 0, 0)</c>) has no defined rotation axis,
+    /// Degenerate orientation: a quaternion that is not normalizable (squared magnitude is zero or not
+    /// finite, e.g. <c>default(Quaternion)</c> = <c>(0, 0, 0, 0)</c>) has no defined rotation axis,
     /// so the geodesic angle from
     /// <see cref="RotationAngleDegrees(Quaternion, Quaternion)"/> is undefined. Rather than fail a
     /// legitimate default-pose round-trip, the orientation half falls back to a componentwise
@@ -785,6 +971,10 @@ public static class MathTolerance
     /// permissive (a tolerance of 1 or more would accept a zero quaternion as equal to a real
     /// rotation). So <c>(0, 0, 0, 0)</c> compared with itself passes, while <c>(0, 0, 0, 0)</c>
     /// compared with any real rotation fails on the component deltas regardless of the angular tolerance.
+    /// </para>
+    /// <para>
+    /// A position with a NaN coordinate, or two positions whose distance is not a number (for example
+    /// two infinite coordinates), never matches, not even NaN against NaN.
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentOutOfRangeException">Either tolerance is NaN or negative.</exception>
@@ -798,7 +988,8 @@ public static class MathTolerance
     {
         ValidateTolerance(positionTolerance, nameof(positionTolerance));
         ValidateTolerance(rotationToleranceDegrees, nameof(rotationToleranceDegrees));
-        if (PositionDistance(actualPosition, expectedPosition) > positionTolerance)
+        // Written as a negated <=, so a NaN distance (a NaN or infinite coordinate) fails instead of passing.
+        if (!(PositionDistance(actualPosition, expectedPosition) <= positionTolerance))
         {
             return false;
         }
@@ -811,8 +1002,7 @@ public static class MathTolerance
             return angleDegrees <= rotationToleranceDegrees;
         }
 
-        return IsApproximatelyEqual(
-            actualOrientation, expectedOrientation, DegenerateOrientationComponentTolerance);
+        return DegenerateOrientationsMatch(actualOrientation, expectedOrientation);
     }
 
     /// <summary>
@@ -847,9 +1037,10 @@ public static class MathTolerance
     /// <remarks>
     /// <para>
     /// The comparison is performed on the rotational-equivalence metric, not on axis-component
-    /// or angle-magnitude differences. The expected axis-angle pair is materialised as a
-    /// quaternion via <see cref="Quaternion.CreateFromAxisAngle(Vector3, float)"/>; that
-    /// quaternion is then compared to <paramref name="value"/> through
+    /// or angle-magnitude differences. The expected axis-angle pair is materialized as a unit
+    /// quaternion in <see cref="double"/> precision (the axis is normalized in double, so even an
+    /// axis such as <c>(1e30, 0, 0)</c> or <c>(1e-30, 0, 0)</c> keeps its direction); that
+    /// quaternion is then compared to <paramref name="value"/> with the same test as
     /// <see cref="IsRotationallyEquivalent(Quaternion, Quaternion, double)"/>, which evaluates
     /// <c>|dot(unit_a, unit_b)| &gt;= 1 - tolerance</c>. Going through the dot-product metric
     /// handles every edge case the per-component extraction would otherwise stumble on
@@ -861,7 +1052,14 @@ public static class MathTolerance
     /// Identity-rotation edge case: when <paramref name="expectedAngleDegrees"/> is approximately
     /// zero the expected quaternion is approximately the identity, and the comparison reduces
     /// to <paramref name="value"/> being approximately the identity rotation. The expected
-    /// axis must still be non-degenerate so a deliberate zero-axis input is rejected.
+    /// axis must still have a direction, so a deliberate zero-axis input is rejected.
+    /// </para>
+    /// <para>
+    /// A <paramref name="value"/> that cannot be normalized (for example <c>default(Quaternion)</c>)
+    /// names no rotation: it is compared componentwise, at the fixed tolerance of
+    /// <c>1e-6</c> (a NaN or infinite component never matches) described for
+    /// <see cref="IsRotationallyEquivalent(Quaternion, Quaternion, double)"/>, with the expected
+    /// rotation, so it never matches a real rotation.
     /// </para>
     /// <para>
     /// Tolerance calibration: <paramref name="tolerance"/> is a dot-product tolerance. For small
@@ -876,8 +1074,8 @@ public static class MathTolerance
     /// </para>
     /// </remarks>
     /// <param name="value">The rotation under test.</param>
-    /// <param name="expectedAxis">The expected rotation axis. Normalized internally; must have
-    /// finite and non-trivially-zero squared length.</param>
+    /// <param name="expectedAxis">The expected rotation axis. Normalized internally in double
+    /// precision; must have finite components and a length greater than zero.</param>
     /// <param name="expectedAngleDegrees">The expected rotation magnitude in degrees.</param>
     /// <param name="tolerance">Dot-product tolerance on the unit-quaternion forms of
     /// <paramref name="value"/> and the materialised expected rotation: the comparison passes
@@ -887,9 +1085,8 @@ public static class MathTolerance
     /// <returns><see langword="true"/> if <paramref name="value"/> is rotationally equivalent
     /// to the requested axis-angle rotation within tolerance.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
-    /// <exception cref="ArgumentException"><paramref name="expectedAxis"/> has a non-finite
-    /// component, or its squared length underflows during normalization (no axis is
-    /// defined).</exception>
+    /// <exception cref="ArgumentException"><paramref name="expectedAxis"/> has a NaN or infinite
+    /// component, or has zero length (no axis is defined).</exception>
     public static bool HasAxisAngleApproximately(
         Quaternion value,
         Vector3 expectedAxis,
@@ -897,16 +1094,30 @@ public static class MathTolerance
         double tolerance)
     {
         ValidateTolerance(tolerance);
-        Vector3 normalizedExpectedAxis = NormalizeAxisOrThrow(expectedAxis);
-        double expectedAngleRadians = expectedAngleDegrees * (Math.PI / 180.0);
-        Quaternion expectedQuaternion = Quaternion.CreateFromAxisAngle(normalizedExpectedAxis, float.CreateTruncating(expectedAngleRadians));
+        NormalizeAxisToDoubleOrThrow(expectedAxis, out double axisX, out double axisY, out double axisZ);
+
+        // The expected rotation as a unit quaternion, built in double precision from the unit axis.
+        double halfAngleRadians = expectedAngleDegrees * (Math.PI / 360.0);
+        double sine = Math.Sin(halfAngleRadians);
+        double ex = axisX * sine;
+        double ey = axisY * sine;
+        double ez = axisZ * sine;
+        double ew = Math.Cos(halfAngleRadians);
 
         // Use the rotational-equivalence formulation: two rotations are equal iff the absolute
         // dot product of their unit-quaternion forms is >= 1 - tolerance. This handles every
         // edge case the per-component axis-angle comparison would otherwise stumble on
         // (180-degree boundary where (axis, +180) ≡ (axis, -180) ≡ (-axis, ±180); the q vs -q
         // double cover; non-unit inputs via internal normalization).
-        return IsRotationallyEquivalent(value, expectedQuaternion, tolerance);
+        if (!TryNormalizeToDouble(value, out double vx, out double vy, out double vz, out double vw))
+        {
+            var expectedQuaternion = new Quaternion(
+                float.CreateTruncating(ex), float.CreateTruncating(ey), float.CreateTruncating(ez), float.CreateTruncating(ew));
+            return DegenerateOrientationsMatch(value, expectedQuaternion);
+        }
+
+        double dot = Math.Abs((vx * ex) + (vy * ey) + (vz * ez) + (vw * ew));
+        return dot >= 1.0 - tolerance;
     }
 
     /// <summary>
@@ -941,9 +1152,8 @@ public static class MathTolerance
     /// angle alongside the axis so the extracted pair compares directly against the caller's
     /// expected pair.
     /// </remarks>
-    /// <exception cref="ArgumentException"><paramref name="expectedAxis"/> has a non-finite
-    /// component, or its squared length underflows during normalization (no axis is
-    /// defined).</exception>
+    /// <exception cref="ArgumentException"><paramref name="expectedAxis"/> has a NaN or infinite
+    /// component, or has zero length (no axis is defined).</exception>
     internal static void ExtractAxisAngle(
         Quaternion value,
         Vector3 expectedAxis,
@@ -952,15 +1162,20 @@ public static class MathTolerance
         out Vector3 normalizedExpectedAxis,
         out bool isIdentityRotation)
     {
-        normalizedExpectedAxis = NormalizeAxisOrThrow(expectedAxis);
+        NormalizeAxisToDoubleOrThrow(expectedAxis, out double axisX, out double axisY, out double axisZ);
+        normalizedExpectedAxis = new Vector3(
+            float.CreateTruncating(axisX), float.CreateTruncating(axisY), float.CreateTruncating(axisZ));
 
-        Quaternion normalized = Quaternion.Normalize(value);
-        double nxs = normalized.X;
-        double nys = normalized.Y;
-        double nzs = normalized.Z;
-        double xyzLenSquared = nxs * nxs + nys * nys + nzs * nzs;
-        double xyzLen = Math.Sqrt(xyzLenSquared);
+        if (!TryNormalizeToDouble(value, out double nx, out double ny, out double nz, out double nw))
+        {
+            // A quaternion with no direction has no axis and no angle to report.
+            extractedAxis = Vector3.Zero;
+            extractedAngleDegrees = double.NaN;
+            isIdentityRotation = false;
+            return;
+        }
 
+        double xyzLen = Math.Sqrt((nx * nx) + (ny * ny) + (nz * nz));
         if (xyzLen < 1e-12)
         {
             extractedAxis = Vector3.Zero;
@@ -969,28 +1184,18 @@ public static class MathTolerance
             return;
         }
 
-        double nx = normalized.X;
-        double ny = normalized.Y;
-        double nz = normalized.Z;
-        double nw = normalized.W;
-        extractedAxis = new Vector3(
-            float.CreateTruncating(nx / xyzLen),
-            float.CreateTruncating(ny / xyzLen),
-            float.CreateTruncating(nz / xyzLen));
+        double ux = nx / xyzLen;
+        double uy = ny / xyzLen;
+        double uz = nz / xyzLen;
         double angleRadians = 2.0 * Math.Atan2(xyzLen, Math.Abs(nw));
         if (nw < 0)
         {
             angleRadians = -angleRadians;
         }
+        extractedAxis = new Vector3(float.CreateTruncating(ux), float.CreateTruncating(uy), float.CreateTruncating(uz));
         extractedAngleDegrees = angleRadians * (180.0 / Math.PI);
 
-        double ex = extractedAxis.X;
-        double ey = extractedAxis.Y;
-        double ez = extractedAxis.Z;
-        double dot = ex * normalizedExpectedAxis.X
-            + ey * normalizedExpectedAxis.Y
-            + ez * normalizedExpectedAxis.Z;
-        if (dot < 0)
+        if (((ux * axisX) + (uy * axisY) + (uz * axisZ)) < 0)
         {
             extractedAxis = -extractedAxis;
             extractedAngleDegrees = -extractedAngleDegrees;
@@ -998,40 +1203,42 @@ public static class MathTolerance
         isIdentityRotation = false;
     }
 
-    private static Vector3 NormalizeAxisOrThrow(Vector3 expectedAxis)
+    /// <summary>
+    /// Normalizes <paramref name="expectedAxis"/> to unit length in <see cref="double"/> precision. The
+    /// squared length of any finite <see cref="float"/> axis, from the smallest denormal to
+    /// <see cref="float.MaxValue"/>, is representable in double, so only a non-finite component or an
+    /// exactly zero axis has no direction.
+    /// </summary>
+    /// <param name="expectedAxis">The axis to normalize. The parameter is named like the public callers'
+    /// own parameter so the thrown exception's parameter name matches the public API.</param>
+    /// <param name="x">Receives the normalized X component.</param>
+    /// <param name="y">Receives the normalized Y component.</param>
+    /// <param name="z">Receives the normalized Z component.</param>
+    /// <exception cref="ArgumentException">A component is NaN or infinite, or the axis has zero length.</exception>
+    private static void NormalizeAxisToDoubleOrThrow(Vector3 expectedAxis, out double x, out double y, out double z)
     {
-        // Parameter is named expectedAxis (not axis) so the paramName on the thrown
-        // ArgumentException matches what every public caller (HasAxisAngleApproximately,
-        // ExtractAxisAngle) passes as their own parameter, keeping the exception metadata
-        // consistent with the public API's documented parameter name.
-        // Reject NaN / infinity components up front: their squared length is non-finite
-        // (NaN propagates, infinity squares to infinity) and Vector3.Normalize on either
-        // would silently emit NaN components rather than throw.
         double ax = expectedAxis.X;
         double ay = expectedAxis.Y;
         double az = expectedAxis.Z;
-        double lenSquared = ax * ax + ay * ay + az * az;
-        if (!double.IsFinite(lenSquared))
+        double lengthSquared = (ax * ax) + (ay * ay) + (az * az);
+        if (!double.IsFinite(lengthSquared))
         {
             throw new ArgumentException(
                 "expectedAxis must have finite components (a NaN or infinite component leaves the rotation axis undefined).",
                 nameof(expectedAxis));
         }
 
-        // Vector3.Normalize works in single precision; for axis components small enough that
-        // the squared length underflows to zero in float, the result is NaN components.
-        // Verify post-normalize finiteness rather than picking a magic-number lower bound
-        // on the squared length; this catches the underflow case regardless of where the
-        // float-denormal boundary falls.
-        Vector3 normalized = Vector3.Normalize(expectedAxis);
-        if (!float.IsFinite(normalized.X) || !float.IsFinite(normalized.Y) || !float.IsFinite(normalized.Z))
+        if (lengthSquared <= 0.0)
         {
             throw new ArgumentException(
-                "expectedAxis is too small to normalize without underflow (a zero-length axis has no defined direction).",
+                "expectedAxis has zero length (a zero-length axis has no defined direction).",
                 nameof(expectedAxis));
         }
 
-        return normalized;
+        double inverseLength = 1.0 / Math.Sqrt(lengthSquared);
+        x = ax * inverseLength;
+        y = ay * inverseLength;
+        z = az * inverseLength;
     }
 
     private static void ValidateTolerance(double tolerance, string paramName = "tolerance")

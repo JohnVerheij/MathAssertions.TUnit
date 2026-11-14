@@ -105,7 +105,10 @@ public static class Containment
     /// hull (subdividing a face into smaller triangles) shift the verdict for the same
     /// geometric point. Dividing by <c>|normal|</c> recovers the dimensionally correct
     /// signed distance from the face plane. Degenerate (zero-area) face triangles are
-    /// skipped so they cannot produce a NaN signed distance from the division.
+    /// skipped so they cannot produce a NaN signed distance from the division. A hull in which
+    /// every face is degenerate encloses no volume and contains no point, so the result is
+    /// <see langword="false"/>. A NaN in the point or in a vertex of a face never passes: the
+    /// result is <see langword="false"/>.
     /// </para>
     /// <para>
     /// Spans whose length is not a positive multiple of three return
@@ -131,21 +134,63 @@ public static class Containment
         if (hullVertices.Length < 3 || hullVertices.Length % 3 is not 0)
             return false;
 
+        var hasUsableFace = false;
         for (var i = 0; i < hullVertices.Length; i += 3)
         {
-            var a = hullVertices[i];
-            var b = hullVertices[i + 1];
-            var c = hullVertices[i + 2];
-            var normal = Vector3.Cross(b - a, c - a);
-            double normalLength = normal.Length();
-            if (normalLength <= 0.0)
+            if (!TryFaceDistance(hullVertices[i], hullVertices[i + 1], hullVertices[i + 2], point, out var signedDistance))
                 continue;
-            double dot = Vector3.Dot(point - a, normal);
-            var signedDistance = dot / normalLength;
-            if (signedDistance > tolerance)
+            hasUsableFace = true;
+            // Negated <=, so a NaN distance (a NaN point or vertex) fails instead of passing.
+            if (!(signedDistance <= tolerance))
                 return false;
         }
+
+        // A hull whose every face is degenerate encloses no volume: there is no inside to be in.
+        return hasUsableFace;
+    }
+
+    /// <summary>
+    /// Signed distance of <paramref name="point"/> from the plane of the face <c>(a, b, c)</c>, positive on the
+    /// side the face's normal <c>(b - a) x (c - a)</c> points to. Computed in <see cref="double"/>: in
+    /// <see cref="float"/> the normal of a tiny but valid face (sides near <c>1e-12</c>) has a squared length
+    /// that underflows to zero, and the face would be skipped as degenerate.
+    /// </summary>
+    /// <param name="a">First vertex of the face.</param>
+    /// <param name="b">Second vertex of the face.</param>
+    /// <param name="c">Third vertex of the face.</param>
+    /// <param name="point">The point to measure.</param>
+    /// <param name="signedDistance">The signed distance; NaN when a coordinate is NaN.</param>
+    /// <returns><see langword="false"/> when the face is degenerate (its normal has zero length).</returns>
+    private static bool TryFaceDistance(Vector3 a, Vector3 b, Vector3 c, Vector3 point, out double signedDistance)
+    {
+        var (abX, abY, abZ) = DifferenceInDouble(b, a);
+        var (acX, acY, acZ) = DifferenceInDouble(c, a);
+        double normalX = (abY * acZ) - (abZ * acY);
+        double normalY = (abZ * acX) - (abX * acZ);
+        double normalZ = (abX * acY) - (abY * acX);
+        double normalLength = Math.Sqrt((normalX * normalX) + (normalY * normalY) + (normalZ * normalZ));
+        if (normalLength <= 0.0)
+        {
+            signedDistance = 0.0;
+            return false;
+        }
+
+        var (apX, apY, apZ) = DifferenceInDouble(point, a);
+        double dot = (apX * normalX) + (apY * normalY) + (apZ * normalZ);
+        signedDistance = dot / normalLength;
         return true;
+    }
+
+    /// <summary>The components of <c>to - from</c>, each widened to <see cref="double"/> before the subtraction.</summary>
+    /// <param name="to">The end point.</param>
+    /// <param name="from">The start point.</param>
+    /// <returns>The difference in <see cref="double"/> precision.</returns>
+    private static (double X, double Y, double Z) DifferenceInDouble(Vector3 to, Vector3 from)
+    {
+        double toX = to.X;
+        double toY = to.Y;
+        double toZ = to.Z;
+        return (toX - from.X, toY - from.Y, toZ - from.Z);
     }
 
     private static void ValidateTolerance(double tolerance)

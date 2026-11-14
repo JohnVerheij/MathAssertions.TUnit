@@ -29,7 +29,8 @@ public static class Properties
     /// Returns <see langword="true"/> when every point in <paramref name="points"/> lies
     /// on a single line within <paramref name="tolerance"/>. Sequences with fewer than
     /// three points are vacuously collinear; sequences in which all points coincide are
-    /// also collinear.
+    /// also collinear. A point with a NaN or infinite coordinate defines no line: the result is
+    /// <see langword="false"/>.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -56,6 +57,9 @@ public static class Properties
     public static bool IsCollinear(ReadOnlySpan<Vector3> points, double tolerance)
     {
         ValidateTolerance(tolerance);
+
+        if (!AreAllFinite(points))
+            return false;
 
         if (points.Length < 3)
             return true;
@@ -94,11 +98,16 @@ public static class Properties
     /// Returns <see langword="true"/> when every point in <paramref name="points"/> lies
     /// on a single plane within <paramref name="tolerance"/>. Sequences with fewer than
     /// four points are vacuously coplanar; sequences in which every point is collinear
-    /// are also coplanar (every line lies on infinitely many planes).
+    /// are also coplanar (every line lies on infinitely many planes). A point with a NaN or
+    /// infinite coordinate defines no plane: the result is <see langword="false"/>.
     /// </summary>
     /// <remarks>
     /// Searches the input for a non-collinear triple and uses it to construct the test
-    /// plane. If no such triple exists the entire set is collinear, which trivially
+    /// plane. A triple counts as non-collinear when its third point lies farther than
+    /// <paramref name="tolerance"/> (a length, like every other distance here) from the line
+    /// through the first two, the same measure <see cref="IsCollinear(ReadOnlySpan{Vector3}, double)"/>
+    /// uses; the cross product alone is an area and would let a small point set pass whatever
+    /// its shape. If no such triple exists the entire set is collinear, which trivially
     /// satisfies coplanarity. The search is at worst quadratic in the number of points
     /// when most pairs are collinear with <c>points[0]</c>; for typical test inputs the
     /// non-collinear triple is found in the first few iterations.
@@ -112,34 +121,101 @@ public static class Properties
     {
         ValidateTolerance(tolerance);
 
+        if (!AreAllFinite(points))
+            return false;
         if (points.Length < 4)
             return true;
+        if (!TryFindPlaneNormal(points, tolerance, out var normalX, out var normalY, out var normalZ))
+            return true;
 
-        var p0 = points[0];
-        var normal = Vector3.Zero;
-        var foundNormal = false;
-        for (var i = 1; i < points.Length - 1 && !foundNormal; i++)
+        double ox = points[0].X;
+        double oy = points[0].Y;
+        double oz = points[0].Z;
+        for (var i = 0; i < points.Length; i++)
         {
+            double px = points[i].X;
+            double py = points[i].Y;
+            double pz = points[i].Z;
+            double dot = ((px - ox) * normalX) + ((py - oy) * normalY) + ((pz - oz) * normalZ);
+            if (Math.Abs(dot) > tolerance)
+                return false;
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Looks for a triple <c>points[0]</c>, <c>points[i]</c>, <c>points[j]</c> that spans a plane: the
+    /// third point lies farther than <paramref name="tolerance"/> from the line through the first two
+    /// (the length of the cross product divided by the length of the edge, so the measure is a distance).
+    /// An edge no longer than the tolerance (coincident or near-coincident points, as in IsCollinear) is skipped: its direction is noise. Computed in <see cref="double"/> precision.
+    /// </summary>
+    /// <param name="points">Finite points, at least three.</param>
+    /// <param name="tolerance">Distance a point must exceed to count as off the line.</param>
+    /// <param name="normalX">Receives the X component of the unit plane normal.</param>
+    /// <param name="normalY">Receives the Y component of the unit plane normal.</param>
+    /// <param name="normalZ">Receives the Z component of the unit plane normal.</param>
+    /// <returns><see langword="true"/> if a spanning triple was found; <see langword="false"/> if every
+    /// point lies on one line within <paramref name="tolerance"/>.</returns>
+    private static bool TryFindPlaneNormal(
+        ReadOnlySpan<Vector3> points,
+        double tolerance,
+        out double normalX,
+        out double normalY,
+        out double normalZ)
+    {
+        double ox = points[0].X;
+        double oy = points[0].Y;
+        double oz = points[0].Z;
+        for (var i = 1; i < points.Length - 1; i++)
+        {
+            double ax = points[i].X;
+            double ay = points[i].Y;
+            double az = points[i].Z;
+            double ux = ax - ox;
+            double uy = ay - oy;
+            double uz = az - oz;
+            double edgeLength = Math.Sqrt((ux * ux) + (uy * uy) + (uz * uz));
+            if (edgeLength <= tolerance)
+                continue;
+
             for (var j = i + 1; j < points.Length; j++)
             {
-                var n = Vector3.Cross(points[i] - p0, points[j] - p0);
-                double nLength = n.Length();
-                if (nLength > tolerance)
+                double jx = points[j].X;
+                double jy = points[j].Y;
+                double jz = points[j].Z;
+                double vx = jx - ox;
+                double vy = jy - oy;
+                double vz = jz - oz;
+                double cx = (uy * vz) - (uz * vy);
+                double cy = (uz * vx) - (ux * vz);
+                double cz = (ux * vy) - (uy * vx);
+                double crossLength = Math.Sqrt((cx * cx) + (cy * cy) + (cz * cz));
+                if (crossLength / edgeLength > tolerance)
                 {
-                    normal = Vector3.Normalize(n);
-                    foundNormal = true;
-                    break;
+                    normalX = cx / crossLength;
+                    normalY = cy / crossLength;
+                    normalZ = cz / crossLength;
+                    return true;
                 }
             }
         }
-        if (!foundNormal)
-            return true;
 
-        for (var i = 0; i < points.Length; i++)
+        normalX = normalY = normalZ = 0.0;
+        return false;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> when every coordinate of every point is finite (neither NaN nor
+    /// infinite). Distances to such a point are NaN, and a NaN distance would otherwise pass a
+    /// "greater than tolerance" test.
+    /// </summary>
+    /// <param name="points">Points to inspect.</param>
+    /// <returns><see langword="true"/> if all coordinates are finite.</returns>
+    private static bool AreAllFinite(ReadOnlySpan<Vector3> points)
+    {
+        foreach (var p in points)
         {
-            double dot = Vector3.Dot(points[i] - p0, normal);
-            var d = Math.Abs(dot);
-            if (d > tolerance)
+            if (!float.IsFinite(p.X) || !float.IsFinite(p.Y) || !float.IsFinite(p.Z))
                 return false;
         }
         return true;

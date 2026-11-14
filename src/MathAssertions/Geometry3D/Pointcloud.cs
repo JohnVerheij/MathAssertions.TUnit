@@ -72,7 +72,8 @@ public static class Pointcloud
     /// <summary>
     /// Returns <see langword="true"/> when every point in <paramref name="cloud"/> lies
     /// within <paramref name="maxResidual"/> perpendicular distance of
-    /// <paramref name="plane"/>. The empty cloud is vacuously on the plane.
+    /// <paramref name="plane"/>. The empty cloud is vacuously on the plane; a cloud with a NaN
+    /// point is not on any plane.
     /// </summary>
     /// <param name="cloud">Point cloud.</param>
     /// <param name="plane">Reference plane (assumes unit-length normal, the standard
@@ -90,7 +91,8 @@ public static class Pointcloud
 
         foreach (var p in cloud)
         {
-            if (p.DistanceFrom(plane) > maxResidual)
+            // Negated <=, so a NaN distance (a NaN point) fails instead of passing.
+            if (!(p.DistanceFrom(plane) <= maxResidual))
                 return false;
         }
         return true;
@@ -101,7 +103,7 @@ public static class Pointcloud
     /// within <paramref name="maxResidual"/> radial distance of the sphere defined by
     /// <paramref name="center"/> and <paramref name="radius"/>: the absolute difference
     /// between point-to-center distance and the radius is bounded by the residual. The
-    /// empty cloud is vacuously on the sphere.
+    /// empty cloud is vacuously on the sphere; a cloud with a NaN point is not on any sphere.
     /// </summary>
     /// <param name="cloud">Point cloud.</param>
     /// <param name="center">Sphere center.</param>
@@ -122,7 +124,8 @@ public static class Pointcloud
         {
             double distance = Vector3.Distance(p, center);
             var residual = Math.Abs(distance - radius);
-            if (residual > maxResidual)
+            // Negated <=, so a NaN residual (a NaN point) fails instead of passing.
+            if (!(residual <= maxResidual))
                 return false;
         }
         return true;

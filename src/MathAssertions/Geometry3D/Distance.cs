@@ -75,53 +75,93 @@ public static class Distance
     /// <param name="triangle">Triangle to measure to.</param>
     /// <returns>The unsigned closest-point distance.</returns>
     public static double DistanceFrom(this Vector3 point, Triangle3D triangle)
+        => Vector3.Distance(point, ClosestPointOn(triangle, point));
+
+    /// <summary>
+    /// Closest point of <paramref name="triangle"/> to <paramref name="point"/>: the Voronoi region
+    /// classification of Ericson, <i>Real-Time Collision Detection</i>, §5.1.5, in the order vertex A, vertex B,
+    /// edge AB, vertex C, edge AC, edge BC, interior.
+    /// </summary>
+    /// <param name="triangle">The triangle.</param>
+    /// <param name="point">The point to measure from.</param>
+    /// <returns>The point of the triangle nearest to <paramref name="point"/>.</returns>
+    private static Vector3 ClosestPointOn(Triangle3D triangle, Vector3 point)
     {
         var ab = triangle.B - triangle.A;
         var ac = triangle.C - triangle.A;
         var ap = point - triangle.A;
         var d1 = Vector3.Dot(ab, ap);
         var d2 = Vector3.Dot(ac, ap);
-        if (d1 <= 0 && d2 <= 0)
-            return Vector3.Distance(point, triangle.A);
+        if (IsInVertexARegion(d1, d2))
+            return triangle.A;
 
         var bp = point - triangle.B;
         var d3 = Vector3.Dot(ab, bp);
         var d4 = Vector3.Dot(ac, bp);
-        if (d3 >= 0 && d4 <= d3)
-            return Vector3.Distance(point, triangle.B);
+        if (IsInVertexBRegion(d3, d4))
+            return triangle.B;
 
         var vc = (d1 * d4) - (d3 * d2);
-        if (vc <= 0 && d1 >= 0 && d3 <= 0)
-        {
-            var v = d1 / (d1 - d3);
-            return Vector3.Distance(point, triangle.A + (v * ab));
-        }
+        if (IsInEdgeRegion(vc, d1, d3))
+            return triangle.A + (d1 / (d1 - d3) * ab);
 
         var cp = point - triangle.C;
         var d5 = Vector3.Dot(ab, cp);
         var d6 = Vector3.Dot(ac, cp);
-        if (d6 >= 0 && d5 <= d6)
-            return Vector3.Distance(point, triangle.C);
+        if (IsInVertexCRegion(d5, d6))
+            return triangle.C;
 
         var vb = (d5 * d2) - (d1 * d6);
-        if (vb <= 0 && d2 >= 0 && d6 <= 0)
-        {
-            var w = d2 / (d2 - d6);
-            return Vector3.Distance(point, triangle.A + (w * ac));
-        }
+        if (IsInEdgeRegion(vb, d2, d6))
+            return triangle.A + (d2 / (d2 - d6) * ac);
 
         var va = (d3 * d6) - (d5 * d4);
-        if (va <= 0 && (d4 - d3) >= 0 && (d5 - d6) >= 0)
+        if (IsInEdgeBcRegion(va, d3, d4, d5, d6))
         {
             var w = (d4 - d3) / ((d4 - d3) + (d5 - d6));
-            return Vector3.Distance(point, triangle.B + (w * (triangle.C - triangle.B)));
+            return triangle.B + (w * (triangle.C - triangle.B));
         }
 
         // Projection lies inside the triangle; reconstruct the foot of the perpendicular.
         var denom = 1f / (va + vb + vc);
         var vBary = vb * denom;
         var wBary = vc * denom;
-        var closest = triangle.A + (vBary * ab) + (wBary * ac);
-        return Vector3.Distance(point, closest);
+        return triangle.A + (vBary * ab) + (wBary * ac);
     }
+
+    /// <summary>Whether the projection falls in the Voronoi region of vertex A.</summary>
+    /// <param name="d1">Dot of AB with the vector from A to the point.</param>
+    /// <param name="d2">Dot of AC with the vector from A to the point.</param>
+    /// <returns><see langword="true"/> when both dots are non-positive.</returns>
+    private static bool IsInVertexARegion(float d1, float d2) => d1 <= 0 && d2 <= 0;
+
+    /// <summary>Whether the projection falls in the Voronoi region of vertex B.</summary>
+    /// <param name="d3">Dot of AB with the vector from B to the point.</param>
+    /// <param name="d4">Dot of AC with the vector from B to the point.</param>
+    /// <returns><see langword="true"/> when <paramref name="d3"/> is non-negative and <paramref name="d4"/> does not exceed it.</returns>
+    private static bool IsInVertexBRegion(float d3, float d4) => d3 >= 0 && d4 <= d3;
+
+    /// <summary>Whether the projection falls in the Voronoi region of vertex C.</summary>
+    /// <param name="d5">Dot of AB with the vector from C to the point.</param>
+    /// <param name="d6">Dot of AC with the vector from C to the point.</param>
+    /// <returns><see langword="true"/> when <paramref name="d6"/> is non-negative and <paramref name="d5"/> does not exceed it.</returns>
+    private static bool IsInVertexCRegion(float d5, float d6) => d6 >= 0 && d5 <= d6;
+
+    /// <summary>Whether the projection falls in the Voronoi region of edge AB or edge AC.</summary>
+    /// <param name="signedArea">The barycentric area term of the opposite vertex.</param>
+    /// <param name="dotAtStart">Dot of the edge with the vector from its start vertex to the point.</param>
+    /// <param name="dotAtEnd">Dot of the edge with the vector from the other vertex to the point.</param>
+    /// <returns><see langword="true"/> when the point projects onto the edge.</returns>
+    private static bool IsInEdgeRegion(float signedArea, float dotAtStart, float dotAtEnd)
+        => signedArea <= 0 && dotAtStart >= 0 && dotAtEnd <= 0;
+
+    /// <summary>Whether the projection falls in the Voronoi region of edge BC.</summary>
+    /// <param name="va">The barycentric area term of vertex A.</param>
+    /// <param name="d3">Dot of AB with the vector from B to the point.</param>
+    /// <param name="d4">Dot of AC with the vector from B to the point.</param>
+    /// <param name="d5">Dot of AB with the vector from C to the point.</param>
+    /// <param name="d6">Dot of AC with the vector from C to the point.</param>
+    /// <returns><see langword="true"/> when the point projects onto edge BC.</returns>
+    private static bool IsInEdgeBcRegion(float va, float d3, float d4, float d5, float d6)
+        => va <= 0 && (d4 - d3) >= 0 && (d5 - d6) >= 0;
 }
