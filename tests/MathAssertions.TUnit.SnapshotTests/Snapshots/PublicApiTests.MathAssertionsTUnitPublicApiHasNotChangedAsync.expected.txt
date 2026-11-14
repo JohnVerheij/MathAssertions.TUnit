@@ -1,7 +1,6 @@
 [assembly: System.Reflection.AssemblyMetadata("IsAotCompatible", "True")]
 [assembly: System.Reflection.AssemblyMetadata("IsTrimmable", "True")]
 [assembly: System.Reflection.AssemblyMetadata("RepositoryUrl", "https://github.com/JohnVerheij/MathAssertions.TUnit")]
-[assembly: System.Runtime.Versioning.TargetFramework(".NETCoreApp,Version=v10.0", FrameworkDisplayName=".NET 10.0")]
 namespace MathAssertions.TUnit
 {
     public static class ArrayAssertions
@@ -146,6 +145,10 @@ namespace MathAssertions.TUnit
     {
         [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to roundtrip through forward/inverse within tolerance {tolerance}", InlineMethodBody=true)]
         public static bool HasRoundtripIdentity(this double value, System.Func<double, double> forward, System.Func<double, double> inverse, double tolerance) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(InlineMethodBody=true)]
+        public static TUnit.Assertions.Core.AssertionResult IsAngleApproximatelyEqualTo(this double value, double expected, double toleranceDegrees) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(InlineMethodBody=true)]
+        public static TUnit.Assertions.Core.AssertionResult IsAngleApproximatelyEqualTo(this float value, float expected, float toleranceDegrees) { }
         [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be approximately equal to {expected} within tolerance {tolerance}", InlineMethodBody=true)]
         public static bool IsApproximatelyEqualTo(this double value, double expected, double tolerance) { }
         [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be approximately equal to {expected} within tolerance {tolerance}", InlineMethodBody=true)]
@@ -380,6 +383,12 @@ namespace TUnit.Assertions.Extensions
         protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<double> metadata) { }
         protected override string GetExpectation() { }
     }
+    public sealed class Double_IsAngleApproximatelyEqualTo_Double_Double_Assertion : TUnit.Assertions.Core.Assertion<double>
+    {
+        public Double_IsAngleApproximatelyEqualTo_Double_Double_Assertion(TUnit.Assertions.Core.AssertionContext<double> context, double expected, double toleranceDegrees) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<double> metadata) { }
+        protected override string GetExpectation() { }
+    }
     public sealed class Double_IsApproximatelyEqualTo_Double_Double_Assertion : TUnit.Assertions.Core.Assertion<double>
     {
         public Double_IsApproximatelyEqualTo_Double_Double_Assertion(TUnit.Assertions.Core.AssertionContext<double> context, double expected, double tolerance) { }
@@ -426,6 +435,12 @@ namespace TUnit.Assertions.Extensions
     {
         public FloatArray_IsApproximatelyEqualTo_FloatArray_Float_Assertion(TUnit.Assertions.Core.AssertionContext<float[]> context, float[] expected, float tolerance) { }
         protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<float[]> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Float_IsAngleApproximatelyEqualTo_Float_Float_Assertion : TUnit.Assertions.Core.Assertion<float>
+    {
+        public Float_IsAngleApproximatelyEqualTo_Float_Float_Assertion(TUnit.Assertions.Core.AssertionContext<float> context, float expected, float toleranceDegrees) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<float> metadata) { }
         protected override string GetExpectation() { }
     }
     public sealed class Float_IsApproximatelyEqualTo_Float_Float_Assertion : TUnit.Assertions.Core.Assertion<float>
@@ -680,6 +695,8 @@ namespace TUnit.Assertions.Extensions
     public static class ScalarAssertions
     {
         public static TUnit.Assertions.Extensions.Double_HasRoundtripIdentity_FuncDoubleDouble_FuncDoubleDouble_Double_Assertion HasRoundtripIdentity(this TUnit.Assertions.Core.IAssertionSource<double> source, System.Func<double, double> forward, System.Func<double, double> inverse, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("forward")] string? forwardExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("inverse")] string? inverseExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
+        public static TUnit.Assertions.Extensions.Double_IsAngleApproximatelyEqualTo_Double_Double_Assertion IsAngleApproximatelyEqualTo(this TUnit.Assertions.Core.IAssertionSource<double> source, double expected, double toleranceDegrees, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("toleranceDegrees")] string? toleranceDegreesExpression = null) { }
+        public static TUnit.Assertions.Extensions.Float_IsAngleApproximatelyEqualTo_Float_Float_Assertion IsAngleApproximatelyEqualTo(this TUnit.Assertions.Core.IAssertionSource<float> source, float expected, float toleranceDegrees, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("toleranceDegrees")] string? toleranceDegreesExpression = null) { }
         public static TUnit.Assertions.Extensions.Double_IsApproximatelyEqualTo_Double_Double_Assertion IsApproximatelyEqualTo(this TUnit.Assertions.Core.IAssertionSource<double> source, double expected, double tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
         public static TUnit.Assertions.Extensions.Float_IsApproximatelyEqualTo_Float_Float_Assertion IsApproximatelyEqualTo(this TUnit.Assertions.Core.IAssertionSource<float> source, float expected, float tolerance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tolerance")] string? toleranceExpression = null) { }
         public static TUnit.Assertions.Extensions.Double_IsCloseInUlpsTo_Double_Long_Assertion IsCloseInUlpsTo(this TUnit.Assertions.Core.IAssertionSource<double> source, double expected, long ulpDistance, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("ulpDistance")] string? ulpDistanceExpression = null) { }

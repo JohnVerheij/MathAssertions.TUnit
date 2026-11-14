@@ -31,6 +31,15 @@ namespace MathAssertions.TUnit.SnapshotTests;
 internal sealed class PublicApiTests
 {
     /// <summary>
+    /// Leaves out the assembly's <c>TargetFramework</c> attribute, so one baseline covers every
+    /// target framework the packages build for.
+    /// </summary>
+    private static readonly ApiGeneratorOptions ApiOptions = new()
+    {
+        ExcludeAttributes = ["System.Runtime.Versioning.TargetFrameworkAttribute"],
+    };
+
+    /// <summary>
     /// Pins the public surface of the framework-agnostic <c>MathAssertions</c> assembly:
     /// <c>MathTolerance</c> and any future BCL-only helpers.
     /// </summary>
@@ -44,7 +53,7 @@ internal sealed class PublicApiTests
         // platform's native EOL while the committed .expected.txt baseline is always LF
         // (per .gitattributes), and Windows local runs would diff against the CI-accepted
         // baseline.
-        var publicApi = assembly.GeneratePublicApi().ReplaceLineEndings("\n");
+        var publicApi = assembly.GeneratePublicApi(ApiOptions).ReplaceLineEndings("\n");
 
         await Assert.That(publicApi).MatchesSnapshot();
     }
@@ -63,7 +72,7 @@ internal sealed class PublicApiTests
         // platform's native EOL while the committed .expected.txt baseline is always LF
         // (per .gitattributes), and Windows local runs would diff against the CI-accepted
         // baseline.
-        var publicApi = assembly.GeneratePublicApi().ReplaceLineEndings("\n");
+        var publicApi = assembly.GeneratePublicApi(ApiOptions).ReplaceLineEndings("\n");
 
         await Assert.That(publicApi).MatchesSnapshot();
     }

@@ -29,7 +29,7 @@ The framework-agnostic core is feature-complete across seven topical clusters an
 | Sequences | Monotonicity (strict and non-strict), sortedness, boundedness with NaN-aware element check, arithmetic / geometric progressions, single-step Cauchy convergence, generic length predicates |
 | Statistics | Welford's mean + variance, median, percentile (overflow-safe), standard deviation, sum, sigma-bound checks |
 | Linear algebra | `Matrix4x4` invariants (symmetric, orthogonal, proper rotation, identity, determinant, trace, invertible); `Vector3` pair properties (orthogonality, scale-invariant parallelism, angle between, linear independence) |
-| Number theory | `long` predicates: divisibility, primality (overflow-safe), coprimality, GCD/LCM (`long.MinValue`-aware, `OverflowException`-on-LCM-overflow; `IsDivisibleBy(long.MinValue, -1)` also throws `OverflowException`), powers of base, perfect square (overflow-safe successor check), modular congruence (canonical-residue form) |
+| Number theory | `long` predicates: divisibility, primality (overflow-safe), coprimality, GCD/LCM (`long.MinValue`-aware, `OverflowException`-on-LCM-overflow; `IsDivisibleBy` is `true` for a divisor of `1` or `-1`, including `long.MinValue`), powers of base, perfect square (overflow-safe successor check), modular congruence (canonical-residue form) |
 | Geometry3D | Eight primitive `record struct` types (`Sphere`, `AxisAlignedBox`, `OrientedBox`, `Ray3D`, `LineSegment3D`, `Triangle3D`, `Capsule`, `Cylinder`); property predicates (`IsDegenerate`, `IsCollinear`, `AreCoplanar`); containment (point/box/sphere/OBB/convex hull); closest-point distance (point->plane/segment/triangle, citing Ericson, *Real-Time Collision Detection* §§5.1.2, 5.1.5); intersection (sphere-sphere, AABB-AABB, ray-plane/sphere/triangle/AABB, citing Akenine-Möller, Haines, Hoffman, *Real-Time Rendering* 4th ed. §§22.6, 22.7, 22.8); pointcloud aggregates (boundedness, centroid, on-plane, on-sphere) |
 
 `MathAssertions.TUnit` ships ~85 fluent extensions across thirteen adapter classes; `MathAssertions` (the framework-agnostic core) ships the underlying static helpers. See the per-package READMEs and CHANGELOG for the exhaustive method listings.
@@ -81,7 +81,7 @@ This library replaces both with a single fluent DSL that auto-imports alongside 
 dotnet add package MathAssertions.TUnit
 ```
 
-**Requirements:** TUnit 1.81.10 or later, .NET 10. `MathAssertions` (the framework-agnostic core) and TUnit's runtime + assertion deps come transitively. The package is AOT-compatible, trimmable, and uses no runtime reflection in the assertion path.
+**Requirements:** TUnit 1.81.10 or later, .NET 10 or .NET 11. `MathAssertions` (the framework-agnostic core) and TUnit's runtime + assertion deps come transitively. The package is AOT-compatible, trimmable, and uses no runtime reflection in the assertion path.
 
 ## Package layout
 
@@ -309,7 +309,8 @@ public async Task ComputedPositionIsApproximatelyAtTarget(CancellationToken ct)
 
 `IsApproximatelyEqualTo` checks one numeric value against a literal expected within tolerance. To pin a *whole pose* (position and orientation together) as a snapshot baseline, render it to deterministic text with `MathAssertions.Render.PoseRenderer` and pin the result. A regression that flips a quaternion sign or swaps two pose fields then surfaces as a snapshot diff, even when each component still passes its own tolerance check.
 
-```csharp
+```csharp no-compile
+using System.Numerics;
 using MathAssertions.Render;
 
 [Test]
@@ -331,6 +332,8 @@ Only `PoseRenderer` lives in `MathAssertions.Render`. The assertions, the quater
 The pose assertions take `System.Numerics` types (`Vector3` and `Quaternion`). A pose delivered over the wire as a protobuf message usually carries its own position and orientation message types with `double` (or `float`) fields. Project the protobuf pose to `System.Numerics` first, then assert. Keeping the projection in one small mapping helper (here `ToVector3()` / `ToQuaternion()`) means the assertion reads the same whether the pose came from a solver or a deserialized message.
 
 ```csharp
+using System.Numerics;
+
 // MyProtoPose is your generated protobuf message; ToVector3() / ToQuaternion()
 // are your own one-line projections from its fields onto System.Numerics types.
 private static Vector3 ToVector3(MyProtoPosition p) => new((float)p.X, (float)p.Y, (float)p.Z);
@@ -461,15 +464,39 @@ await Assert.That(MathTolerance.HasRoundtripIdentity(
 
 When the round-trip needs typed inputs (vector / quaternion / serializer pair), compose `[GenerateAssertion]` on your own type rather than chaining `HasRoundtripIdentity`: the primitive is intentionally `double`-only so the family does not lock in a particular cross-type roundtrip surface.
 
+### Pattern: comparing angles that wrap at 360 degrees
+
+A yaw, heading or any angle in degrees repeats every 360 degrees, so the plain difference of `179.9` and `-179.9` (359.8) says nothing about how far apart they are. `IsAngleApproximatelyEqualTo` compares on the circle: the distance is the shorter arc, in `[0, 180]`, so `359` and `1` are 2 degrees apart and `+180` equals `-180`. It exists for `double` and `float`, and the tolerance is in degrees.
+
+```csharp
+// +180 and -180 are the same direction; 179.99 is within 0.05 degrees of it:
+await Assert.That(yawDegrees).IsAngleApproximatelyEqualTo(-180f, toleranceDegrees: 0.05f);
+
+// The wrapped difference as a number, and the same check as a plain boolean, for a loop that collects mismatches:
+float difference = MathTolerance.AngleDifferenceDegrees(yawDegrees, expectedYawDegrees);
+bool matches = MathTolerance.IsAngleApproximatelyEqual(yawDegrees, expectedYawDegrees, 0.05f);
+```
+
+A failure shows the wrapped difference:
+
+```text
+Expected to satisfy IsAngleApproximatelyEqualTo(170, 10)
+but the wrapped difference is 20 degrees, outside the tolerance of 10 degrees
+  actual:   -170 degrees
+  expected: 170 degrees (angles compared modulo 360)
+```
+
+A NaN or infinite angle never matches (not even NaN against NaN): it has no position on the circle. Huge angles are reduced modulo 360 exactly, so `1e7` degrees keeps its precision. Use `IsApproximatelyEqualTo` when the plain difference is what you mean, and `HasAxisAngleApproximately` or `IsRotationallyEquivalentTo` for rotations given as quaternions.
+
 ### Pattern: geometric checks on vectors and rotations (v0.5.0+)
 
 ```csharp
 // The unsigned angle between two directions, in radians (0..pi):
 await Assert.That(forward).HasAngleBetweenApproximately(target, expectedRadians: Math.PI / 2, tolerance: 1e-6);
 
-// Parallel or antiparallel, whatever the lengths within float range: both lengths above the
-// tolerance, and both lengths and their product below about 1.8e19. The lengths and the cross
-// product are computed in float; beyond that range they overflow and the result can be wrong.
+// Parallel or antiparallel, whatever the lengths: both lengths must be above the tolerance (a
+// shorter vector counts as parallel to anything). The lengths and the cross product are computed
+// in double, so no float vector can overflow them.
 // The tolerance is the sine of the allowed deviation, so 1e-3 admits about a milliradian.
 await Assert.That(axis).IsParallelTo(new Vector3(0, 0, 10), tolerance: 1e-3);
 
@@ -477,11 +504,12 @@ await Assert.That(axis).IsParallelTo(new Vector3(0, 0, 10), tolerance: 1e-3);
 await Assert.That(Vector3.Normalize(direction)).IsNormalized(tolerance: 1e-6);
 await Assert.That(orientation).IsNormalized(tolerance: 1e-6);
 
-// A proper rotation: two checks that must both pass, M * M^T = I and determinant +1, each within the
-// tolerance. A reflection (determinant -1) fails under any tolerance below 2. An affine matrix (last
-// column 0, 0, 0, 1) with a translation or a scale factor other than +1 or -1 fails unless both
-// checks stay within the tolerance. CreateScale(-1, -1, 1) is a 180-degree rotation about Z and passes.
-// The whole 4x4 matrix is checked, not the affine form: a 4D rotation that mixes W with X, Y or Z passes.
+// A proper rotation: three checks that must all pass, each within the tolerance: M * M^T = I, the last
+// column is 0, 0, 0, 1 (the affine form), and the determinant is +1. A reflection (determinant -1)
+// fails under any tolerance below 2. A matrix with a translation or a scale factor other than +1 or -1
+// fails unless the checks stay within the tolerance. CreateScale(-1, -1, 1) is a 180-degree rotation
+// about Z and passes. A 4D rotation that mixes W with X, Y or Z fails the last-column check, where
+// IsOrthogonal, a pure 4x4 check, accepts it.
 await Assert.That(Matrix4x4.CreateFromQuaternion(orientation)).IsRotation(tolerance: 1e-5);
 ```
 
@@ -527,9 +555,28 @@ Match TUnit's `IsCloseTo` primitive semantics:
 
 For the Vector3 overload, every component pair is evaluated against this table; the assertion passes iff all three pairs pass.
 
-The generic `ReadOnlyTensorSpan<T>` overload follows the NaN rows but not the infinity rows: it compares infinities through `T.Abs(a - b) > tolerance`. Under a finite tolerance the results match the table; under a tolerance of positive infinity it returns `true` for opposite-sign infinities and for an infinity against a finite value.
+The generic `ReadOnlyTensorSpan<T>` overload follows the same rows, infinities included, under every tolerance (positive infinity as well). For integer element types a difference beyond the range of the type (for example `int.MaxValue` against `int.MinValue`) is larger than any tolerance and compares unequal; unsigned types do not wrap.
 
-This table describes the tolerance comparisons. Other checks do not define NaN handling: NaN input can pass the pose position comparison, the pointcloud on-plane and on-sphere checks, convex-hull containment, and the monotonic-sequence checks. Assert finiteness separately when it matters.
+This table describes the tolerance comparisons. The checks that test a bound fail on NaN instead of passing: the pose position comparison (a NaN distance, from a NaN coordinate or infinite coordinates that cancel, never matches, not even NaN against NaN), the pointcloud on-plane and on-sphere checks, convex-hull containment (a NaN point or vertex), the four monotonic-sequence checks (any NaN in the span), the collinear and coplanar checks (a point with a NaN or infinite coordinate), and ray-box intersection. The angle comparison never matches a NaN or infinite angle. A quaternion that cannot be normalized (the zero quaternion) is compared componentwise at a fixed tolerance of `1e-6` by `IsRotationallyEquivalentTo`, `HasAxisAngleApproximately` and the pose comparison: it matches itself and no real rotation. The progression and convergence checks (`IsArithmeticProgression`, `IsGeometricProgression`, `IsCauchyConvergent`, `ConvergesTo`) and a quaternion with NaN components follow the table above, where NaN against NaN is equal.
+
+### Statistics: NaN and tolerance units
+
+Every `Statistics` method states what it does with a NaN in the sample and what unit its tolerance has. No method ignores NaN; filter the sample first when NaN is expected.
+
+| Method | Tolerance unit | A NaN in the sample |
+|---|---|---|
+| `MeanAndVariance` | (returns the pair) | Mean and variance are NaN. An empty sample gives `(NaN, NaN)`, a single value `(value, 0)` (a single NaN included). |
+| `HasMeanApproximately` | the unit of the values | The mean is NaN: it matches only an expected NaN. An empty sample returns `false`. |
+| `HasVarianceApproximately` | the squared unit of the values | The variance is NaN: it matches only an expected NaN. Fewer than two values return `false`. |
+| `HasStdDevApproximately` | the unit of the values | The deviation is NaN: it matches only an expected NaN. Fewer than two values return `false`. |
+| `HasSumApproximately` | the unit of the values | The sum is NaN: it matches only an expected NaN. An empty sample sums to `0`. |
+| `HasMedianApproximately` | the unit of the values | NaN sorts first; the median is NaN only when a NaN lands on a middle position. An empty sample returns `false`. |
+| `HasPercentileApproximately` | the unit of the values | NaN sorts first; the result is NaN only for the ranks that interpolate it. The percentile is on the scale 0 to 100 (50 is the median). An empty sample returns `false`. |
+| `IsWithinSigmasOfMean` | standard deviations (a multiple, no unit) | A NaN value or a NaN in the sample returns `false`. Fewer than two values return `false`. |
+| `AreAllWithinSigmasOfMean` | standard deviations (a multiple, no unit) | A NaN in the sample returns `false`. Fewer than two values return `false`. |
+
+An infinite `sigmas` over a sample whose standard deviation is zero gives a NaN envelope (`infinity * 0`), which nothing is within.
+
 
 ## Stability intent (pre-1.0)
 

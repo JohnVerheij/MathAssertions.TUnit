@@ -10,7 +10,7 @@
     dependency by accident, this project would fail to compile.
   -->
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>net10.0;net11.0</TargetFrameworks>
     <RootNamespace>MathAssertions.Tests</RootNamespace>
     <AssemblyName>MathAssertions.Tests</AssemblyName>
 

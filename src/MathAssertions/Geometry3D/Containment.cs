@@ -105,7 +105,10 @@ public static class Containment
     /// hull (subdividing a face into smaller triangles) shift the verdict for the same
     /// geometric point. Dividing by <c>|normal|</c> recovers the dimensionally correct
     /// signed distance from the face plane. Degenerate (zero-area) face triangles are
-    /// skipped so they cannot produce a NaN signed distance from the division.
+    /// skipped so they cannot produce a NaN signed distance from the division. A hull in which
+    /// every face is degenerate encloses no volume and contains no point, so the result is
+    /// <see langword="false"/>. A NaN in the point or in a vertex of a face never passes: the
+    /// result is <see langword="false"/>.
     /// </para>
     /// <para>
     /// Spans whose length is not a positive multiple of three return
@@ -131,6 +134,7 @@ public static class Containment
         if (hullVertices.Length < 3 || hullVertices.Length % 3 is not 0)
             return false;
 
+        var hasUsableFace = false;
         for (var i = 0; i < hullVertices.Length; i += 3)
         {
             var a = hullVertices[i];
@@ -140,12 +144,16 @@ public static class Containment
             double normalLength = normal.Length();
             if (normalLength <= 0.0)
                 continue;
+            hasUsableFace = true;
             double dot = Vector3.Dot(point - a, normal);
             var signedDistance = dot / normalLength;
-            if (signedDistance > tolerance)
+            // Negated <=, so a NaN distance (a NaN point or vertex) fails instead of passing.
+            if (!(signedDistance <= tolerance))
                 return false;
         }
-        return true;
+
+        // A hull whose every face is degenerate encloses no volume: there is no inside to be in.
+        return hasUsableFace;
     }
 
     private static void ValidateTolerance(double tolerance)

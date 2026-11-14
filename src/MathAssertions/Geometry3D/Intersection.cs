@@ -146,7 +146,8 @@ public static class Intersection
             var max = ComponentAt(box.Max, i);
             if (Math.Abs(dir) < ParallelEpsilon)
             {
-                if (origin < min || origin > max)
+                // Negated bounds test, so a NaN origin fails instead of passing the slab.
+                if (!(origin >= min && origin <= max))
                     return false;
             }
             else

@@ -20,6 +20,23 @@ namespace MathAssertions;
 /// e-Handbook of Statistical Methods §1.3.5.6 and Knuth, <i>The Art of Computer
 /// Programming Vol. 2</i>, §4.2.2.
 /// </para>
+/// <para>
+/// NaN policy. A NaN in the sample poisons the moments: the mean, variance, standard deviation
+/// and sum are NaN, so those checks match only an expected value that is itself NaN (both NaN
+/// compare equal, as in <see cref="MathTolerance"/>). The median and the percentile sort a
+/// copy of the sample, which places NaN first, and then read positions: they are NaN only when a
+/// NaN lands on a position they read (for example the middle of a sample that is mostly NaN).
+/// The sigma checks (<see cref="IsWithinSigmasOfMean(double, ReadOnlySpan{double}, double)"/>
+/// and <see cref="AreAllWithinSigmasOfMean(ReadOnlySpan{double}, double)"/>) return
+/// <see langword="false"/> for a NaN value or a NaN in the sample. No method ignores NaN; filter
+/// the sample first when NaN is expected.
+/// </para>
+/// <para>
+/// Units of the tolerances. <c>tolerance</c> is an absolute difference in the unit of the
+/// values for the mean, standard deviation, sum, median and percentile, and in the squared unit
+/// for the variance. <c>sigmas</c> is a multiple of the sample standard deviation and has no
+/// unit. The percentile is on the scale 0 to 100 (50 is the median), not 0 to 1.
+/// </para>
 /// </remarks>
 public static class Statistics
 {
@@ -65,8 +82,8 @@ public static class Statistics
     /// </summary>
     /// <param name="values">Sample to inspect.</param>
     /// <param name="expected">Expected mean.</param>
-    /// <param name="tolerance">Maximum allowed absolute difference. Must be non-negative
-    /// and not NaN.</param>
+    /// <param name="tolerance">Maximum allowed absolute difference, in the unit of the values. Must be
+    /// non-negative and not NaN.</param>
     /// <returns><see langword="true"/> if the sample mean is approximately
     /// <paramref name="expected"/>.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
@@ -88,8 +105,8 @@ public static class Statistics
     /// </summary>
     /// <param name="values">Sample to inspect.</param>
     /// <param name="expected">Expected variance.</param>
-    /// <param name="tolerance">Maximum allowed absolute difference. Must be non-negative
-    /// and not NaN.</param>
+    /// <param name="tolerance">Maximum allowed absolute difference, in the squared unit of the values (for meters, meters squared). Must be
+    /// non-negative and not NaN.</param>
     /// <returns><see langword="true"/> if the sample variance is approximately
     /// <paramref name="expected"/>.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
@@ -112,8 +129,8 @@ public static class Statistics
     /// </summary>
     /// <param name="values">Sample to inspect.</param>
     /// <param name="expected">Expected standard deviation.</param>
-    /// <param name="tolerance">Maximum allowed absolute difference. Must be non-negative
-    /// and not NaN.</param>
+    /// <param name="tolerance">Maximum allowed absolute difference, in the unit of the values. Must be
+    /// non-negative and not NaN.</param>
     /// <returns><see langword="true"/> if the sample standard deviation is approximately
     /// <paramref name="expected"/>.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
@@ -134,8 +151,8 @@ public static class Statistics
     /// </summary>
     /// <param name="values">Sample to inspect.</param>
     /// <param name="expected">Expected sum.</param>
-    /// <param name="tolerance">Maximum allowed absolute difference. Must be non-negative
-    /// and not NaN.</param>
+    /// <param name="tolerance">Maximum allowed absolute difference, in the unit of the values. Must be
+    /// non-negative and not NaN.</param>
     /// <returns><see langword="true"/> if the sum is approximately
     /// <paramref name="expected"/>.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
@@ -161,17 +178,21 @@ public static class Statistics
     /// span backing store. The copy is the algorithm's only allocation.
     /// </para>
     /// <para>
-    /// Even-length median uses the overflow-safe form <c>a/2 + b/2</c> rather than the
-    /// textbook <c>(a + b)/2</c>. The latter overflows to <see cref="double.PositiveInfinity"/>
-    /// for samples whose two middle values sum past <see cref="double.MaxValue"/>
-    /// (for example <c>[double.MaxValue, double.MaxValue]</c>); the half-then-add form
-    /// is exact for the same input.
+    /// The even-length median is the midpoint of the two middle values, formed so that it neither
+    /// overflows nor loses a denormal: the textbook <c>(a + b)/2</c> overflows to
+    /// <see cref="double.PositiveInfinity"/> for two large same-signed values (for example
+    /// <c>[double.MaxValue, double.MaxValue]</c>), and halving each operand first rounds the
+    /// smallest denormals to zero. Opposite-signed neighbors use the sum, same-signed neighbors use
+    /// <c>lower + (upper - lower)/2</c>, and an infinite neighbor uses the halves.
+    /// </para>
+    /// <para>
+    /// NaN sorts first, so the median is NaN only when a NaN lands on a middle position.
     /// </para>
     /// </remarks>
     /// <param name="values">Sample to inspect.</param>
     /// <param name="expected">Expected median.</param>
-    /// <param name="tolerance">Maximum allowed absolute difference. Must be non-negative
-    /// and not NaN.</param>
+    /// <param name="tolerance">Maximum allowed absolute difference, in the unit of the values. Must be
+    /// non-negative and not NaN.</param>
     /// <returns><see langword="true"/> if the median is approximately
     /// <paramref name="expected"/>.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
@@ -194,7 +215,7 @@ public static class Statistics
         {
             var lower = sorted[(sorted.Length / 2) - 1];
             var upper = sorted[sorted.Length / 2];
-            median = (lower / 2.0) + (upper / 2.0);
+            median = Midpoint(lower, upper);
         }
         return MathTolerance.IsApproximatelyEqual(median, expected, tolerance);
     }
@@ -209,6 +230,8 @@ public static class Statistics
     /// <remarks>
     /// <para>
     /// Allocates a sorted copy of the input. The empty span returns <see langword="false"/>.
+    /// NaN sorts first, so a NaN poisons only the ranks that interpolate it (rank 0 and the
+    /// ranks between the first two positions).
     /// </para>
     /// <para>
     /// Interpolation uses the overflow-safe lerp form <c>a*(1-f) + b*f</c> rather than the
@@ -222,8 +245,8 @@ public static class Statistics
     /// <param name="values">Sample to inspect.</param>
     /// <param name="percentile">Percentile in the closed interval <c>[0, 100]</c>.</param>
     /// <param name="expected">Expected percentile value.</param>
-    /// <param name="tolerance">Maximum allowed absolute difference. Must be non-negative
-    /// and not NaN.</param>
+    /// <param name="tolerance">Maximum allowed absolute difference, in the unit of the values. Must be
+    /// non-negative and not NaN.</param>
     /// <returns><see langword="true"/> if the percentile is approximately
     /// <paramref name="expected"/>.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="percentile"/> is outside
@@ -267,9 +290,13 @@ public static class Statistics
     /// <param name="value">Value to test.</param>
     /// <param name="sample">Reference sample whose mean and standard deviation define the
     /// envelope.</param>
-    /// <param name="sigmas">Number of standard deviations defining the envelope. Must be
-    /// non-negative and not NaN.</param>
-    /// <returns><see langword="true"/> if <c>|value - mean| &lt;= sigmas * stdDev</c>.</returns>
+    /// <param name="sigmas">Number of standard deviations defining the envelope (a multiple of the
+    /// standard deviation, no unit). Must be non-negative and not NaN. An infinite sigmas over a sample
+    /// with zero standard deviation gives a NaN envelope (<c>infinity * 0</c>), which nothing is
+    /// within.</param>
+    /// <returns><see langword="true"/> if <c>|value - mean| &lt;= sigmas * stdDev</c>; a NaN
+    /// <paramref name="value"/> or a NaN in <paramref name="sample"/> returns
+    /// <see langword="false"/>.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="sigmas"/> is NaN or negative.</exception>
     public static bool IsWithinSigmasOfMean(double value, ReadOnlySpan<double> sample, double sigmas)
     {
@@ -325,6 +352,26 @@ public static class Statistics
                 return false;
         }
         return true;
+    }
+
+    /// <summary>
+    /// Midpoint of two sorted neighbors without the failure modes of the naive forms: halving each operand
+    /// rounds the smallest denormals to zero, and the plain sum overflows for two large same-signed values.
+    /// An infinite operand uses the halves (an infinity stays an infinity, and opposite infinities give NaN);
+    /// operands of opposite sign use the sum (it cannot overflow); same-signed operands use
+    /// <c>lower + (upper - lower) / 2</c> (the difference cannot overflow, and the half of a difference is
+    /// rounded once).
+    /// </summary>
+    /// <param name="lower">The smaller neighbor.</param>
+    /// <param name="upper">The larger neighbor.</param>
+    /// <returns>The value halfway between the two.</returns>
+    private static double Midpoint(double lower, double upper)
+    {
+        if (double.IsInfinity(lower) || double.IsInfinity(upper))
+            return (lower / 2.0) + (upper / 2.0);
+        if (double.IsNegative(lower) != double.IsNegative(upper))
+            return (lower + upper) / 2.0;
+        return lower + ((upper - lower) / 2.0);
     }
 
     private static void ValidateTolerance(double tolerance)

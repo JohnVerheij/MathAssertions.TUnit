@@ -1111,28 +1111,27 @@ internal sealed class MathToleranceTests
         await Assert.That(result).IsFalse();
     }
 
-    /// <summary>Pins the tensor overload's infinity results next to the scalar overload's: the
-    /// tensor compares through <c>T.Abs(a - b) &gt; tolerance</c>, so the two agree under a finite
-    /// tolerance and differ under a tolerance of positive infinity, where the tensor returns
-    /// <see langword="true"/> for opposite-sign infinities and for an infinity against a finite value.</summary>
+    /// <summary>Pins that the tensor overload applies the scalar overload's infinity rules under every
+    /// tolerance, positive infinity included: an infinity equals only the infinity of the same sign.</summary>
     [Test]
-    [Arguments(double.PositiveInfinity, double.PositiveInfinity, 1.0, true, true)]
-    [Arguments(double.PositiveInfinity, double.NegativeInfinity, 1.0, false, false)]
-    [Arguments(double.PositiveInfinity, 1.0, 1.0, false, false)]
-    [Arguments(double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity, true, true)]
-    [Arguments(double.NegativeInfinity, double.NegativeInfinity, double.PositiveInfinity, true, true)]
-    [Arguments(double.PositiveInfinity, double.NegativeInfinity, double.PositiveInfinity, true, false)]
-    [Arguments(double.PositiveInfinity, 1.0, double.PositiveInfinity, true, false)]
+    [Arguments(double.PositiveInfinity, double.PositiveInfinity, 1.0, true)]
+    [Arguments(double.PositiveInfinity, double.NegativeInfinity, 1.0, false)]
+    [Arguments(double.PositiveInfinity, 1.0, 1.0, false)]
+    [Arguments(double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity, true)]
+    [Arguments(double.NegativeInfinity, double.NegativeInfinity, double.PositiveInfinity, true)]
+    [Arguments(double.PositiveInfinity, double.NegativeInfinity, double.PositiveInfinity, false)]
+    [Arguments(double.PositiveInfinity, 1.0, double.PositiveInfinity, false)]
+    [Arguments(1.0, double.NegativeInfinity, double.PositiveInfinity, false)]
     public async Task IsApproximatelyEqual_TensorDouble_Infinity_ComparedToScalar(
-        double a, double b, double tolerance, bool expectedTensor, bool expectedScalar, CancellationToken ct)
+        double a, double b, double tolerance, bool expected, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
         var tensor = MathTolerance.IsApproximatelyEqual(
             new ReadOnlyTensorSpan<double>(new[] { a }, Shape1, default),
             new ReadOnlyTensorSpan<double>(new[] { b }, Shape1, default),
             tolerance);
-        await Assert.That(tensor).IsEqualTo(expectedTensor);
-        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, tolerance)).IsEqualTo(expectedScalar);
+        await Assert.That(tensor).IsEqualTo(expected);
+        await Assert.That(MathTolerance.IsApproximatelyEqual(a, b, tolerance)).IsEqualTo(expected);
     }
 
     [Test]
@@ -1209,19 +1208,15 @@ internal sealed class MathToleranceTests
         await Assert.That(ex!.ParamName).IsEqualTo("expectedAxis");
     }
 
-    /// <summary>Pins the post-normalize underflow branch of <c>NormalizeAxisOrThrow</c>. A
-    /// non-zero but sub-denormal-magnitude axis whose squared length underflows to zero in
-    /// <see cref="float"/> causes <see cref="Vector3.Normalize"/> to emit NaN components.
-    /// The post-normalize finiteness check catches this regardless of where the float-denormal
-    /// boundary falls and reports the failure as <c>expectedAxis</c>.</summary>
+    /// <summary>Pins that the smallest denormal axis, whose squared length underflows in
+    /// <see cref="float"/>, still has a direction: the axis is normalized in double precision, so
+    /// the comparison runs instead of throwing.</summary>
     [Test]
-    public async Task HasAxisAngleApproximately_UnderflowAxis_Throws(CancellationToken ct)
+    public async Task HasAxisAngleApproximately_DenormalAxis_NormalizesInDouble(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
-        ArgumentException? ex = await Assert.That(() => MathTolerance.HasAxisAngleApproximately(
-                Quaternion.Identity, new Vector3(float.Epsilon, 0f, 0f), 0.0, tolerance: 1e-6))
-            .Throws<ArgumentException>();
-        await Assert.That(ex!.ParamName).IsEqualTo("expectedAxis");
+        await Assert.That(MathTolerance.HasAxisAngleApproximately(
+                Quaternion.Identity, new Vector3(float.Epsilon, 0f, 0f), 0.0, tolerance: 1e-6)).IsTrue();
     }
 
     /// <summary>Pins the zero-length-axis path on the public surface (the

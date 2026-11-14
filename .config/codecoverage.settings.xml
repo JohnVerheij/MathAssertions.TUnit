@@ -24,20 +24,12 @@
         <Source>.*[/\\]obj[/\\].*</Source>
       </Exclude>
     </Sources>
-    <!-- Exclude generated / explicitly-opted-out code via attribute. -->
+    <!-- Exclude generated code only, through its attribute. Nothing in the production sources opts
+         out of coverage on purpose, and the compiler-generated attribute is left out of this list so
+         the bodies of async methods and lambdas stay measured. -->
     <Attributes>
       <Exclude>
-        <Attribute>^System\.Diagnostics\.CodeAnalysis\.ExcludeFromCodeCoverageAttribute$</Attribute>
         <Attribute>^System\.CodeDom\.Compiler\.GeneratedCodeAttribute$</Attribute>
-        <Attribute>^System\.Runtime\.CompilerServices\.CompilerGeneratedAttribute$</Attribute>
-        <!-- TUnit's [GenerateAssertion(InlineMethodBody=true)] inlines the method body
-             into the generator-emitted assertion class. The original static method becomes
-             unreachable at runtime (the inlined copy gets called instead), so coverage
-             reports it as 0%. Excluding the attribute restricts measurement to the
-             actually-exercised generated code; the method bodies themselves are tested
-             via MathToleranceTests (which exercise the helpers directly) and
-             AdapterAssertionsTests (which exercise the generator-emitted methods). -->
-        <Attribute>^TUnit\.Assertions\.Attributes\.GenerateAssertionAttribute$</Attribute>
       </Exclude>
     </Attributes>
     <!-- MTP default is false (VSTest default was true). Explicit for clarity. -->

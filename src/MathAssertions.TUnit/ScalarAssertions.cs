@@ -1,5 +1,6 @@
 using System;
 using TUnit.Assertions.Attributes;
+using TUnit.Assertions.Core;
 
 namespace MathAssertions.TUnit;
 
@@ -24,6 +25,28 @@ public static class ScalarAssertions
         InlineMethodBody = true)]
     public static bool IsApproximatelyEqualTo(this float value, float expected, float tolerance)
         => MathTolerance.IsApproximatelyEqual(value, expected, tolerance);
+
+    /// <summary>
+    /// Angle comparison in degrees on the circle that wraps every <c>360</c> degrees, for
+    /// <see cref="double"/>: <c>359</c> and <c>1</c> are <c>2</c> degrees apart and <c>180</c> equals
+    /// <c>-180</c>. A NaN or infinite angle never matches. The failure shows the wrapped difference.
+    /// See <see cref="MathTolerance.AngleDifferenceDegrees(double, double)"/>.
+    /// </summary>
+    [GenerateAssertion(InlineMethodBody = true)]
+    public static AssertionResult IsAngleApproximatelyEqualTo(this double value, double expected, double toleranceDegrees)
+        => MathTolerance.IsAngleApproximatelyEqual(value, expected, toleranceDegrees)
+            ? AssertionResult.Passed
+            : AssertionResult.Failed(MathFailureMessage.AngleApproximatelyEqual(value, expected, toleranceDegrees));
+
+    /// <summary>
+    /// Angle comparison in degrees on the circle that wraps every <c>360</c> degrees, for
+    /// <see cref="float"/>. Same rules as the <see cref="double"/> overload.
+    /// </summary>
+    [GenerateAssertion(InlineMethodBody = true)]
+    public static AssertionResult IsAngleApproximatelyEqualTo(this float value, float expected, float toleranceDegrees)
+        => MathTolerance.IsAngleApproximatelyEqual(value, expected, toleranceDegrees)
+            ? AssertionResult.Passed
+            : AssertionResult.Failed(MathFailureMessage.AngleApproximatelyEqual(value, expected, toleranceDegrees));
 
     /// <summary>ULP-distance equality for <see cref="double"/>.</summary>
     [GenerateAssertion(

@@ -7,7 +7,7 @@
     test stack runs the canonical example end-to-end on the package's own surface.
 
     Why a separate project from MathAssertions.TUnit.Tests:
-      - Keeps the public-API surface check architecturally separate from behaviour tests.
+      - Keeps the public-API surface check architecturally separate from behavior tests.
       - Mirrors the TimeAssertions / SnapshotAssertions / LogAssertions layout (each repo has
         a dedicated *.SnapshotTests project) so the family is consistent.
 
@@ -24,7 +24,7 @@
     ever regresses.
   -->
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>net10.0;net11.0</TargetFrameworks>
     <RootNamespace>MathAssertions.TUnit.SnapshotTests</RootNamespace>
     <AssemblyName>MathAssertions.TUnit.SnapshotTests</AssemblyName>
 

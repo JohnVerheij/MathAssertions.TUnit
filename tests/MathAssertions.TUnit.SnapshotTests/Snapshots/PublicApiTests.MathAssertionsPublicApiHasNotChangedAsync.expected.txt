@@ -3,7 +3,6 @@
 [assembly: System.Reflection.AssemblyMetadata("RepositoryUrl", "https://github.com/JohnVerheij/MathAssertions.TUnit")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("MathAssertions.TUnit")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("MathAssertions.Tests")]
-[assembly: System.Runtime.Versioning.TargetFramework(".NETCoreApp,Version=v10.0", FrameworkDisplayName=".NET 10.0")]
 namespace MathAssertions.Geometry3D
 {
     public readonly struct AxisAlignedBox : System.IEquatable<MathAssertions.Geometry3D.AxisAlignedBox>
@@ -128,8 +127,12 @@ namespace MathAssertions
     }
     public static class MathTolerance
     {
+        public static double AngleDifferenceDegrees(double a, double b) { }
+        public static float AngleDifferenceDegrees(float a, float b) { }
         public static bool HasAxisAngleApproximately(System.Numerics.Quaternion value, System.Numerics.Vector3 expectedAxis, double expectedAngleDegrees, double tolerance) { }
         public static bool HasRoundtripIdentity(double x, System.Func<double, double> forward, System.Func<double, double> inverse, double tolerance) { }
+        public static bool IsAngleApproximatelyEqual(double a, double b, double toleranceDegrees) { }
+        public static bool IsAngleApproximatelyEqual(float a, float b, float toleranceDegrees) { }
         public static bool IsApproximatelyEqual(System.Numerics.Complex a, System.Numerics.Complex b, double tolerance) { }
         public static bool IsApproximatelyEqual(System.Numerics.Matrix4x4 a, System.Numerics.Matrix4x4 b, double tolerance) { }
         public static bool IsApproximatelyEqual(System.Numerics.Plane a, System.Numerics.Plane b, double tolerance) { }

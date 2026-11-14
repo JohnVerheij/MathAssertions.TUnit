@@ -73,27 +73,45 @@ public static class LinearAlgebra
     }
 
     /// <summary>
-    /// Returns <see langword="true"/> when the matrix is a proper rotation: two checks that must both
-    /// pass, each within tolerance. It is orthogonal (<c>M * M^T = I</c>, so it preserves lengths
-    /// and angles) <em>and</em> has determinant <c>+1</c>. The determinant check rules out
-    /// reflections (an improper orthogonal matrix has determinant <c>-1</c>) under any tolerance
-    /// below <c>2</c>. An affine matrix (last column <c>0, 0, 0, 1</c>) with a translation, or with
-    /// a scale factor other than <c>+1</c> or <c>-1</c>, fails unless both checks stay within the
-    /// tolerance: <c>Matrix4x4.CreateScale(2)</c> passes the orthogonality check at a tolerance of
-    /// <c>3</c> and fails the determinant check (<c>8</c>). A sign-flip scale such as
-    /// <c>Matrix4x4.CreateScale(-1, -1, 1)</c> is a 180-degree rotation and passes. The check covers
-    /// the whole 4x4 matrix and does not check the affine form: a 4D rotation that mixes W with X,
-    /// Y or Z passes although its translation slots (<c>M41</c> to <c>M43</c>) are not zero. Assert
-    /// the affine form separately when the input may not be affine.
+    /// Returns <see langword="true"/> when the matrix is a proper rotation in the affine form of
+    /// <see cref="Matrix4x4"/>: three checks that must all pass, each within tolerance. It is
+    /// orthogonal (<c>M * M^T = I</c>, so it preserves lengths and angles), its last column is
+    /// <c>0, 0, 0, 1</c> (<c>M14</c>, <c>M24</c> and <c>M34</c> within the tolerance of <c>0</c>,
+    /// <c>M44</c> within the tolerance of <c>1</c>), <em>and</em> it has determinant <c>+1</c>. The
+    /// determinant check rules out reflections (an improper orthogonal matrix has determinant
+    /// <c>-1</c>) under any tolerance below <c>2</c>. A matrix with a translation, or with a scale
+    /// factor other than <c>+1</c> or <c>-1</c>, fails unless the checks stay within the tolerance:
+    /// <c>Matrix4x4.CreateScale(2)</c> passes the orthogonality check at a tolerance of <c>3</c>
+    /// and fails the determinant check (<c>8</c>). A sign-flip scale such as
+    /// <c>Matrix4x4.CreateScale(-1, -1, 1)</c> is a 180-degree rotation and passes. A 4D rotation
+    /// that mixes W with X, Y or Z is orthogonal but fails the last-column check; use
+    /// <see cref="IsOrthogonal(Matrix4x4, double)"/>, a pure 4x4 check, when that form is wanted.
     /// </summary>
     /// <param name="m">Matrix to test.</param>
-    /// <param name="tolerance">Maximum allowed absolute deviation, applied to both the
-    /// orthogonality check (per element of <c>M * M^T - I</c>) and the determinant (from <c>+1</c>).
-    /// Must be non-negative and not NaN.</param>
+    /// <param name="tolerance">Maximum allowed absolute deviation, applied to the
+    /// orthogonality check (per element of <c>M * M^T - I</c>), the last column (per element) and the
+    /// determinant (from <c>+1</c>). Must be non-negative and not NaN.</param>
     /// <returns><see langword="true"/> if the matrix is a proper rotation within tolerance.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
     public static bool IsRotation(Matrix4x4 m, double tolerance)
-        => IsOrthogonal(m, tolerance) && HasDeterminantApproximately(m, 1.0, tolerance);
+        => IsOrthogonal(m, tolerance)
+        && HasAffineLastColumn(m, tolerance)
+        && HasDeterminantApproximately(m, 1.0, tolerance);
+
+    /// <summary>
+    /// Returns <see langword="true"/> when the last column of <paramref name="m"/> is <c>0, 0, 0, 1</c>
+    /// within <paramref name="tolerance"/>: the form of an affine transform in the row-vector convention
+    /// of <see cref="Matrix4x4"/>.
+    /// </summary>
+    /// <param name="m">Matrix to test.</param>
+    /// <param name="tolerance">Maximum allowed absolute deviation per element, already validated.</param>
+    /// <returns><see langword="true"/> if <c>M14</c>, <c>M24</c> and <c>M34</c> are within the tolerance of
+    /// <c>0</c> and <c>M44</c> within the tolerance of <c>1</c>.</returns>
+    private static bool HasAffineLastColumn(Matrix4x4 m, double tolerance)
+        => MathTolerance.IsApproximatelyEqual(m.M14, 0.0, tolerance)
+        && MathTolerance.IsApproximatelyEqual(m.M24, 0.0, tolerance)
+        && MathTolerance.IsApproximatelyEqual(m.M34, 0.0, tolerance)
+        && MathTolerance.IsApproximatelyEqual(m.M44, 1.0, tolerance);
 
     /// <summary>
     /// Returns <see langword="true"/> when the matrix equals the
@@ -205,11 +223,11 @@ public static class LinearAlgebra
     /// The tolerance is an angular measure (the sine of the maximum permitted deviation from exactly
     /// parallel), not an absolute cross-product magnitude. For small angles <c>sin(theta) ~ theta</c>,
     /// so a tolerance of <c>1e-3</c> admits directions within roughly a milliradian of parallel
-    /// regardless of how long the vectors are, as long as both are longer than the tolerance
-    /// and the computation stays within <see langword="float"/> range: both lengths and their
-    /// product below about <c>1.8e19</c>. The lengths and the cross product are computed in
-    /// <see langword="float"/>; beyond that range they overflow and the result can be wrong.
-    /// A vector of length <c>&lt;= tolerance</c> counts as parallel to anything.
+    /// regardless of how long the vectors are, as long as both are longer than the tolerance.
+    /// The lengths and the cross product are computed in <see langword="double"/>, so no
+    /// <see langword="float"/> vector can overflow them. A vector of length
+    /// <c>&lt;= tolerance</c> counts as parallel to anything. A NaN component gives
+    /// <see langword="false"/>, and so does an infinite one under a finite tolerance.
     /// </remarks>
     /// <param name="u">First vector.</param>
     /// <param name="v">Second vector.</param>
@@ -221,13 +239,45 @@ public static class LinearAlgebra
     {
         ValidateTolerance(tolerance);
 
-        double uLength = u.Length();
-        double vLength = v.Length();
+        double uLength = LengthInDouble(u);
+        double vLength = LengthInDouble(v);
         if (uLength <= tolerance || vLength <= tolerance)
             return true;
 
-        double sineOfAngle = Vector3.Cross(u, v).Length() / (uLength * vLength);
+        double sineOfAngle = CrossLengthInDouble(u, v) / (uLength * vLength);
         return MathTolerance.IsApproximatelyEqual(sineOfAngle, 0.0, tolerance);
+    }
+
+    /// <summary>
+    /// Length of <paramref name="v"/> computed in <see cref="double"/> precision, so a component up to
+    /// <see cref="float.MaxValue"/> cannot overflow when squared.
+    /// </summary>
+    /// <param name="v">The vector.</param>
+    /// <returns>The Euclidean length.</returns>
+    private static double LengthInDouble(Vector3 v)
+    {
+        double x = v.X;
+        double y = v.Y;
+        double z = v.Z;
+        return Math.Sqrt((x * x) + (y * y) + (z * z));
+    }
+
+    /// <summary>Length of the cross product of two vectors computed in <see cref="double"/> precision.</summary>
+    /// <param name="u">First vector.</param>
+    /// <param name="v">Second vector.</param>
+    /// <returns>The length of <c>u x v</c>.</returns>
+    private static double CrossLengthInDouble(Vector3 u, Vector3 v)
+    {
+        double ux = u.X;
+        double uy = u.Y;
+        double uz = u.Z;
+        double vx = v.X;
+        double vy = v.Y;
+        double vz = v.Z;
+        double cx = (uy * vz) - (uz * vy);
+        double cy = (uz * vx) - (ux * vz);
+        double cz = (ux * vy) - (uy * vx);
+        return Math.Sqrt((cx * cx) + (cy * cy) + (cz * cz));
     }
 
     /// <summary>

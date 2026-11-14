@@ -23,7 +23,7 @@ The mathematical-assertion surface is exposed as fluent extensions over TUnit's 
 dotnet add package MathAssertions.TUnit
 ```
 
-`MathAssertions` (the framework-agnostic core) comes transitively. **Requirements:** TUnit 1.81.10 or later, .NET 10.
+`MathAssertions` (the framework-agnostic core) comes transitively. **Requirements:** TUnit 1.81.10 or later, .NET 10 or .NET 11.
 
 The source-generated entry point (`IsApproximatelyEqualTo` on `Vector3`) auto-imports via `TUnit.Assertions.Extensions`. The additional `using` you typically need is `System.Numerics` for the value type itself, plus `MathAssertions.Geometry3D` when you construct the geometry primitives (`Sphere`, `Ray3D`, ...). If you call `MathTolerance.IsApproximatelyEqual` directly from a `[GenerateAssertion]` extension on a private domain type, add `MathAssertions` to your `GlobalUsings.cs`:
 
@@ -52,11 +52,11 @@ The fluent surface, organized by adapter class:
 
 | Class | Coverage |
 |---|---|
-| `ScalarAssertions` | `IsApproximatelyEqualTo` and `IsCloseInUlpsTo` for `double` and `float`; `IsRelativelyAndAbsolutelyCloseTo`, `IsNonNegativeFinite`, `IsProbability`, `IsPercentage`, and `HasRoundtripIdentity` for `double` only. |
+| `ScalarAssertions` | `IsApproximatelyEqualTo`, `IsAngleApproximatelyEqualTo` (degrees, wrapping at 360) and `IsCloseInUlpsTo` for `double` and `float`; `IsRelativelyAndAbsolutelyCloseTo`, `IsNonNegativeFinite`, `IsProbability`, `IsPercentage`, and `HasRoundtripIdentity` for `double` only. |
 | `VectorAssertions` | `IsApproximatelyEqualTo` for `Vector2`/`Vector3`/`Vector4`; `Vector3.HasMagnitudeApproximately`, `IsNormalized`. |
 | `QuaternionAssertions` | `IsApproximatelyEqualTo`, `IsRotationallyEquivalentTo` (SO(3) double-cover), `HasAxisAngleApproximately` (axis-angle form; v0.2.0+), `IsIdentity`, `IsNormalized`. |
 | `PoseAssertions` | `(Vector3, Quaternion).IsPoseApproximatelyEqualTo` and `Matrix4x4.IsRigidTransformApproximatelyEqualTo`: pose / rigid-transform equality with separate position (Euclidean distance) and rotation (geodesic degrees) tolerances, plus a combined failure diagnostic (v0.4.0+). `rotationToleranceDegrees` is an angle, not a per-component quaternion delta; do not port a component epsilon into it (see the migration note in the main README). |
-| `MatrixAssertions` | `Matrix4x4.IsApproximatelyEqualTo` plus the full invariant surface: `IsSymmetric`, `IsOrthogonal`, `IsRotation` (proper rotation: orthogonal with determinant +1; v0.5.0+), `IsIdentity`, `HasDeterminantApproximately`, `HasTraceApproximately`, `IsInvertible`. |
+| `MatrixAssertions` | `Matrix4x4.IsApproximatelyEqualTo` plus the full invariant surface: `IsSymmetric`, `IsOrthogonal`, `IsRotation` (proper rotation: orthogonal, last column `0, 0, 0, 1`, determinant +1), `IsIdentity`, `HasDeterminantApproximately`, `HasTraceApproximately`, `IsInvertible`. |
 | `PlaneAssertions` | `IsApproximatelyEqualTo`, `IsGeometricallyEquivalentTo` (sign-flip equivalence). |
 | `ComplexAssertions` | `IsApproximatelyEqualTo`. |
 | `ArrayAssertions` | `double[]` / `float[]` element-wise `IsApproximatelyEqualTo` with `ArgumentNullException` on null arrays. |
@@ -158,13 +158,13 @@ The fluent extensions match the underlying `MathTolerance` semantics, which matc
 | Finite | `Math.Abs(a - b) <= tolerance` | as expected |
 | Tolerance is NaN or negative | (anything) | `ArgumentOutOfRangeException` at call time |
 
-For compound types (`Vector2`/`Vector3`/`Vector4`, `Quaternion`, `Matrix4x4`, `Plane`, `Complex`), every component pair is evaluated against this table; the assertion passes iff every pair passes. This table describes the tolerance comparisons; other checks (pose position, pointcloud on-plane and on-sphere, convex-hull containment, monotonic sequences) do not define NaN handling, so assert finiteness separately when it matters.
+For compound types (`Vector2`/`Vector3`/`Vector4`, `Quaternion`, `Matrix4x4`, `Plane`, `Complex`), every component pair is evaluated against this table; the assertion passes iff every pair passes. This table describes the tolerance comparisons. The checks that test a bound fail on NaN instead of passing (pose position, pointcloud on-plane and on-sphere, convex-hull containment, monotonic sequences, collinear and coplanar, ray-box intersection), and `IsAngleApproximatelyEqualTo` never matches a NaN or infinite angle. The statistics assertions state their NaN behavior and the unit of each tolerance in the [main README](https://github.com/JohnVerheij/MathAssertions.TUnit#statistics-nan-and-tolerance-units).
 
 ## Extending to your own types
 
 Add tolerance assertions for your own domain types via a one-line `[GenerateAssertion]` extension calling `MathTolerance.IsApproximatelyEqual` on each component. The package never sees your private types.
 
-```csharp
+```csharp no-compile
 using MathAssertions;
 using TUnit.Assertions.Attributes;
 

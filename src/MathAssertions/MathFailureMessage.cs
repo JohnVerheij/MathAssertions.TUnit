@@ -345,9 +345,41 @@ internal static class MathFailureMessage
         sb.Append(CultureInfo.InvariantCulture, $"  extracted angle:    {Fmt(extractedAngleDegrees)} degrees").AppendLine();
         // Circular distance modulo 360: shorter of the two arcs. Without this, (359, 1)
         // would render as 358 instead of 2, which contradicts the predicate's SO(3) verdict.
-        double rawDelta = Math.Abs(extractedAngleDegrees - expectedAngleDegrees) % 360.0;
-        double dAngle = Math.Min(rawDelta, 360.0 - rawDelta);
+        double dAngle = MathTolerance.AngleDifferenceDegrees(extractedAngleDegrees, expectedAngleDegrees);
         sb.Append(CultureInfo.InvariantCulture, $"  delta angle:        {Fmt(dAngle)} degrees");
+        return sb.ToString();
+    }
+
+    /// <summary>Renders the failure for <see cref="MathTolerance.IsAngleApproximatelyEqual(double, double, double)"/>.</summary>
+    /// <param name="actual">The angle, in degrees, that failed the comparison.</param>
+    /// <param name="expected">The expected angle in degrees.</param>
+    /// <param name="toleranceDegrees">The tolerance in degrees the comparison was performed against.</param>
+    /// <returns>The rendered failure-message text (multi-line, invariant-culture formatted).</returns>
+    public static string AngleApproximatelyEqual(double actual, double expected, double toleranceDegrees)
+        => AngleApproximatelyEqual(
+            Fmt(actual), Fmt(expected), Fmt(toleranceDegrees), Fmt(MathTolerance.AngleDifferenceDegrees(actual, expected)));
+
+    /// <summary>Renders the failure for <see cref="MathTolerance.IsAngleApproximatelyEqual(float, float, float)"/>.</summary>
+    /// <param name="actual">The angle, in degrees, that failed the comparison.</param>
+    /// <param name="expected">The expected angle in degrees.</param>
+    /// <param name="toleranceDegrees">The tolerance in degrees the comparison was performed against.</param>
+    /// <returns>The rendered failure-message text (multi-line, invariant-culture formatted).</returns>
+    public static string AngleApproximatelyEqual(float actual, float expected, float toleranceDegrees)
+        => AngleApproximatelyEqual(
+            FmtSingle(actual), FmtSingle(expected), FmtSingle(toleranceDegrees), FmtSingle(MathTolerance.AngleDifferenceDegrees(actual, expected)));
+
+    /// <summary>Assembles the angle failure from already formatted numbers.</summary>
+    /// <param name="actual">The formatted actual angle.</param>
+    /// <param name="expected">The formatted expected angle.</param>
+    /// <param name="tolerance">The formatted tolerance.</param>
+    /// <param name="difference">The formatted wrapped difference.</param>
+    /// <returns>The rendered failure-message text.</returns>
+    private static string AngleApproximatelyEqual(string actual, string expected, string tolerance, string difference)
+    {
+        var sb = new StringBuilder();
+        sb.Append(CultureInfo.InvariantCulture, $"the wrapped difference is {difference} degrees, outside the tolerance of {tolerance} degrees").AppendLine();
+        sb.Append(CultureInfo.InvariantCulture, $"  actual:   {actual} degrees").AppendLine();
+        sb.Append(CultureInfo.InvariantCulture, $"  expected: {expected} degrees (angles compared modulo 360)");
         return sb.ToString();
     }
 
@@ -420,6 +452,8 @@ internal static class MathFailureMessage
     }
 
     private static string Fmt(double value) => value.ToString("G", CultureInfo.InvariantCulture);
+
+    private static string FmtSingle(float value) => value.ToString("G", CultureInfo.InvariantCulture);
 
     private static string FormatVector(Vector2 v) => v.ToString("G", CultureInfo.InvariantCulture);
     private static string FormatVector(Vector3 v) => v.ToString("G", CultureInfo.InvariantCulture);
