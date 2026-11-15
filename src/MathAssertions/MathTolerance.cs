@@ -388,8 +388,11 @@ public static class MathTolerance
     /// <summary>
     /// Compares one element pair of the tensor overload by the scalar overloads' rules: NaN matches only NaN,
     /// an infinity matches only the same infinity (before any subtraction, under every tolerance), and finite
-    /// values match when the larger minus the smaller is at most the tolerance. The subtraction is checked so
-    /// an integer difference beyond the range of <typeparamref name="T"/> throws instead of wrapping.
+    /// values match when the larger minus the smaller is at most the tolerance. For <see cref="float"/> and
+    /// <see cref="Half"/> the difference is formed in <see cref="double"/>, as the scalar and span overloads do: a
+    /// subtraction in the element type rounds, and the rounded difference could equal the tolerance when the exact
+    /// one is a little larger. The subtraction is checked so an integer difference beyond the range of
+    /// <typeparamref name="T"/> throws instead of wrapping.
     /// </summary>
     /// <typeparam name="T">Element type, any <see cref="INumber{TSelf}"/>.</typeparam>
     /// <param name="av">Element of the first tensor.</param>
@@ -407,6 +410,8 @@ public static class MathTolerance
 
         var larger = av >= bv ? av : bv;
         var smaller = av >= bv ? bv : av;
+        if (typeof(T) == typeof(float) || typeof(T) == typeof(Half))
+            return double.CreateTruncating(larger) - double.CreateTruncating(smaller) <= double.CreateTruncating(tolerance);
         return checked(larger - smaller) <= tolerance;
     }
 

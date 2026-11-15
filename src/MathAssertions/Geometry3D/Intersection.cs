@@ -73,23 +73,33 @@ public static class Intersection
     /// solid <paramref name="sphere"/>. Geometric solution: project the sphere center
     /// onto the ray, then compare squared perpendicular distance to squared radius.
     /// </summary>
-    /// <remarks>The ray direction must be a unit vector; the projection math assumes it.
+    /// <remarks>The ray direction need not have unit length: the projection is divided by its squared length, so a
+    /// direction normalized in <see cref="float"/> (a rounding away from unit length) gives the exact perpendicular
+    /// distance, for a distant sphere too. A zero direction hits only when the origin is inside the sphere.
     /// Reference: Akenine-Möller, Haines, Hoffman, <i>Real-Time Rendering</i> 4th ed., §22.6.</remarks>
     public static bool Intersects(Ray3D ray, Sphere sphere)
     {
         // Computed in double, and the squared perpendicular distance is the squared length of l - s * direction,
         // not l2 - s * s: the float squares overflow for a distant sphere, and the difference of two huge
-        // squares cancels every digit that matters (for a unit direction the two are equal).
+        // squares cancels every digit that matters (for a unit direction the two are equal). The projection s is
+        // divided by the squared direction length: a float direction is a rounding away from unit length, an
+        // error the distance to the sphere multiplies. A zero direction keeps s = 0 (its dot product), and a NaN
+        // one keeps the NaN, which hits nothing.
         var (lx, ly, lz) = Containment.DifferenceInDouble(sphere.Center, ray.Origin);
-        double s = (lx * ray.Direction.X) + (ly * ray.Direction.Y) + (lz * ray.Direction.Z);
+        double dx = ray.Direction.X;
+        double dy = ray.Direction.Y;
+        double dz = ray.Direction.Z;
+        double dot = (lx * dx) + (ly * dy) + (lz * dz);
+        double dd = (dx * dx) + (dy * dy) + (dz * dz);
+        double s = dd > 0 ? dot / dd : dot;
         double l2 = (lx * lx) + (ly * ly) + (lz * lz);
         double radius = sphere.Radius;
         double r2 = radius * radius;
         if (s < 0 && l2 > r2)
             return false;
-        double px = lx - (s * ray.Direction.X);
-        double py = ly - (s * ray.Direction.Y);
-        double pz = lz - (s * ray.Direction.Z);
+        double px = lx - (s * dx);
+        double py = ly - (s * dy);
+        double pz = lz - (s * dz);
         double m2 = (px * px) + (py * py) + (pz * pz);
         return m2 <= r2;
     }
