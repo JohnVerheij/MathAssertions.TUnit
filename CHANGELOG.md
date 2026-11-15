@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-15: angle tolerance, .NET 11, geometry and linear algebra in double
+
 ### Added
 
 - **`MathTolerance.AngleDifferenceDegrees(double, double)` and `MathTolerance.AngleDifferenceDegrees(float, float)`:** the shorter arc between two angles in degrees, in `[0, 180]`: `359` and `1` are `2` apart and `180` and `-180` are `0` apart. Each angle is reduced to `[-180, 180]` first (the IEEE remainder, exact, so huge angles keep their precision and nothing overflows), and two angles on both sides of `180` are compared after one moves a full turn, so a difference of one ulp is not rounded to a full turn; a NaN or infinite angle gives NaN. The `float` overload computes in `double` and rounds once.
@@ -291,7 +293,8 @@ The 0.0.1 scope is intentionally narrow. The release exists to establish the rep
 - All helpers validate `tolerance` (rejects NaN and negative values via `ArgumentOutOfRangeException`).
 - `Vector3.IsApproximatelyEqualTo(expected, tolerance)`: fluent component-wise assertion entry point, generated via TUnit's `[GenerateAssertion]`. Calls `MathTolerance.IsApproximatelyEqual(Vector3, Vector3, double)` internally.
 
-[unreleased]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.5.1...HEAD
+[unreleased]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.4.3...v0.5.0
 [0.4.3]: https://github.com/JohnVerheij/MathAssertions.TUnit/compare/v0.4.2...v0.4.3
