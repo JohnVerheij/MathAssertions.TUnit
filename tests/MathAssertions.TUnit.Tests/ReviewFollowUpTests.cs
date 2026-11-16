@@ -11,9 +11,9 @@ namespace MathAssertions.TUnit.Tests;
 /// Pins the follow-up fixes to the review sweep: a ray-sphere test that assumed an exactly unit direction, statistics
 /// that lost a small value or a small spread to a scaling chosen by the largest magnitude or to the rounding of a running
 /// sum or mean, a sum recovery that lost a small value to its fixed scaling, and a tensor comparison that subtracted
-/// <see cref="float"/> and <see cref="Half"/> elements in their own precision. Each test failed on the code it replaced, except three that pin
-/// an answer the new code must keep: a zero direction, and the correctly rounded means of a denormal sample and of
-/// <c>[0.1, 0.2, 0.3]</c>.
+/// <see cref="float"/> and <see cref="Half"/> elements in their own precision. Each test failed on the code it replaced, except four that pin
+/// an answer the new code must keep: a zero direction, the correctly rounded means of a denormal sample and of
+/// <c>[0.1, 0.2, 0.3]</c>, and the mean of extremes of one sign.
 /// </summary>
 [Category("Smoke")]
 [Timeout(5_000)]
