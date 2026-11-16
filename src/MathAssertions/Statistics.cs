@@ -54,8 +54,10 @@ public static class Statistics
     /// relative to mean.
     /// </para>
     /// <para>
-    /// The mean is a compensated sum (Neumaier) divided by the count, so a value that plain addition would round
-    /// away next to larger ones that cancel still counts, in any order. The variance is Welford's algorithm over
+    /// The mean is a compensated sum (Neumaier) divided by the count: the rounding error of each addition is carried
+    /// along, so a small value between two large ones that cancel still counts, whichever comes first. The compensation
+    /// is one extra term, so with several levels of cancellation (<c>[1e300, 1e200, 1, -1e200, -1e300]</c>) a value can
+    /// still be lost. The variance is Welford's algorithm over
     /// the sample centered on its smallest value, so values only a few units in the last place apart keep their
     /// variance.
     /// </para>
@@ -202,8 +204,9 @@ public static class Statistics
 
     /// <summary>
     /// Neumaier's compensated sum of the sample scaled by <c>2^-shift</c>: the low-order part each addition rounds
-    /// away is collected in the compensation, so a value next to larger ones that cancel still counts, whatever the
-    /// order. A shift down also rounds away the low bits of a value near the bottom of the range; those are kept in the
+    /// away is collected in the compensation, so a small value between two larger ones that cancel still counts,
+    /// whichever comes first; the compensation is one term, so with several levels of cancellation a value can still be
+    /// lost. A shift down also rounds away the low bits of a value near the bottom of the range; those are kept in the
     /// residual, exactly, at the original scale. A shift up (a negative <paramref name="shift"/>) is exact.
     /// </summary>
     /// <param name="values">The sample, finite.</param>
@@ -346,8 +349,8 @@ public static class Statistics
 
     /// <summary>
     /// The sum of a sample. A sample with NaN or an infinity is summed plainly, so those carry into the sum. A finite
-    /// sample is summed with compensation (<see cref="CompensatedSum"/>), so a value that plain addition would round
-    /// away next to larger ones that cancel still counts, over a copy shifted down by <see cref="OverflowShift"/>, so no
+    /// sample is summed with compensation (<see cref="CompensatedSum"/>), so a small value between two large ones that
+    /// cancel still counts, over a copy shifted down by <see cref="OverflowShift"/>, so no
     /// partial sum overflows (<c>[double.MaxValue, double.MaxValue, -double.MaxValue]</c> sums to
     /// <c>double.MaxValue</c>): the sum is infinite only when it does not fit in a <see cref="double"/>.
     /// </summary>

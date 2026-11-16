@@ -66,7 +66,7 @@ internal sealed class ReviewFollowUpTests
         // when it came between the two large values. The compensated sum keeps it in any order.
         var large = Math.ScaleB(1.0, 500);
         var small = Math.ScaleB(1.0, -600);
-        double[][] orders = [[large, -large, small], [large, small, -large], [small, large, -large]];
+        double[][] orders = [[large, -large, small], [large, small, -large], [small, large, -large], [-large, large, small], [-large, small, large], [small, -large, large]];
 
         foreach (var values in orders)
         {

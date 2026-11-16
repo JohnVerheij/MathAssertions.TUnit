@@ -74,8 +74,10 @@ public static class Intersection
     /// onto the ray, then compare squared perpendicular distance to squared radius.
     /// </summary>
     /// <remarks>The ray direction need not have unit length: the projection is divided by its squared length, so a
-    /// direction normalized in <see cref="float"/> (a rounding away from unit length) gives the exact perpendicular
-    /// distance, for a distant sphere too. A zero direction hits only when the origin is inside the sphere.
+    /// direction normalized in <see cref="float"/> (a rounding away from unit length) gives the perpendicular distance
+    /// to double precision, for a distant sphere too. That distance is accurate to about <c>2^-52</c> of the distance
+    /// to the sphere's center, so for a sphere more than about <c>2^50</c> times its radius away, rounding can decide
+    /// the result. A zero direction hits only when the origin is inside the sphere.
     /// Reference: Akenine-Möller, Haines, Hoffman, <i>Real-Time Rendering</i> 4th ed., §22.6.</remarks>
     public static bool Intersects(Ray3D ray, Sphere sphere)
     {
