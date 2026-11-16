@@ -63,7 +63,7 @@ internal sealed class ReviewFollowUpTests
     {
         ct.ThrowIfCancellationRequested();
         // Scaling by the largest magnitude (2^-500) took 2^-600 below the smallest double, and a running mean lost it
-        // when it came between the two large values. The compensated sum keeps it in any order.
+        // when it came between the two large values. The exact sum keeps it in any order.
         var large = Math.ScaleB(1.0, 500);
         var small = Math.ScaleB(1.0, -600);
         double[][] orders = [[large, -large, small], [large, small, -large], [small, large, -large], [-large, large, small], [-large, small, large], [small, -large, large]];
@@ -96,6 +96,25 @@ internal sealed class ReviewFollowUpTests
 
         await Assert.That(Statistics.HasMeanApproximately(positive, double.MaxValue, 0)).IsTrue();
         await Assert.That(Statistics.HasMeanApproximately(negative, -double.MaxValue, 0)).IsTrue();
+    }
+
+    [Test]
+    public async Task MeanAndSum_AreExact_RoundedOnce(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // The mean of [0.5, -0.5, 2e] is 2e/3, which rounds to e; dividing in a scaled-up copy and scaling back rounded it
+        // twice, to zero. Five copies of double.MaxValue have that mean; folding a compensation in before the division gave
+        // one unit in the last place less, and the constant sample failed its own one-sigma check. Nested cancellation lost
+        // the 1 in a compensated sum. The exact sum, rounded once, gets all of them right.
+        double[] five = [double.MaxValue, double.MaxValue, double.MaxValue, double.MaxValue, double.MaxValue];
+        var large = Math.ScaleB(1.0, 500);
+        var middle = Math.ScaleB(1.0, 200);
+
+        await Assert.That(Statistics.HasMeanApproximately([0.5, -0.5, 2 * double.Epsilon], double.Epsilon, 0)).IsTrue();
+        await Assert.That(Statistics.HasMeanApproximately(five, double.MaxValue, 0)).IsTrue();
+        await Assert.That(Statistics.AreAllWithinSigmasOfMean(five, 1)).IsTrue();
+        await Assert.That(Statistics.HasSumApproximately([1e300, 1e200, 1, -1e200, -1e300], 1, 0)).IsTrue();
+        await Assert.That(Statistics.HasMeanApproximately([large, middle, 1, -middle, -large], 0.2, 0)).IsTrue();
     }
 
     [Test]
@@ -226,7 +245,7 @@ internal sealed class ReviewFollowUpTests
     {
         ct.ThrowIfCancellationRequested();
         // A 1 next to extremes that cancel was absorbed by the running sum, in the overflow recovery and in a plain sum
-        // alike; the compensated sum keeps it.
+        // alike; the exact sum keeps it.
         var max = double.MaxValue;
 
         await Assert.That(Statistics.HasSumApproximately([max, max, 1, -max, -max], 1, 0)).IsTrue();

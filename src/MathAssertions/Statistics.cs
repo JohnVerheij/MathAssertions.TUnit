@@ -1,12 +1,13 @@
 using System;
+using System.Numerics;
 
 namespace MathAssertions;
 
 /// <summary>
 /// Statistical-property checks for <see cref="ReadOnlySpan{T}"/> of <see cref="double"/>:
 /// mean, variance, standard deviation, sum, median, percentile, and sigma-bound checks
-/// against the sample's own mean. The mean and the sum are compensated (Neumaier), and the variance
-/// comes from Welford's online algorithm over the sample centered on its smallest value.
+/// against the sample's own mean. The mean and the sum are computed exactly and rounded once, and the
+/// variance comes from Welford's online algorithm over the sample centered on its smallest value.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -54,24 +55,19 @@ public static class Statistics
     /// relative to mean.
     /// </para>
     /// <para>
-    /// The mean is a compensated sum (Neumaier) divided by the count: the rounding error of each addition is carried
-    /// along, so a small value between two large ones that cancel still counts, whichever comes first. The compensation
-    /// is one extra term, so with several levels of cancellation (<c>[1e300, 1e200, 1, -1e200, -1e300]</c>) a value can
-    /// still be lost. The variance is Welford's algorithm over
-    /// the sample centered on its smallest value, so values only a few units in the last place apart keep their
-    /// variance.
+    /// The mean of a finite sample is exact: the values are summed as whole numbers of the smallest positive
+    /// <see cref="double"/> (<c>2^-1074</c>), so no addition rounds, and the sum divided by the count is rounded once
+    /// to the nearest double, ties to even. That holds in any order and at any magnitude: the mean of
+    /// <c>[double.MaxValue, -double.MaxValue]</c> is <c>0</c>, and a small value between large ones that cancel always
+    /// counts. The variance is Welford's algorithm over the sample centered on its smallest value, so values only a few
+    /// units in the last place apart keep their variance.
     /// </para>
     /// <para>
-    /// A sample of finite values is summarized on copies scaled by powers of two (exact), so nothing overflows
-    /// or underflows on the way, whatever the magnitudes: the mean over a copy shifted down only as far as keeps
-    /// every partial sum finite (scaled up when the values are below 1, not scaled inside the usual range), with
-    /// the bits a shift down rounds away kept apart and added back, and the squares over the centered copy scaled
-    /// by the sample's spread. The mean of <c>[double.MaxValue, -double.MaxValue]</c> is <c>0</c>, not the
-    /// infinity that a running difference would give. The variance is infinite only when it does not fit in a
-    /// <see cref="double"/>, and zero only when it is too small to represent. The standard deviation checks take
-    /// the square root before scaling back, so their standard deviation is finite and non-zero whenever it fits,
-    /// even when the variance does not. A sample with NaN or an infinity is summarized as it is, so those
-    /// propagate.
+    /// The squares are taken over the centered copy scaled by a power of two of the sample's spread, so they neither
+    /// overflow nor underflow, whatever the magnitudes. The variance is infinite only when it does not fit in a
+    /// <see cref="double"/>, and zero only when it is too small to represent. The standard deviation checks take the
+    /// square root before scaling back, so their standard deviation is finite and non-zero whenever it fits, even when
+    /// the variance does not. A sample with NaN or an infinity is summarized as it is, so those propagate.
     /// </para>
     /// </remarks>
     /// <param name="values">Sample to summarize.</param>
@@ -84,7 +80,7 @@ public static class Statistics
 
     /// <summary>
     /// Mean, unbiased variance and standard deviation of a sample. For a finite sample the mean comes from
-    /// <see cref="MeanWithoutOverflow"/>, and the squares from Welford's algorithm over a copy centered on the
+    /// <see cref="ExactMean"/>, and the squares from Welford's algorithm over a copy centered on the
     /// smallest value and scaled by the power of two of the sample's spread (<see cref="SpreadExponent"/>); a sample
     /// with NaN or an infinity is summarized by plain Welford, so those propagate.
     /// </summary>
@@ -123,7 +119,7 @@ public static class Statistics
 
         var exponent = SpreadExponent(min, max);
         var (_, m2) = Welford(values, exponent, Math.ScaleB(min, -exponent));
-        return (MeanWithoutOverflow(values, largest), m2 / (values.Length - 1), exponent);
+        return (ExactMean(values), m2 / (values.Length - 1), exponent);
     }
 
     /// <summary>
@@ -214,85 +210,91 @@ public static class Statistics
     }
 
     /// <summary>
-    /// The mean of a finite sample of at least two values: the compensated sum of a scaled copy
-    /// (<see cref="CompensatedSum"/>) divided by the count. A sample whose largest magnitude is below 1 is scaled up
-    /// to it, which is exact and keeps the division clear of the denormal range, where it would round early; one near
-    /// the top of the range is shifted down by <see cref="OverflowShift"/>, just far enough to keep every partial sum
-    /// finite; any other is not scaled. After a shift down the sum is restored before the division when it fits, so a
-    /// tiny mean is not rounded away in the shifted copy, and the bits the shift rounded away are added back.
+    /// The mean of a finite sample, exactly: its exact sum (<see cref="ExactSum"/>) divided by the count and rounded
+    /// once to the nearest <see cref="double"/>, ties to even (<see cref="RoundUnits"/>).
     /// </summary>
-    /// <param name="values">The sample.</param>
-    /// <param name="largest">The largest magnitude in it, finite.</param>
-    /// <returns>The mean.</returns>
-    private static double MeanWithoutOverflow(ReadOnlySpan<double> values, double largest)
-    {
-        var count = values.Length;
-        var shift = largest is > 0 and < 1 ? Math.ILogB(largest) : OverflowShift(largest, count);
-        var (sum, compensation, residual) = CompensatedSum(values, shift);
-        var scaledSum = sum + compensation;
-        if (shift <= 0)
-            return Math.ScaleB(Divide(sum, compensation, count), shift);
-
-        var total = Math.ScaleB(scaledSum, shift) + residual;
-        return double.IsFinite(total)
-            ? total / count
-            : Math.ScaleB(scaledSum / count, shift) + (residual / count);
-    }
+    /// <param name="values">The sample, finite and not empty.</param>
+    /// <returns>The correctly rounded mean.</returns>
+    private static double ExactMean(ReadOnlySpan<double> values) => RoundUnits(ExactSum(values), values.Length);
 
     /// <summary>
-    /// A compensated sum divided by the count with one rounding in effect: the quotient of the sum, then the exact
-    /// remainder of that division (a fused multiply-add) and the compensation divided by the count and added to it.
-    /// Dividing the rounded total instead rounds twice, which turns the mean of <c>[0.1, 0.2, 0.3]</c> into
-    /// <c>0.19999999999999998</c>.
-    /// </summary>
-    /// <param name="sum">The compensated sum's running sum.</param>
-    /// <param name="compensation">Its compensation.</param>
-    /// <param name="count">The number of values.</param>
-    /// <returns>The quotient.</returns>
-    private static double Divide(double sum, double compensation, int count)
-    {
-        var quotient = sum / count;
-        var remainder = Math.FusedMultiplyAdd(-quotient, count, sum);
-        return quotient + ((remainder + compensation) / count);
-    }
-
-    /// <summary>
-    /// Neumaier's compensated sum of the sample scaled by <c>2^-shift</c>: the low-order part each addition rounds
-    /// away is collected in the compensation, so a small value between two larger ones that cancel still counts,
-    /// whichever comes first; the compensation is one term, so with several levels of cancellation a value can still be
-    /// lost. A shift down also rounds away the low bits of a value near the bottom of the range; those are kept in the
-    /// residual, exactly, at the original scale. A shift up (a negative <paramref name="shift"/>) is exact.
+    /// The exact sum of a finite sample as a whole number of the smallest positive <see cref="double"/>
+    /// (<c>2^-1074</c>). Every finite double is such a whole number (<see cref="Units"/>), so no addition rounds, in any
+    /// order and at any magnitude.
     /// </summary>
     /// <param name="values">The sample, finite.</param>
-    /// <param name="shift">The power of two the values are divided by.</param>
-    /// <returns>The scaled sum, its compensation, and the residual at the original scale.</returns>
-    private static (double Sum, double Compensation, double Residual) CompensatedSum(ReadOnlySpan<double> values, int shift)
+    /// <returns>The sum in units of <c>2^-1074</c>.</returns>
+    private static BigInteger ExactSum(ReadOnlySpan<double> values)
     {
-        var sum = 0.0;
-        var compensation = 0.0;
-        var residual = 0.0;
-        foreach (var raw in values)
-        {
-            var v = Math.ScaleB(raw, -shift);
-            residual += raw - Math.ScaleB(v, shift);
-            var next = sum + v;
-            compensation += Math.Abs(sum) >= Math.Abs(v) ? (sum - next) + v : (v - next) + sum;
-            sum = next;
-        }
-
-        return (sum, compensation, residual);
+        var sum = BigInteger.Zero;
+        foreach (var v in values)
+            sum += Units(v);
+        return sum;
     }
 
     /// <summary>
-    /// The smallest power-of-two shift that keeps every partial sum and every running difference of
-    /// <paramref name="count"/> values of magnitude up to <paramref name="largest"/> finite: zero unless the values
-    /// come near the top of the range of a <see cref="double"/>.
+    /// A finite <see cref="double"/> as a whole number of <c>2^-1074</c>, exactly. Below <c>2^-1021</c> the value times
+    /// <c>2^1074</c> is already a whole number under <c>2^53</c> (the denormals and the smallest binade); above, its
+    /// 53-bit significand is shifted into place.
     /// </summary>
-    /// <param name="largest">The largest magnitude, finite and not negative.</param>
-    /// <param name="count">The number of values, at least one when <paramref name="largest"/> is positive.</param>
-    /// <returns>The shift, at least zero.</returns>
-    private static int OverflowShift(double largest, int count)
-        => largest > 0 ? Math.Max(0, Math.ILogB(largest) + int.Log2(count - 1) + 1 - 1021) : 0;
+    /// <param name="value">A finite value.</param>
+    /// <returns>The value in units of <c>2^-1074</c>.</returns>
+    private static BigInteger Units(double value)
+    {
+        if (value is 0d)
+            return BigInteger.Zero;
+
+        var magnitude = Math.Abs(value);
+        var exponent = Math.ILogB(magnitude);
+        var units = exponent < -1021
+            ? new BigInteger(long.CreateChecked(Math.ScaleB(magnitude, 1074)))
+            : new BigInteger(long.CreateChecked(Math.ScaleB(magnitude, 52 - exponent))) << (exponent + 1022);
+        return value < 0 ? -units : units;
+    }
+
+    /// <summary>
+    /// The <see cref="double"/> nearest to <c>numerator / denominator * 2^-1074</c>, ties to even: one correct
+    /// rounding. Below <c>2^53</c> units the doubles are exactly the whole numbers of units (the denormals and the
+    /// smallest binade), so the quotient is rounded to a whole number there; above, it is rounded to 53 significant
+    /// bits, where the dropped bits and the remainder decide. A result beyond <see cref="double.MaxValue"/> rounds to
+    /// infinity.
+    /// </summary>
+    /// <param name="numerator">The exact value in units of <c>2^-1074</c>, times the denominator.</param>
+    /// <param name="denominator">The divisor, positive.</param>
+    /// <returns>The correctly rounded quotient; positive zero for a zero numerator.</returns>
+    private static double RoundUnits(BigInteger numerator, int denominator)
+    {
+        var quotient = BigInteger.DivRem(BigInteger.Abs(numerator), denominator, out var remainder);
+        var bits = quotient.GetBitLength();
+        var scale = bits <= 53 ? 0 : int.CreateChecked(bits - 53);
+        var significand = quotient >> scale;
+        if (RoundsUp(quotient - (significand << scale), scale, remainder, denominator, significand.IsEven))
+            significand += BigInteger.One;
+
+        var magnitude = Math.ScaleB(double.CreateChecked(significand), scale - 1074);
+        return numerator.Sign < 0 ? -magnitude : magnitude;
+    }
+
+    /// <summary>
+    /// Whether the significand of <see cref="RoundUnits"/> rounds up: the part below it is the dropped bits (as many as
+    /// <paramref name="scale"/>) plus <c>remainder / denominator</c> of the last unit. More than half rounds up, less
+    /// than half rounds down, and exactly half rounds to an even significand.
+    /// </summary>
+    /// <param name="dropped">The bits below the significand.</param>
+    /// <param name="scale">How many bits were dropped.</param>
+    /// <param name="remainder">The remainder of the division, below the denominator.</param>
+    /// <param name="denominator">The divisor.</param>
+    /// <param name="isEven">Whether the significand is even.</param>
+    /// <returns><see langword="true"/> when the significand rounds up.</returns>
+    private static bool RoundsUp(BigInteger dropped, int scale, BigInteger remainder, int denominator, bool isEven)
+    {
+        // Compare the part below the significand with one half of its last place: as fractions of 2^scale units, the
+        // part is (dropped * denominator + remainder) / (denominator * 2^scale) and the half is 1/2.
+        var twice = ((dropped * denominator) + remainder) * 2;
+        var whole = new BigInteger(denominator) << scale;
+        var comparison = twice.CompareTo(whole);
+        return comparison > 0 || (comparison is 0 && !isEven);
+    }
 
     /// <summary>
     /// The power-of-two exponent of the spread of a finite sample (its largest value minus its smallest), by which
@@ -403,30 +405,26 @@ public static class Statistics
 
     /// <summary>
     /// The sum of a sample. A sample with NaN or an infinity is summed plainly, so those carry into the sum. A finite
-    /// sample is summed with compensation (<see cref="CompensatedSum"/>), so a small value between two large ones that
-    /// cancel still counts, over a copy shifted down by <see cref="OverflowShift"/>, so no
-    /// partial sum overflows (<c>[double.MaxValue, double.MaxValue, -double.MaxValue]</c> sums to
-    /// <c>double.MaxValue</c>): the sum is infinite only when it does not fit in a <see cref="double"/>.
+    /// sample is summed exactly (<see cref="ExactSum"/>) and rounded once, so the result is the <see cref="double"/>
+    /// nearest to the true sum, in any order: <c>[double.MaxValue, double.MaxValue, -double.MaxValue]</c> sums to
+    /// <c>double.MaxValue</c>, and the sum is infinite only when it does not fit in a <see cref="double"/>.
     /// </summary>
     /// <param name="values">The sample.</param>
     /// <returns>The sum; zero for the empty sample.</returns>
     private static double Sum(ReadOnlySpan<double> values)
     {
-        var largest = 0.0;
         foreach (var v in values)
-            largest = Math.Max(largest, Math.Abs(v));
-
-        if (!double.IsFinite(largest))
         {
-            var plain = 0.0;
-            foreach (var v in values)
-                plain += v;
-            return plain;
+            if (!double.IsFinite(v))
+            {
+                var plain = 0.0;
+                foreach (var w in values)
+                    plain += w;
+                return plain;
+            }
         }
 
-        var shift = OverflowShift(largest, values.Length);
-        var (sum, compensation, residual) = CompensatedSum(values, shift);
-        return Math.ScaleB(sum + compensation, shift) + residual;
+        return RoundUnits(ExactSum(values), 1);
     }
 
     /// <summary>
