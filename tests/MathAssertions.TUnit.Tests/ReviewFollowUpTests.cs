@@ -189,6 +189,24 @@ internal sealed class ReviewFollowUpTests
     }
 
     [Test]
+    public async Task SigmaChecks_TinySigmasAndDenormalSamples_AreJudgedPrecisely(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // sigmas = double.Epsilon over [-max, max] is an envelope of about 1.26e-15; the product rounded in the denormal
+        // range made it 8.9e-16 and rejected 1.11e-15. Over [-e, e] at 0.7071 sigmas the envelope is 0.99999e, which
+        // rounded up to e and admitted e.
+        double[] extremes = [-double.MaxValue, double.MaxValue];
+        double[] denormals = [-double.Epsilon, double.Epsilon];
+
+        await Assert.That(Statistics.IsWithinSigmasOfMean(Math.ScaleB(1.25, -50), extremes, double.Epsilon)).IsTrue();
+        await Assert.That(Statistics.IsWithinSigmasOfMean(Math.ScaleB(1.5, -50), extremes, double.Epsilon)).IsFalse();
+        await Assert.That(Statistics.IsWithinSigmasOfMean(double.Epsilon, denormals, 0.7071)).IsFalse();
+        await Assert.That(Statistics.IsWithinSigmasOfMean(double.Epsilon, denormals, 0.7072)).IsTrue();
+        await Assert.That(Statistics.AreAllWithinSigmasOfMean(denormals, 0.7071)).IsFalse();
+        await Assert.That(Statistics.AreAllWithinSigmasOfMean(denormals, 0.7072)).IsTrue();
+    }
+
+    [Test]
     public async Task HasSumApproximately_SmallValueNextToExtremesThatCancel_CountsIt(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();

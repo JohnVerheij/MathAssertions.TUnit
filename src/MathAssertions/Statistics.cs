@@ -127,26 +127,46 @@ public static class Statistics
     }
 
     /// <summary>
-    /// Whether <paramref name="value"/> lies within the envelope around <paramref name="mean"/>. The plain difference
-    /// is compared with the envelope scaled back from the scaled copy, which gives the answer of
-    /// <c>|value - mean| &lt;= sigmas * stdDev</c> and an infinite envelope only when the true one exceeds every
-    /// finite difference, also when the standard deviation itself does not fit in a <see cref="double"/>. Only a
-    /// difference that does not fit is compared on the scaled copy, with the value and the mean divided by
-    /// <c>2^exponent</c>; there a difference near the bottom of the range can round away, which no envelope of that
-    /// size could tell apart anyway.
+    /// The sigma envelope <c>sigmas * stdDev</c> as a mantissa and a power of two, where the standard deviation is
+    /// <paramref name="scaledStdDev"/> times <c>2^exponent</c>: <paramref name="sigmas"/> is split into its own mantissa
+    /// and power of two, so the one product is of two numbers near 1 and neither overflows nor rounds in the denormal
+    /// range. The envelope is <c>Mantissa * 2^(Exponent)</c>; it is never formed as one <see cref="double"/>.
+    /// </summary>
+    /// <param name="sigmas">The number of standard deviations, validated (not NaN, not negative).</param>
+    /// <param name="scaledStdDev">The standard deviation divided by <c>2^exponent</c>.</param>
+    /// <param name="exponent">The exponent of <see cref="ScaledMoments"/>.</param>
+    /// <returns>The mantissa (zero for a zero envelope, infinite for infinite sigmas, NaN for infinite sigmas over a
+    /// zero standard deviation) and the power of two.</returns>
+    private static (double Mantissa, int Exponent) Envelope(double sigmas, double scaledStdDev, int exponent)
+    {
+        var sigmasExponent = double.IsFinite(sigmas) && sigmas > 0 ? Math.ILogB(sigmas) : 0;
+        return (Math.ScaleB(sigmas, -sigmasExponent) * scaledStdDev, sigmasExponent + exponent);
+    }
+
+    /// <summary>
+    /// Whether <paramref name="value"/> lies within the envelope around <paramref name="mean"/>:
+    /// <c>|value - mean| &lt;= Mantissa * 2^(Exponent)</c>, decided as <c>|value - mean| * 2^-(Exponent) &lt;= Mantissa</c>.
+    /// The power-of-two scaling is exact, and where it overflows or underflows the difference is so far above or below
+    /// the envelope that the answer stands, so the only rounding is that of the envelope's mantissa. A difference that does
+    /// not fit in a <see cref="double"/> is formed on the copy scaled by <c>2^-sampleExponent</c> instead. A zero envelope
+    /// admits only the mean itself.
     /// </summary>
     /// <param name="value">The value to test.</param>
     /// <param name="mean">The mean of the sample.</param>
-    /// <param name="scaledThreshold">The envelope divided by <c>2^exponent</c>: sigmas times the scaled standard
-    /// deviation.</param>
-    /// <param name="exponent">The exponent of <see cref="ScaledMoments"/>.</param>
+    /// <param name="envelope">The envelope from <see cref="Envelope"/>.</param>
+    /// <param name="sampleExponent">The exponent of <see cref="ScaledMoments"/>.</param>
     /// <returns><see langword="true"/> when the value is within the envelope; <see langword="false"/> for NaN.</returns>
-    private static bool IsWithinEnvelope(double value, double mean, double scaledThreshold, int exponent)
+    private static bool IsWithinEnvelope(double value, double mean, (double Mantissa, int Exponent) envelope, int sampleExponent)
     {
+        if (!(envelope.Mantissa > 0))
+            return Math.Abs(value - mean) <= envelope.Mantissa;
+
         var difference = Math.Abs(value - mean);
-        return double.IsFinite(difference)
-            ? difference <= Math.ScaleB(scaledThreshold, exponent)
-            : Math.Abs(Math.ScaleB(value, -exponent) - Math.ScaleB(mean, -exponent)) <= scaledThreshold;
+        if (double.IsFinite(difference))
+            return Math.ScaleB(difference, -envelope.Exponent) <= envelope.Mantissa;
+
+        var scaledDifference = Math.Abs(Math.ScaleB(value, -sampleExponent) - Math.ScaleB(mean, -sampleExponent));
+        return Math.ScaleB(scaledDifference, sampleExponent - envelope.Exponent) <= envelope.Mantissa;
     }
 
     /// <summary>The largest magnitude, the smallest value and the largest value of a sample; the largest magnitude is
@@ -529,9 +549,9 @@ public static class Statistics
     /// <paramref name="sigmas"/> standard deviations of the mean of
     /// <paramref name="sample"/>. Returns <see langword="false"/> for samples with fewer
     /// than two observations, where standard deviation is undefined under the unbiased
-    /// <c>N-1</c> convention. The envelope comes from the sample scaled by a power of two, so it
-    /// stays finite when the standard deviation does not fit in a <see cref="double"/>, and the
-    /// difference from the mean is compared as it is.
+    /// <c>N-1</c> convention. The envelope is kept as a mantissa and a power of two, so it
+    /// neither overflows nor rounds in the denormal range, whatever the magnitudes of the sample,
+    /// the value and <paramref name="sigmas"/>.
     /// </summary>
     /// <param name="value">Value to test.</param>
     /// <param name="sample">Reference sample whose mean and standard deviation define the
@@ -551,7 +571,7 @@ public static class Statistics
         if (sample.Length < 2)
             return false;
         var (mean, scaledVariance, exponent) = ScaledMoments(sample);
-        return IsWithinEnvelope(value, mean, sigmas * Math.Sqrt(scaledVariance), exponent);
+        return IsWithinEnvelope(value, mean, Envelope(sigmas, Math.Sqrt(scaledVariance), exponent), exponent);
     }
 
     /// <summary>
@@ -577,9 +597,9 @@ public static class Statistics
     /// NaN is false would otherwise let the loop fall through to a vacuous-true return).
     /// </para>
     /// <para>
-    /// The envelope comes from the sample scaled by a power of two, so a standard deviation that
-    /// does not fit in a <see cref="double"/> still bounds it: <c>[-double.MaxValue, double.MaxValue]</c>
-    /// fails at half a sigma. The difference of each value from the mean is compared as it is.
+    /// The envelope is kept as a mantissa and a power of two, so it neither overflows nor rounds in
+    /// the denormal range: <c>[-double.MaxValue, double.MaxValue]</c> fails at half a sigma, and a
+    /// tiny <paramref name="sigmas"/> or a sample of denormals is judged as precisely as any other.
     /// </para>
     /// </remarks>
     /// <param name="values">Sample to inspect, both as the reference and as the test set.</param>
@@ -594,10 +614,10 @@ public static class Statistics
         if (values.Length < 2)
             return false;
         var (mean, scaledVariance, exponent) = ScaledMoments(values);
-        var scaledThreshold = sigmas * Math.Sqrt(scaledVariance);
+        var envelope = Envelope(sigmas, Math.Sqrt(scaledVariance), exponent);
         foreach (var v in values)
         {
-            if (!IsWithinEnvelope(v, mean, scaledThreshold, exponent))
+            if (!IsWithinEnvelope(v, mean, envelope, exponent))
                 return false;
         }
         return true;
