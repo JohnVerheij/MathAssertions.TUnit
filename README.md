@@ -8,7 +8,7 @@
 [![NuGet](https://img.shields.io/nuget/v/MathAssertions.TUnit.svg)](https://www.nuget.org/packages/MathAssertions.TUnit/)
 [![Downloads](https://img.shields.io/nuget/dt/MathAssertions.TUnit.svg)](https://www.nuget.org/packages/MathAssertions.TUnit/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4.svg)](https://dotnet.microsoft.com/download/dotnet/10.0)
+[![.NET](https://img.shields.io/badge/.NET-10.0%20%7C%2011.0-512BD4.svg)](https://dotnet.microsoft.com/download/dotnet/10.0)
 
 TUnit-native math assertion library for .NET. Covers tolerance comparisons (scalar, `System.Numerics` compounds, spans, tensors), sequences, statistics, linear algebra, number theory, and 3D geometry. Source-generated entry points integrate with TUnit's `Assert.That(...)` pipeline. The tolerance comparisons handle NaN and infinity explicitly (see [NaN and infinity semantics](#nan-and-infinity-semantics)). AOT-compatible, reflection-free in the assertion path.
 
