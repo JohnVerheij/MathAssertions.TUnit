@@ -147,7 +147,8 @@ public static class Sequences
     /// Returns <see langword="true"/> when every adjacent difference equals the first
     /// difference within <paramref name="tolerance"/>; that is, the sequence is an arithmetic
     /// progression with a common difference. Empty and single-element spans are vacuously
-    /// progressions.
+    /// progressions. A span that contains NaN or an infinity returns <see langword="false"/>: such a
+    /// value has no finite difference to compare (NaN would otherwise equal NaN and pass).
     /// </summary>
     /// <param name="values">Sequence to inspect.</param>
     /// <param name="tolerance">Maximum allowed deviation of each adjacent difference from the
@@ -158,6 +159,8 @@ public static class Sequences
     {
         ValidateTolerance(tolerance);
 
+        if (ContainsNonFinite(values))
+            return false;
         if (values.Length < 2)
             return true;
 
@@ -174,7 +177,9 @@ public static class Sequences
     /// Returns <see langword="true"/> when every adjacent ratio equals the first ratio
     /// within <paramref name="tolerance"/>; that is, the sequence is a geometric progression
     /// with a common ratio. Returns <see langword="false"/> when any divisor is zero
-    /// (the ratio is undefined). Empty and single-element spans are vacuously progressions.
+    /// (the ratio is undefined). Empty and single-element spans are vacuously progressions. A span
+    /// that contains NaN or an infinity returns <see langword="false"/>: such a value has no finite
+    /// ratio to compare (NaN would otherwise equal NaN and pass).
     /// </summary>
     /// <param name="values">Sequence to inspect.</param>
     /// <param name="tolerance">Maximum allowed deviation of each adjacent ratio from the
@@ -185,6 +190,8 @@ public static class Sequences
     {
         ValidateTolerance(tolerance);
 
+        if (ContainsNonFinite(values))
+            return false;
         if (values.Length < 2)
             return true;
 
@@ -304,6 +311,19 @@ public static class Sequences
         foreach (var value in values)
         {
             if (double.IsNaN(value))
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>Returns <see langword="true"/> when any value is NaN or infinite.</summary>
+    /// <param name="values">Sequence to inspect.</param>
+    /// <returns><see langword="true"/> if the sequence contains a non-finite value.</returns>
+    private static bool ContainsNonFinite(ReadOnlySpan<double> values)
+    {
+        foreach (var value in values)
+        {
+            if (!double.IsFinite(value))
                 return true;
         }
         return false;

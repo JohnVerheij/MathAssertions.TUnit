@@ -76,7 +76,10 @@ public static class MathTolerance
         if (float.IsInfinity(a) || float.IsInfinity(b))
             return float.IsInfinity(a) && float.IsInfinity(b) && float.IsNegative(a) == float.IsNegative(b);
 
-        return Math.Abs(a - b) <= tolerance;
+        // The difference is formed in double: a float subtraction rounds, and the rounded difference could
+        // equal the tolerance when the exact one is a little larger (2^24 against -1 is 2^24 + 1 apart).
+        double widenedA = a;
+        return Math.Abs(widenedA - b) <= tolerance;
     }
 
     /// <summary>
@@ -385,8 +388,11 @@ public static class MathTolerance
     /// <summary>
     /// Compares one element pair of the tensor overload by the scalar overloads' rules: NaN matches only NaN,
     /// an infinity matches only the same infinity (before any subtraction, under every tolerance), and finite
-    /// values match when the larger minus the smaller is at most the tolerance. The subtraction is checked so
-    /// an integer difference beyond the range of <typeparamref name="T"/> throws instead of wrapping.
+    /// values match when the larger minus the smaller is at most the tolerance. For <see cref="float"/> and
+    /// <see cref="Half"/> the difference is formed in <see cref="double"/>, as the scalar and span overloads do: a
+    /// subtraction in the element type rounds, and the rounded difference could equal the tolerance when the exact
+    /// one is a little larger. The subtraction is checked so an integer difference beyond the range of
+    /// <typeparamref name="T"/> throws instead of wrapping.
     /// </summary>
     /// <typeparam name="T">Element type, any <see cref="INumber{TSelf}"/>.</typeparam>
     /// <param name="av">Element of the first tensor.</param>
@@ -404,6 +410,8 @@ public static class MathTolerance
 
         var larger = av >= bv ? av : bv;
         var smaller = av >= bv ? bv : av;
+        if (typeof(T) == typeof(float) || typeof(T) == typeof(Half))
+            return double.CreateTruncating(larger) - double.CreateTruncating(smaller) <= double.CreateTruncating(tolerance);
         return checked(larger - smaller) <= tolerance;
     }
 
@@ -556,7 +564,9 @@ public static class MathTolerance
 
         var diff = Math.Abs(a - b);
         var scale = Math.Max(Math.Abs(a), Math.Abs(b));
-        return diff <= Math.Max(absoluteTolerance, relativeTolerance * scale);
+        // Two separate comparisons, not Math.Max of the two bounds: an infinite relative tolerance times a
+        // scale of zero is NaN, and Math.Max would pass the NaN on and reject two equal zeros.
+        return diff <= absoluteTolerance || diff <= relativeTolerance * scale;
     }
 
     /// <summary>
@@ -870,7 +880,7 @@ public static class MathTolerance
     /// <param name="z">Receives the normalized Z component.</param>
     /// <param name="w">Receives the normalized W component.</param>
     /// <returns><see langword="true"/> when normalization succeeded; otherwise <see langword="false"/>.</returns>
-    private static bool TryNormalizeToDouble(Quaternion q, out double x, out double y, out double z, out double w)
+    internal static bool TryNormalizeToDouble(Quaternion q, out double x, out double y, out double z, out double w)
     {
         double qx = q.X, qy = q.Y, qz = q.Z, qw = q.W;
         double lengthSquared = (qx * qx) + (qy * qy) + (qz * qz) + (qw * qw);

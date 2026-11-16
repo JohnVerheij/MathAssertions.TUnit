@@ -20,10 +20,13 @@ public static class Intersection
     /// <paramref name="a"/> and <paramref name="b"/> overlap (boundary contact counts as
     /// intersection). Compared via squared center distance to avoid the square root.
     /// </summary>
+    /// <remarks>The radii and the squares are computed in <see cref="double"/>, so spheres of radius near
+    /// <c>1e20</c> or <c>1e-25</c> neither overflow nor underflow into a wrong verdict.</remarks>
     public static bool Intersects(Sphere a, Sphere b)
     {
-        var sumRadii = a.Radius + b.Radius;
-        return Vector3.DistanceSquared(a.Center, b.Center) <= sumRadii * sumRadii;
+        double sumRadii = a.Radius;
+        sumRadii += b.Radius;
+        return Distance.SquaredDistanceInDouble(a.Center, b.Center) <= sumRadii * sumRadii;
     }
 
     /// <summary>
@@ -70,17 +73,36 @@ public static class Intersection
     /// solid <paramref name="sphere"/>. Geometric solution: project the sphere center
     /// onto the ray, then compare squared perpendicular distance to squared radius.
     /// </summary>
-    /// <remarks>The ray direction must be a unit vector; the projection math assumes it.
+    /// <remarks>The ray direction need not have unit length: the projection is divided by its squared length, so a
+    /// direction normalized in <see cref="float"/> (a rounding away from unit length) gives the perpendicular distance
+    /// to double precision, for a distant sphere too. That distance is accurate to about <c>2^-52</c> of the distance
+    /// to the sphere's center, so for a sphere more than about <c>2^50</c> times its radius away, rounding can decide
+    /// the result. A zero direction hits only when the origin is inside the sphere.
     /// Reference: Akenine-Möller, Haines, Hoffman, <i>Real-Time Rendering</i> 4th ed., §22.6.</remarks>
     public static bool Intersects(Ray3D ray, Sphere sphere)
     {
-        var l = sphere.Center - ray.Origin;
-        var s = Vector3.Dot(l, ray.Direction);
-        var l2 = Vector3.Dot(l, l);
-        var r2 = sphere.Radius * sphere.Radius;
+        // Computed in double, and the squared perpendicular distance is the squared length of l - s * direction,
+        // not l2 - s * s: the float squares overflow for a distant sphere, and the difference of two huge
+        // squares cancels every digit that matters (for a unit direction the two are equal). The projection s is
+        // divided by the squared direction length: a float direction is a rounding away from unit length, an
+        // error the distance to the sphere multiplies. A zero direction keeps s = 0 (its dot product), and a NaN
+        // one keeps the NaN, which hits nothing.
+        var (lx, ly, lz) = Containment.DifferenceInDouble(sphere.Center, ray.Origin);
+        double dx = ray.Direction.X;
+        double dy = ray.Direction.Y;
+        double dz = ray.Direction.Z;
+        double dot = (lx * dx) + (ly * dy) + (lz * dz);
+        double dd = (dx * dx) + (dy * dy) + (dz * dz);
+        double s = dd > 0 ? dot / dd : dot;
+        double l2 = (lx * lx) + (ly * ly) + (lz * lz);
+        double radius = sphere.Radius;
+        double r2 = radius * radius;
         if (s < 0 && l2 > r2)
             return false;
-        var m2 = l2 - (s * s);
+        double px = lx - (s * dx);
+        double py = ly - (s * dy);
+        double pz = lz - (s * dz);
+        double m2 = (px * px) + (py * py) + (pz * pz);
         return m2 <= r2;
     }
 

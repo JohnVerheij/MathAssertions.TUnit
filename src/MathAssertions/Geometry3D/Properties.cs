@@ -16,12 +16,19 @@ public static class Properties
     /// <param name="t">Triangle to test.</param>
     /// <param name="tolerance">Maximum area considered degenerate. Must be non-negative
     /// and not NaN.</param>
-    /// <returns><see langword="true"/> if <c>t.Area &lt;= tolerance</c>.</returns>
+    /// <returns><see langword="true"/> if the area, computed in <see cref="double"/>, is at most
+    /// <paramref name="tolerance"/>; a triangle with a NaN coordinate is not degenerate (its area is
+    /// not a number).</returns>
+    /// <remarks>
+    /// <see cref="Triangle3D.Area"/> is a <see cref="float"/> and underflows to zero for a tiny triangle
+    /// (sides near <c>1e-25</c>); this check uses the area in <see cref="double"/>, so a tolerance of zero
+    /// still tells a tiny triangle from a flat one.
+    /// </remarks>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is NaN or negative.</exception>
     public static bool IsDegenerate(this Triangle3D t, double tolerance)
     {
         ValidateTolerance(tolerance);
-        double area = t.Area;
+        double area = CrossLengthOfDifferences(t.B, t.C, t.A) * 0.5;
         return area <= tolerance;
     }
 
@@ -64,34 +71,59 @@ public static class Properties
         if (points.Length < 3)
             return true;
 
+        // Everything below is computed in double: in float the difference of two finite points can overflow
+        // (3e38 against -3e38), which turns the distance into NaN and passes any point, and the length of a
+        // tiny edge underflows to zero.
         var p0 = points[0];
-        var direction = Vector3.Zero;
-        var foundDirection = false;
+        var directionIndex = -1;
+        double dirLength = 0.0;
         for (var i = 1; i < points.Length; i++)
         {
-            var d = points[i] - p0;
-            double dLength = d.Length();
+            double dLength = DifferenceLength(points[i], p0);
             if (dLength > tolerance)
             {
-                direction = d;
-                foundDirection = true;
+                directionIndex = i;
+                dirLength = dLength;
                 break;
             }
         }
-        if (!foundDirection)
+        if (directionIndex < 0)
             return true;
 
-        // foundDirection guarantees |direction| > tolerance >= 0, so the divisor is non-zero.
-        double dirLength = direction.Length();
+        // A direction was found, so |direction| > tolerance >= 0 and the divisor is non-zero.
+        var direction = points[directionIndex];
         for (var i = 1; i < points.Length; i++)
         {
-            var cross = Vector3.Cross(direction, points[i] - p0);
-            double crossLength = cross.Length();
-            var perpendicularDistance = crossLength / dirLength;
+            var perpendicularDistance = CrossLengthOfDifferences(direction, points[i], p0) / dirLength;
             if (perpendicularDistance > tolerance)
                 return false;
         }
         return true;
+    }
+
+    /// <summary>Length of <c>to - from</c>, each component widened to <see cref="double"/> before the subtraction.</summary>
+    /// <param name="to">The end point.</param>
+    /// <param name="from">The start point.</param>
+    /// <returns>The Euclidean distance between the two points.</returns>
+    private static double DifferenceLength(Vector3 to, Vector3 from)
+    {
+        var (dx, dy, dz) = Containment.DifferenceInDouble(to, from);
+        return Math.Sqrt((dx * dx) + (dy * dy) + (dz * dz));
+    }
+
+    /// <summary>Length of the cross product <c>(a - origin) x (b - origin)</c> computed in <see cref="double"/>.</summary>
+    /// <param name="a">The end of the first edge.</param>
+    /// <param name="b">The end of the second edge.</param>
+    /// <param name="origin">The common start of both edges.</param>
+    /// <returns>The length of the cross product of the two edges.</returns>
+    private static double CrossLengthOfDifferences(Vector3 a, Vector3 b, Vector3 origin)
+    {
+        var (ux, uy, uz) = Containment.DifferenceInDouble(a, origin);
+        var (vx, vy, vz) = Containment.DifferenceInDouble(b, origin);
+        double cx = (uy * vz) - (uz * vy);
+        double cy = (uz * vx) - (ux * vz);
+        double cz = (ux * vy) - (uy * vx);
+        return Math.Sqrt((cx * cx) + (cy * cy) + (cz * cz));
     }
 
     /// <summary>

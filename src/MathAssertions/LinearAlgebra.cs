@@ -207,7 +207,9 @@ public static class LinearAlgebra
     {
         ValidateTolerance(tolerance);
 
-        double dot = Vector3.Dot(u, v);
+        // In double: the float products of (1e20, 1e20, 0) and (1e20, -1e20, 0) overflow to infinity and
+        // the sum is NaN, although the vectors are orthogonal.
+        double dot = DotInDouble(u, v);
         return MathTolerance.IsApproximatelyEqual(dot, 0.0, tolerance);
     }
 
@@ -289,9 +291,62 @@ public static class LinearAlgebra
     /// </summary>
     /// <param name="u">First vector.</param>
     /// <param name="v">Second vector.</param>
-    /// <returns>The angle between the vectors in radians, on <c>[0, pi]</c>.</returns>
+    /// <returns>The angle between the vectors in radians, on <c>[0, pi]</c>; NaN when a component is NaN.</returns>
+    /// <remarks>
+    /// The cross product and the dot product are computed in <see langword="double"/>, so vectors of
+    /// any <see langword="float"/> magnitude keep their angle: <c>(1e-30, 0, 0)</c> and <c>(0, 1e-30, 0)</c>
+    /// are a right angle apart (the products underflow to zero in <see langword="float"/>, which reads
+    /// as a zero vector and gives <c>0</c>), and vectors near <c>1e20</c> do not overflow.
+    /// </remarks>
     public static double AngleBetween(Vector3 u, Vector3 v)
-        => Math.Atan2(Vector3.Cross(u, v).Length(), Vector3.Dot(u, v));
+        => Math.Atan2(CrossLengthInDouble(u, v), DotInDouble(u, v));
+
+    /// <summary>Dot product of two vectors computed in <see cref="double"/> precision.</summary>
+    /// <param name="u">First vector.</param>
+    /// <param name="v">Second vector.</param>
+    /// <returns>The dot product <c>u . v</c>.</returns>
+    private static double DotInDouble(Vector3 u, Vector3 v)
+    {
+        double ux = u.X;
+        double uy = u.Y;
+        double uz = u.Z;
+        return (ux * v.X) + (uy * v.Y) + (uz * v.Z);
+    }
+
+    /// <summary>Scalar triple product <c>a . (b x c)</c> computed in <see cref="double"/> precision.</summary>
+    /// <param name="a">First vector.</param>
+    /// <param name="b">Second vector.</param>
+    /// <param name="c">Third vector.</param>
+    /// <returns>The signed volume of the parallelepiped spanned by the three vectors.</returns>
+    private static double TripleProductInDouble(Vector3 a, Vector3 b, Vector3 c)
+    {
+        double bx = b.X;
+        double by = b.Y;
+        double bz = b.Z;
+        double cx = c.X;
+        double cy = c.Y;
+        double cz = c.Z;
+        double crossX = (by * cz) - (bz * cy);
+        double crossY = (bz * cx) - (bx * cz);
+        double crossZ = (bx * cy) - (by * cx);
+        double ax = a.X;
+        double ay = a.Y;
+        double az = a.Z;
+        return (ax * crossX) + (ay * crossY) + (az * crossZ);
+    }
+
+    /// <summary>Returns <see langword="true"/> when every component of every vector is finite.</summary>
+    /// <param name="vectors">Vectors to inspect.</param>
+    /// <returns><see langword="true"/> if no component is NaN or infinite.</returns>
+    private static bool AreAllFinite(ReadOnlySpan<Vector3> vectors)
+    {
+        foreach (var v in vectors)
+        {
+            if (!float.IsFinite(v.X) || !float.IsFinite(v.Y) || !float.IsFinite(v.Z))
+                return false;
+        }
+        return true;
+    }
 
     /// <summary>
     /// Returns <see langword="true"/> when the supplied vectors are linearly independent
@@ -312,7 +367,13 @@ public static class LinearAlgebra
     /// <para>
     /// The length-1 case compares vector length directly against tolerance rather than
     /// length-squared against tolerance-squared, so the verdict is well-defined for
-    /// extreme tolerance magnitudes (where squaring would underflow or overflow).
+    /// extreme tolerance magnitudes (where squaring would underflow or overflow). The length and the
+    /// triple product are computed in <see langword="double"/>, so a tiny or huge <see langword="float"/>
+    /// vector does not underflow or overflow.
+    /// </para>
+    /// <para>
+    /// A vector with a NaN or infinite component has no direction: the result is
+    /// <see langword="false"/> for any count of vectors but zero.
     /// </para>
     /// </remarks>
     /// <param name="vectors">Vectors to test.</param>
@@ -324,22 +385,21 @@ public static class LinearAlgebra
     {
         ValidateTolerance(tolerance);
 
+        // A vector with a NaN or infinite component has no direction: the set is not independent (the pair
+        // case would otherwise read "not parallel" off the NaN and report independence).
+        if (!AreAllFinite(vectors))
+            return false;
+
         switch (vectors.Length)
         {
             case 0:
                 return true;
             case 1:
-                {
-                    double length = vectors[0].Length();
-                    return length > tolerance;
-                }
+                return LengthInDouble(vectors[0]) > tolerance;
             case 2:
                 return !AreParallel(vectors[0], vectors[1], tolerance);
             case 3:
-                {
-                    double det = Vector3.Dot(vectors[0], Vector3.Cross(vectors[1], vectors[2]));
-                    return Math.Abs(det) > tolerance;
-                }
+                return Math.Abs(TripleProductInDouble(vectors[0], vectors[1], vectors[2])) > tolerance;
             default:
                 return false;
         }

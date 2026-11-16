@@ -23,7 +23,7 @@ The mathematical-assertion surface is exposed as fluent extensions over TUnit's 
 dotnet add package MathAssertions.TUnit
 ```
 
-`MathAssertions` (the framework-agnostic core) comes transitively. **Requirements:** TUnit 1.81.10 or later, .NET 10 or .NET 11.
+`MathAssertions` (the framework-agnostic core) comes transitively. **Requirements:** TUnit 1.85.0 or later, .NET 10 or .NET 11.
 
 The source-generated entry point (`IsApproximatelyEqualTo` on `Vector3`) auto-imports via `TUnit.Assertions.Extensions`. The additional `using` you typically need is `System.Numerics` for the value type itself, plus `MathAssertions.Geometry3D` when you construct the geometry primitives (`Sphere`, `Ray3D`, ...). If you call `MathTolerance.IsApproximatelyEqual` directly from a `[GenerateAssertion]` extension on a private domain type, add `MathAssertions` to your `GlobalUsings.cs`:
 
