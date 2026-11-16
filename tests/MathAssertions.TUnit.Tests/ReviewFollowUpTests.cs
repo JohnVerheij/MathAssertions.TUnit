@@ -9,10 +9,11 @@ namespace MathAssertions.TUnit.Tests;
 
 /// <summary>
 /// Pins the follow-up fixes to the review sweep: a ray-sphere test that assumed an exactly unit direction, statistics
-/// that lost a small value or a small spread to a scaling chosen by the largest magnitude, a sum recovery that lost a
-/// small value to its fixed scaling, and a tensor comparison that subtracted <see cref="float"/> and
-/// <see cref="Half"/> elements in their own precision. Each test failed on the code it replaced, except two that pin
-/// an answer the new code must keep: a zero direction, and the correctly rounded mean of a denormal sample.
+/// that lost a small value or a small spread to a scaling chosen by the largest magnitude or to the rounding of a running
+/// sum or mean, a sum recovery that lost a small value to its fixed scaling, and a tensor comparison that subtracted
+/// <see cref="float"/> and <see cref="Half"/> elements in their own precision. Each test failed on the code it replaced, except three that pin
+/// an answer the new code must keep: a zero direction, and the correctly rounded means of a denormal sample and of
+/// <c>[0.1, 0.2, 0.3]</c>.
 /// </summary>
 [Category("Smoke")]
 [Timeout(5_000)]
@@ -61,11 +62,63 @@ internal sealed class ReviewFollowUpTests
     public async Task HasMeanApproximately_SmallValueNextToLargeOnesThatCancel_CountsIt(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
-        // Scaling by the largest magnitude (2^-500) took 2^-600 below the smallest double.
-        double[] values = [Math.ScaleB(1.0, 500), -Math.ScaleB(1.0, 500), Math.ScaleB(1.0, -600)];
+        // Scaling by the largest magnitude (2^-500) took 2^-600 below the smallest double, and a running mean lost it
+        // when it came between the two large values. The compensated sum keeps it in any order.
+        var large = Math.ScaleB(1.0, 500);
+        var small = Math.ScaleB(1.0, -600);
+        double[][] orders = [[large, -large, small], [large, small, -large], [small, large, -large]];
 
-        await Assert.That(Statistics.HasMeanApproximately(values, Math.ScaleB(1.0, -600) / 3, 0)).IsTrue();
-        await Assert.That(Statistics.HasMeanApproximately(values, 0, 0)).IsFalse();
+        foreach (var values in orders)
+        {
+            await Assert.That(Statistics.HasMeanApproximately(values, small / 3, 0)).IsTrue();
+            await Assert.That(Statistics.HasMeanApproximately(values, 0, 0)).IsFalse();
+        }
+    }
+
+    [Test]
+    public async Task HasMeanApproximately_TinyMeanOfAShiftedSample_IsNotRoundedAwayInTheShiftedCopy(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // The extremes need a shift by 2^4, which takes 16 * double.Epsilon exactly to double.Epsilon; dividing that
+        // by 3 in the shifted copy gave zero. The sum is restored first, so the mean is the correctly rounded 5e.
+        double[] values = [double.MaxValue, -double.MaxValue, 16 * double.Epsilon];
+
+        await Assert.That(Statistics.HasMeanApproximately(values, 5 * double.Epsilon, 0)).IsTrue();
+    }
+
+    [Test]
+    public async Task HasMeanApproximately_ExtremesOfOneSign_AreTheirOwnMean(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // Their sum does not fit in a double, so the mean is divided in the shifted copy and scaled back.
+        double[] positive = [double.MaxValue, double.MaxValue];
+        double[] negative = [-double.MaxValue, -double.MaxValue, -double.MaxValue];
+
+        await Assert.That(Statistics.HasMeanApproximately(positive, double.MaxValue, 0)).IsTrue();
+        await Assert.That(Statistics.HasMeanApproximately(negative, -double.MaxValue, 0)).IsTrue();
+    }
+
+    [Test]
+    public async Task HasMeanApproximately_OrdinarySample_IsTheCorrectlyRoundedMean(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // The exact mean of the three doubles is closest to 0.2; dividing the rounded sum would give
+        // 0.19999999999999998.
+        double[] values = [0.1, 0.2, 0.3];
+
+        await Assert.That(Statistics.HasMeanApproximately(values, 0.2, 0)).IsTrue();
+    }
+
+    [Test]
+    public async Task HasVarianceApproximately_ValuesOneUnitInTheLastPlaceApart_KeepTheirVariance(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // The running mean of [2^52 + 1, 2^52] (the scaled values) rounded to 2^52, so the squared differences were
+        // zero; centered on the smallest value they are [1, 0], and the variance is the exact 2^-105.
+        double[] values = [1.0 + Math.ScaleB(1.0, -52), 1.0];
+
+        await Assert.That(Statistics.HasVarianceApproximately(values, Math.ScaleB(1.0, -105), 0)).IsTrue();
+        await Assert.That(Statistics.AreAllWithinSigmasOfMean(values, 2)).IsTrue();
     }
 
     [Test]
@@ -120,6 +173,20 @@ internal sealed class ReviewFollowUpTests
         await Assert.That(Statistics.HasSumApproximately(values, 0, 0)).IsFalse();
         await Assert.That(Statistics.HasSumApproximately(denormal, double.Epsilon, 0)).IsTrue();
         await Assert.That(Statistics.HasSumApproximately(denormal, 0, 0)).IsFalse();
+    }
+
+    [Test]
+    public async Task HasSumApproximately_ValueThatPlainAdditionRoundsAway_StillCounts(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // A 1 next to extremes that cancel was absorbed by the running sum, in the overflow recovery and in a plain sum
+        // alike; the compensated sum keeps it.
+        var max = double.MaxValue;
+
+        await Assert.That(Statistics.HasSumApproximately([max, max, 1, -max, -max], 1, 0)).IsTrue();
+        await Assert.That(Statistics.HasSumApproximately([max, -max, max, 1, -max], 1, 0)).IsTrue();
+        await Assert.That(Statistics.HasSumApproximately([1e300, 1, -1e300], 1, 0)).IsTrue();
+        await Assert.That(Statistics.HasSumApproximately([1e300, 1, -1e300], 0, 0)).IsFalse();
     }
 
     // ----- MathTolerance, tensor overload -----

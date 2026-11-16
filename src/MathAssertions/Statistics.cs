@@ -5,8 +5,8 @@ namespace MathAssertions;
 /// <summary>
 /// Statistical-property checks for <see cref="ReadOnlySpan{T}"/> of <see cref="double"/>:
 /// mean, variance, standard deviation, sum, median, percentile, and sigma-bound checks
-/// against the sample's own mean. Numerically stable single-pass mean and variance via
-/// Welford's online algorithm.
+/// against the sample's own mean. The mean and the sum are compensated (Neumaier), and the variance
+/// comes from Welford's online algorithm over the sample centered on its smallest value.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -54,16 +54,22 @@ public static class Statistics
     /// relative to mean.
     /// </para>
     /// <para>
+    /// The mean is a compensated sum (Neumaier) divided by the count, so a value that plain addition would round
+    /// away next to larger ones that cancel still counts, in any order. The variance is Welford's algorithm over
+    /// the sample centered on its smallest value, so values only a few units in the last place apart keep their
+    /// variance.
+    /// </para>
+    /// <para>
     /// A sample of finite values is summarized on copies scaled by powers of two (exact), so nothing overflows
-    /// or underflows on the way, whatever the magnitudes: the mean is taken over a copy shifted only as far as
-    /// keeps every difference finite (not at all inside the usual range), with what the shift rounds away
-    /// added back, and the squares over a copy scaled by the sample's spread. The mean of
-    /// <c>[double.MaxValue, -double.MaxValue]</c> is <c>0</c>, not the infinity that the running difference
-    /// would give; a small value next to large ones that cancel still moves the mean; and values that differ by
-    /// far less than their magnitude still have a standard deviation. The variance is infinite only when it
-    /// does not fit in a <see cref="double"/>, and zero only when it is too small to represent. The standard
-    /// deviation checks take the square root before scaling back, so their standard deviation is finite and
-    /// non-zero whenever it fits, even when the variance does not.
+    /// or underflows on the way, whatever the magnitudes: the mean over a copy shifted down only as far as keeps
+    /// every partial sum finite (scaled up when the values are below 1, not scaled inside the usual range), with
+    /// the bits a shift down rounds away kept apart and added back, and the squares over the centered copy scaled
+    /// by the sample's spread. The mean of <c>[double.MaxValue, -double.MaxValue]</c> is <c>0</c>, not the
+    /// infinity that a running difference would give. The variance is infinite only when it does not fit in a
+    /// <see cref="double"/>, and zero only when it is too small to represent. The standard deviation checks take
+    /// the square root before scaling back, so their standard deviation is finite and non-zero whenever it fits,
+    /// even when the variance does not. A sample with NaN or an infinity is summarized as it is, so those
+    /// propagate.
     /// </para>
     /// </remarks>
     /// <param name="values">Sample to summarize.</param>
@@ -75,10 +81,10 @@ public static class Statistics
     }
 
     /// <summary>
-    /// Mean, unbiased variance and standard deviation of a sample, by Welford's algorithm. For a finite sample the
-    /// mean comes from <see cref="MeanWithoutOverflow"/>, and the squares from a copy scaled by the power of two of
-    /// the sample's spread (<see cref="SpreadExponent"/>); a sample with NaN or an infinity is summarized as it is,
-    /// so those propagate.
+    /// Mean, unbiased variance and standard deviation of a sample. For a finite sample the mean comes from
+    /// <see cref="MeanWithoutOverflow"/>, and the squares from Welford's algorithm over a copy centered on the
+    /// smallest value and scaled by the power of two of the sample's spread (<see cref="SpreadExponent"/>); a sample
+    /// with NaN or an infinity is summarized by plain Welford, so those propagate.
     /// </summary>
     /// <param name="values">Sample to summarize.</param>
     /// <returns>The mean, the variance and the standard deviation; NaN for the empty sample, and a variance
@@ -93,13 +99,13 @@ public static class Statistics
         var (largest, min, max) = Extremes(values);
         if (!double.IsFinite(largest))
         {
-            var (plainMean, plainM2) = Welford(values, 0);
+            var (plainMean, plainM2) = Welford(values, 0, 0.0);
             var plainVariance = plainM2 / (values.Length - 1);
             return (plainMean, plainVariance, Math.Sqrt(plainVariance));
         }
 
         var exponent = SpreadExponent(min, max);
-        var (_, m2) = Welford(values, exponent);
+        var (_, m2) = Welford(values, exponent, Math.ScaleB(min, -exponent));
         var scaledVariance = m2 / (values.Length - 1);
         return (
             MeanWithoutOverflow(values, largest),
@@ -127,18 +133,21 @@ public static class Statistics
     }
 
     /// <summary>Welford's running mean and sum of squared differences over the sample scaled by
-    /// <c>2^-exponent</c>.</summary>
+    /// <c>2^-exponent</c> and shifted by <paramref name="reference"/>. A shift leaves the squared differences as they
+    /// are, and centering on the smallest value keeps the running mean from rounding away a spread of a few units in
+    /// the last place.</summary>
     /// <param name="values">The sample.</param>
     /// <param name="exponent">The power of two the values are divided by.</param>
-    /// <returns>The scaled mean and the scaled sum of squared differences from it.</returns>
-    private static (double Mean, double M2) Welford(ReadOnlySpan<double> values, int exponent)
+    /// <param name="reference">The value subtracted from each scaled value.</param>
+    /// <returns>The scaled, shifted mean and the scaled sum of squared differences from it.</returns>
+    private static (double Mean, double M2) Welford(ReadOnlySpan<double> values, int exponent, double reference)
     {
         var mean = 0.0;
         var m2 = 0.0;
         var count = 0;
         foreach (var raw in values)
         {
-            var v = Math.ScaleB(raw, -exponent);
+            var v = Math.ScaleB(raw, -exponent) - reference;
             count++;
             var delta = v - mean;
             mean += delta / count;
@@ -149,34 +158,72 @@ public static class Statistics
     }
 
     /// <summary>
-    /// The mean of a finite sample of at least two values: Welford's running mean over a scaled copy. A sample whose
-    /// largest magnitude is below 1 is scaled up to it, which is exact and keeps the running divisions clear of the
-    /// denormal range, where they would round early; one near the top of the range is shifted down by
-    /// <see cref="OverflowShift"/>, just far enough to keep every difference finite; any other is not scaled. A shift
-    /// down rounds away the low bits of a value near the bottom of the range; those are kept apart, exactly, and their
-    /// mean added after shifting back, so a small value next to large ones that cancel still counts.
+    /// The mean of a finite sample of at least two values: the compensated sum of a scaled copy
+    /// (<see cref="CompensatedSum"/>) divided by the count. A sample whose largest magnitude is below 1 is scaled up
+    /// to it, which is exact and keeps the division clear of the denormal range, where it would round early; one near
+    /// the top of the range is shifted down by <see cref="OverflowShift"/>, just far enough to keep every partial sum
+    /// finite; any other is not scaled. After a shift down the sum is restored before the division when it fits, so a
+    /// tiny mean is not rounded away in the shifted copy, and the bits the shift rounded away are added back.
     /// </summary>
     /// <param name="values">The sample.</param>
     /// <param name="largest">The largest magnitude in it, finite.</param>
     /// <returns>The mean.</returns>
     private static double MeanWithoutOverflow(ReadOnlySpan<double> values, double largest)
     {
-        var shift = largest is > 0 and < 1 ? Math.ILogB(largest) : OverflowShift(largest, values.Length);
+        var count = values.Length;
+        var shift = largest is > 0 and < 1 ? Math.ILogB(largest) : OverflowShift(largest, count);
+        var (sum, compensation, residual) = CompensatedSum(values, shift);
+        var scaledSum = sum + compensation;
         if (shift <= 0)
-            return Math.ScaleB(Welford(values, shift).Mean, shift);
+            return Math.ScaleB(Divide(sum, compensation, count), shift);
 
-        var mean = 0.0;
+        var total = Math.ScaleB(scaledSum, shift) + residual;
+        return double.IsFinite(total)
+            ? total / count
+            : Math.ScaleB(scaledSum / count, shift) + (residual / count);
+    }
+
+    /// <summary>
+    /// A compensated sum divided by the count with one rounding in effect: the quotient of the sum, then the exact
+    /// remainder of that division (a fused multiply-add) and the compensation divided by the count and added to it.
+    /// Dividing the rounded total instead rounds twice, which turns the mean of <c>[0.1, 0.2, 0.3]</c> into
+    /// <c>0.19999999999999998</c>.
+    /// </summary>
+    /// <param name="sum">The compensated sum's running sum.</param>
+    /// <param name="compensation">Its compensation.</param>
+    /// <param name="count">The number of values.</param>
+    /// <returns>The quotient.</returns>
+    private static double Divide(double sum, double compensation, int count)
+    {
+        var quotient = sum / count;
+        var remainder = Math.FusedMultiplyAdd(-quotient, count, sum);
+        return quotient + ((remainder + compensation) / count);
+    }
+
+    /// <summary>
+    /// Neumaier's compensated sum of the sample scaled by <c>2^-shift</c>: the low-order part each addition rounds
+    /// away is collected in the compensation, so a value next to larger ones that cancel still counts, whatever the
+    /// order. A shift down also rounds away the low bits of a value near the bottom of the range; those are kept in the
+    /// residual, exactly, at the original scale. A shift up (a negative <paramref name="shift"/>) is exact.
+    /// </summary>
+    /// <param name="values">The sample, finite.</param>
+    /// <param name="shift">The power of two the values are divided by.</param>
+    /// <returns>The scaled sum, its compensation, and the residual at the original scale.</returns>
+    private static (double Sum, double Compensation, double Residual) CompensatedSum(ReadOnlySpan<double> values, int shift)
+    {
+        var sum = 0.0;
+        var compensation = 0.0;
         var residual = 0.0;
-        var count = 0;
         foreach (var raw in values)
         {
             var v = Math.ScaleB(raw, -shift);
             residual += raw - Math.ScaleB(v, shift);
-            count++;
-            mean += (v - mean) / count;
+            var next = sum + v;
+            compensation += Math.Abs(sum) >= Math.Abs(v) ? (sum - next) + v : (v - next) + sum;
+            sum = next;
         }
 
-        return Math.ScaleB(mean, shift) + (residual / count);
+        return (sum, compensation, residual);
     }
 
     /// <summary>
@@ -185,7 +232,7 @@ public static class Statistics
     /// come near the top of the range of a <see cref="double"/>.
     /// </summary>
     /// <param name="largest">The largest magnitude, finite and not negative.</param>
-    /// <param name="count">The number of values, at least two.</param>
+    /// <param name="count">The number of values, at least one when <paramref name="largest"/> is positive.</param>
     /// <returns>The shift, at least zero.</returns>
     private static int OverflowShift(double largest, int count)
         => largest > 0 ? Math.Max(0, Math.ILogB(largest) + int.Log2(count - 1) + 1 - 1021) : 0;
@@ -294,48 +341,35 @@ public static class Statistics
     {
         ValidateTolerance(tolerance);
 
-        var sum = 0.0;
-        foreach (var v in values)
-            sum += v;
-        if (double.IsInfinity(sum))
-            sum = SumWithoutIntermediateOverflow(values, sum);
-        return MathTolerance.IsApproximatelyEqual(sum, expected, tolerance);
+        return MathTolerance.IsApproximatelyEqual(Sum(values), expected, tolerance);
     }
 
     /// <summary>
-    /// Re-sums a sample whose running sum overflowed. When every value is finite the overflow may be an
-    /// intermediate one (<c>[double.MaxValue, double.MaxValue, -double.MaxValue]</c> sums to
-    /// <c>double.MaxValue</c>), so the values are summed after an exact scaling by the smallest power of two that
-    /// keeps every partial sum finite (<see cref="OverflowShift"/>), and the total is scaled back: it is infinite
-    /// again only when the sum itself does not fit in a <see cref="double"/>. The low bits the scaling rounds away
-    /// from a value near the bottom of the range are kept apart, exactly, and added after scaling back, so a small
-    /// value next to large ones that cancel still counts.
+    /// The sum of a sample. A sample with NaN or an infinity is summed plainly, so those carry into the sum. A finite
+    /// sample is summed with compensation (<see cref="CompensatedSum"/>), so a value that plain addition would round
+    /// away next to larger ones that cancel still counts, over a copy shifted down by <see cref="OverflowShift"/>, so no
+    /// partial sum overflows (<c>[double.MaxValue, double.MaxValue, -double.MaxValue]</c> sums to
+    /// <c>double.MaxValue</c>): the sum is infinite only when it does not fit in a <see cref="double"/>.
     /// </summary>
     /// <param name="values">The sample.</param>
-    /// <param name="overflowedSum">The running sum, infinite.</param>
-    /// <returns>The sum; <paramref name="overflowedSum"/> when a value is NaN or infinite, as then the
-    /// infinity is the true sum.</returns>
-    private static double SumWithoutIntermediateOverflow(ReadOnlySpan<double> values, double overflowedSum)
+    /// <returns>The sum; zero for the empty sample.</returns>
+    private static double Sum(ReadOnlySpan<double> values)
     {
         var largest = 0.0;
         foreach (var v in values)
-        {
-            if (!double.IsFinite(v))
-                return overflowedSum;
             largest = Math.Max(largest, Math.Abs(v));
+
+        if (!double.IsFinite(largest))
+        {
+            var plain = 0.0;
+            foreach (var v in values)
+                plain += v;
+            return plain;
         }
 
         var shift = OverflowShift(largest, values.Length);
-        var scaledSum = 0.0;
-        var residual = 0.0;
-        foreach (var v in values)
-        {
-            var scaled = Math.ScaleB(v, -shift);
-            scaledSum += scaled;
-            residual += v - Math.ScaleB(scaled, shift);
-        }
-
-        return Math.ScaleB(scaledSum, shift) + residual;
+        var (sum, compensation, residual) = CompensatedSum(values, shift);
+        return Math.ScaleB(sum + compensation, shift) + residual;
     }
 
     /// <summary>

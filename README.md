@@ -577,7 +577,7 @@ Every `Statistics` method states what it does with a NaN in the sample and what 
 
 An infinite `sigmas` over a sample whose standard deviation is zero gives a NaN envelope (`infinity * 0`), which nothing is within.
 
-A sample of finite values is summarized without overflow or underflow, whatever its magnitudes: the mean of `[double.MaxValue, -double.MaxValue]` is `0`, a small value next to large ones that cancel still moves the mean, values far closer than their magnitude keep their standard deviation, and the standard deviation of `[1e200, 3e200]` is `1.41e200` although its variance (`2e400`) is infinite. A sum is infinite only when the total does not fit in a `double`, not when a running partial sum overflowed on the way, and a small value next to extremes that cancel still counts.
+A sample of finite values is summarized without overflow or underflow, whatever its magnitudes: the mean of `[double.MaxValue, -double.MaxValue]` is `0`, values only a few units in the last place apart keep their variance, and the standard deviation of `[1e200, 3e200]` is `1.41e200` although its variance (`2e400`) is infinite. Means and sums are compensated, so a value that plain addition rounds away next to larger ones that cancel still counts, in any order (`[1e300, 1, -1e300]` sums to `1`), and a sum is infinite only when the total does not fit in a `double`, not when a running partial sum overflowed on the way.
 
 
 ## Stability intent (pre-1.0)
