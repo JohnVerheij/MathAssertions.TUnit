@@ -176,6 +176,19 @@ internal sealed class ReviewFollowUpTests
     }
 
     [Test]
+    public async Task SigmaChecks_TinyDifferenceFromTheMeanOfExtremes_IsNotRoundedAway(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // The mean of [max, -max, 3e] is e; dividing by 2^1024 rounded both e and 0 to zero, so 0 passed a zero-sigma
+        // envelope. The difference is compared as it is.
+        double[] values = [double.MaxValue, -double.MaxValue, 3 * double.Epsilon];
+
+        await Assert.That(Statistics.IsWithinSigmasOfMean(0, values, 0)).IsFalse();
+        await Assert.That(Statistics.IsWithinSigmasOfMean(double.Epsilon, values, 0)).IsTrue();
+        await Assert.That(Statistics.IsWithinSigmasOfMean(double.Epsilon, [-double.MaxValue, double.MaxValue], 0)).IsFalse();
+    }
+
+    [Test]
     public async Task HasSumApproximately_SmallValueNextToExtremesThatCancel_CountsIt(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();

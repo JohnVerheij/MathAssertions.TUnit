@@ -126,16 +126,28 @@ public static class Statistics
         return (MeanWithoutOverflow(values, largest), m2 / (values.Length - 1), exponent);
     }
 
-    /// <summary>Whether <paramref name="value"/> lies within <paramref name="scaledThreshold"/> of
-    /// <paramref name="mean"/>, compared after dividing both by <c>2^exponent</c>, which is exact and keeps their
-    /// difference finite.</summary>
+    /// <summary>
+    /// Whether <paramref name="value"/> lies within the envelope around <paramref name="mean"/>. The plain difference
+    /// is compared with the envelope scaled back from the scaled copy, which gives the answer of
+    /// <c>|value - mean| &lt;= sigmas * stdDev</c> and an infinite envelope only when the true one exceeds every
+    /// finite difference, also when the standard deviation itself does not fit in a <see cref="double"/>. Only a
+    /// difference that does not fit is compared on the scaled copy, with the value and the mean divided by
+    /// <c>2^exponent</c>; there a difference near the bottom of the range can round away, which no envelope of that
+    /// size could tell apart anyway.
+    /// </summary>
     /// <param name="value">The value to test.</param>
     /// <param name="mean">The mean of the sample.</param>
-    /// <param name="scaledThreshold">The envelope, already divided by <c>2^exponent</c>.</param>
+    /// <param name="scaledThreshold">The envelope divided by <c>2^exponent</c>: sigmas times the scaled standard
+    /// deviation.</param>
     /// <param name="exponent">The exponent of <see cref="ScaledMoments"/>.</param>
     /// <returns><see langword="true"/> when the value is within the envelope; <see langword="false"/> for NaN.</returns>
-    private static bool IsWithinScaled(double value, double mean, double scaledThreshold, int exponent)
-        => Math.Abs(Math.ScaleB(value, -exponent) - Math.ScaleB(mean, -exponent)) <= scaledThreshold;
+    private static bool IsWithinEnvelope(double value, double mean, double scaledThreshold, int exponent)
+    {
+        var difference = Math.Abs(value - mean);
+        return double.IsFinite(difference)
+            ? difference <= Math.ScaleB(scaledThreshold, exponent)
+            : Math.Abs(Math.ScaleB(value, -exponent) - Math.ScaleB(mean, -exponent)) <= scaledThreshold;
+    }
 
     /// <summary>The largest magnitude, the smallest value and the largest value of a sample; the largest magnitude is
     /// NaN when a value is.</summary>
@@ -517,9 +529,9 @@ public static class Statistics
     /// <paramref name="sigmas"/> standard deviations of the mean of
     /// <paramref name="sample"/>. Returns <see langword="false"/> for samples with fewer
     /// than two observations, where standard deviation is undefined under the unbiased
-    /// <c>N-1</c> convention. The comparison is made with the value, the mean and the standard
-    /// deviation divided by the same power of two, which is exact, so the envelope stays finite
-    /// when the standard deviation does not fit in a <see cref="double"/>.
+    /// <c>N-1</c> convention. The envelope comes from the sample scaled by a power of two, so it
+    /// stays finite when the standard deviation does not fit in a <see cref="double"/>, and the
+    /// difference from the mean is compared as it is.
     /// </summary>
     /// <param name="value">Value to test.</param>
     /// <param name="sample">Reference sample whose mean and standard deviation define the
@@ -539,7 +551,7 @@ public static class Statistics
         if (sample.Length < 2)
             return false;
         var (mean, scaledVariance, exponent) = ScaledMoments(sample);
-        return IsWithinScaled(value, mean, sigmas * Math.Sqrt(scaledVariance), exponent);
+        return IsWithinEnvelope(value, mean, sigmas * Math.Sqrt(scaledVariance), exponent);
     }
 
     /// <summary>
@@ -565,10 +577,9 @@ public static class Statistics
     /// NaN is false would otherwise let the loop fall through to a vacuous-true return).
     /// </para>
     /// <para>
-    /// The comparison is made with the values, the mean and the standard deviation divided by the
-    /// same power of two, which is exact, so a standard deviation that does not fit in a
-    /// <see cref="double"/> still bounds the envelope: <c>[-double.MaxValue, double.MaxValue]</c>
-    /// fails at half a sigma.
+    /// The envelope comes from the sample scaled by a power of two, so a standard deviation that
+    /// does not fit in a <see cref="double"/> still bounds it: <c>[-double.MaxValue, double.MaxValue]</c>
+    /// fails at half a sigma. The difference of each value from the mean is compared as it is.
     /// </para>
     /// </remarks>
     /// <param name="values">Sample to inspect, both as the reference and as the test set.</param>
@@ -586,7 +597,7 @@ public static class Statistics
         var scaledThreshold = sigmas * Math.Sqrt(scaledVariance);
         foreach (var v in values)
         {
-            if (!IsWithinScaled(v, mean, scaledThreshold, exponent))
+            if (!IsWithinEnvelope(v, mean, scaledThreshold, exponent))
                 return false;
         }
         return true;
