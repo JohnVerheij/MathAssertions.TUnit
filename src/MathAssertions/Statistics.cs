@@ -93,27 +93,49 @@ public static class Statistics
     /// and standard deviation of zero for one value.</returns>
     private static (double Mean, double Variance, double StdDev) Moments(ReadOnlySpan<double> values)
     {
+        var (mean, scaledVariance, exponent) = ScaledMoments(values);
+        return (mean, Math.ScaleB(scaledVariance, 2 * exponent), Math.ScaleB(Math.Sqrt(scaledVariance), exponent));
+    }
+
+    /// <summary>
+    /// The mean, and the unbiased variance of the sample divided by <c>2^(2 * exponent)</c>, with that exponent: the
+    /// variance as <see cref="Moments"/> computes it, before it is scaled back. The scaled variance always fits, so the
+    /// sigma checks compare in the scaled copy and keep a finite envelope when the standard deviation itself does not
+    /// fit in a <see cref="double"/>. The exponent is zero for a sample with NaN or an infinity, and for fewer than two
+    /// values.
+    /// </summary>
+    /// <param name="values">Sample to summarize.</param>
+    /// <returns>The mean, the scaled variance and the exponent; NaN for the empty sample, and a variance of zero for
+    /// one value.</returns>
+    private static (double Mean, double ScaledVariance, int Exponent) ScaledMoments(ReadOnlySpan<double> values)
+    {
         if (values.Length is 0)
-            return (double.NaN, double.NaN, double.NaN);
+            return (double.NaN, double.NaN, 0);
         if (values.Length is 1)
-            return (values[0], 0.0, 0.0);
+            return (values[0], 0.0, 0);
 
         var (largest, min, max) = Extremes(values);
         if (!double.IsFinite(largest))
         {
             var (plainMean, plainM2) = Welford(values, 0, 0.0);
-            var plainVariance = plainM2 / (values.Length - 1);
-            return (plainMean, plainVariance, Math.Sqrt(plainVariance));
+            return (plainMean, plainM2 / (values.Length - 1), 0);
         }
 
         var exponent = SpreadExponent(min, max);
         var (_, m2) = Welford(values, exponent, Math.ScaleB(min, -exponent));
-        var scaledVariance = m2 / (values.Length - 1);
-        return (
-            MeanWithoutOverflow(values, largest),
-            Math.ScaleB(scaledVariance, 2 * exponent),
-            Math.ScaleB(Math.Sqrt(scaledVariance), exponent));
+        return (MeanWithoutOverflow(values, largest), m2 / (values.Length - 1), exponent);
     }
+
+    /// <summary>Whether <paramref name="value"/> lies within <paramref name="scaledThreshold"/> of
+    /// <paramref name="mean"/>, compared after dividing both by <c>2^exponent</c>, which is exact and keeps their
+    /// difference finite.</summary>
+    /// <param name="value">The value to test.</param>
+    /// <param name="mean">The mean of the sample.</param>
+    /// <param name="scaledThreshold">The envelope, already divided by <c>2^exponent</c>.</param>
+    /// <param name="exponent">The exponent of <see cref="ScaledMoments"/>.</param>
+    /// <returns><see langword="true"/> when the value is within the envelope; <see langword="false"/> for NaN.</returns>
+    private static bool IsWithinScaled(double value, double mean, double scaledThreshold, int exponent)
+        => Math.Abs(Math.ScaleB(value, -exponent) - Math.ScaleB(mean, -exponent)) <= scaledThreshold;
 
     /// <summary>The largest magnitude, the smallest value and the largest value of a sample; the largest magnitude is
     /// NaN when a value is.</summary>
@@ -495,7 +517,9 @@ public static class Statistics
     /// <paramref name="sigmas"/> standard deviations of the mean of
     /// <paramref name="sample"/>. Returns <see langword="false"/> for samples with fewer
     /// than two observations, where standard deviation is undefined under the unbiased
-    /// <c>N-1</c> convention.
+    /// <c>N-1</c> convention. The comparison is made with the value, the mean and the standard
+    /// deviation divided by the same power of two, which is exact, so the envelope stays finite
+    /// when the standard deviation does not fit in a <see cref="double"/>.
     /// </summary>
     /// <param name="value">Value to test.</param>
     /// <param name="sample">Reference sample whose mean and standard deviation define the
@@ -514,8 +538,8 @@ public static class Statistics
 
         if (sample.Length < 2)
             return false;
-        var (mean, _, stdDev) = Moments(sample);
-        return Math.Abs(value - mean) <= sigmas * stdDev;
+        var (mean, scaledVariance, exponent) = ScaledMoments(sample);
+        return IsWithinScaled(value, mean, sigmas * Math.Sqrt(scaledVariance), exponent);
     }
 
     /// <summary>
@@ -540,6 +564,12 @@ public static class Statistics
     /// than silently passing every check (the IEEE 754 rule that any comparison against
     /// NaN is false would otherwise let the loop fall through to a vacuous-true return).
     /// </para>
+    /// <para>
+    /// The comparison is made with the values, the mean and the standard deviation divided by the
+    /// same power of two, which is exact, so a standard deviation that does not fit in a
+    /// <see cref="double"/> still bounds the envelope: <c>[-double.MaxValue, double.MaxValue]</c>
+    /// fails at half a sigma.
+    /// </para>
     /// </remarks>
     /// <param name="values">Sample to inspect, both as the reference and as the test set.</param>
     /// <param name="sigmas">Number of standard deviations defining the envelope. Must be
@@ -552,11 +582,11 @@ public static class Statistics
 
         if (values.Length < 2)
             return false;
-        var (mean, _, stdDev) = Moments(values);
-        var threshold = sigmas * stdDev;
+        var (mean, scaledVariance, exponent) = ScaledMoments(values);
+        var scaledThreshold = sigmas * Math.Sqrt(scaledVariance);
         foreach (var v in values)
         {
-            if (!(Math.Abs(v - mean) <= threshold))
+            if (!IsWithinScaled(v, mean, scaledThreshold, exponent))
                 return false;
         }
         return true;

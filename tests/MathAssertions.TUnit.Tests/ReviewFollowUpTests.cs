@@ -161,6 +161,21 @@ internal sealed class ReviewFollowUpTests
     }
 
     [Test]
+    public async Task SigmaChecks_StandardDeviationBeyondTheDoubleRange_KeepAFiniteEnvelope(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // The standard deviation of [-max, max] is sqrt(2) * max, which overflows; an infinite envelope let both values
+        // pass at half a sigma, although each lies about 0.707 standard deviations from the mean.
+        double[] values = [-double.MaxValue, double.MaxValue];
+
+        await Assert.That(Statistics.AreAllWithinSigmasOfMean(values, 0.5)).IsFalse();
+        await Assert.That(Statistics.AreAllWithinSigmasOfMean(values, 1)).IsTrue();
+        await Assert.That(Statistics.IsWithinSigmasOfMean(double.MaxValue, values, 0.5)).IsFalse();
+        await Assert.That(Statistics.IsWithinSigmasOfMean(double.MaxValue, values, 1)).IsTrue();
+        await Assert.That(Statistics.IsWithinSigmasOfMean(0, values, 0.5)).IsTrue();
+    }
+
+    [Test]
     public async Task HasSumApproximately_SmallValueNextToExtremesThatCancel_CountsIt(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
