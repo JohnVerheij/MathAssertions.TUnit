@@ -38,13 +38,13 @@
       },
       "SnapshotAssertions.TUnit": {
         "type": "Direct",
-        "requested": "[0.10.0, )",
-        "resolved": "0.10.0",
-        "contentHash": "Bhv3p3zqRJjnLy3/WICjz8Y2tJGWXbhdmGvQ5/kX8Hcry+IuXQ7IQeolapnE3FXQpB8TA9qZ6yJ8qU/q9jYSYA==",
+        "requested": "[0.11.0, )",
+        "resolved": "0.11.0",
+        "contentHash": "oXp3w7in1nWa4Jhj2KpK4q30xOFITUIrFJaQjWKRs1/z/+XGkd3Bi0sllzZKfpRd0GFYDNxCciAJaYSHkJP7Mg==",
         "dependencies": {
-          "SnapshotAssertions": "0.10.0",
-          "TUnit.Assertions": "1.85.0",
-          "TUnit.Core": "1.85.0"
+          "SnapshotAssertions": "0.11.0",
+          "TUnit.Assertions": "1.87.12",
+          "TUnit.Core": "1.87.12"
         }
       },
       "SonarAnalyzer.CSharp": {
@@ -138,8 +138,8 @@
       },
       "SnapshotAssertions": {
         "type": "Transitive",
-        "resolved": "0.10.0",
-        "contentHash": "+JbMDtbAsvIXx+rSjYByDLcwW9iVyAEn7UaAU3biS5Ll8+j7bMb56HKJmqtHtNuhg3waodnvDjIf7KtU/j4uzg=="
+        "resolved": "0.11.0",
+        "contentHash": "ivmy6JIBDEeREkfKQgigZHWhA67fTRuxpKe5lH93+k3Rq29+yNYJt37IObtXXfhjHK47Hj4Q1mVXCezYzmuDEw=="
       },
       "System.CodeDom": {
         "type": "Transitive",
@@ -227,13 +227,13 @@
       },
       "SnapshotAssertions.TUnit": {
         "type": "Direct",
-        "requested": "[0.10.0, )",
-        "resolved": "0.10.0",
-        "contentHash": "Bhv3p3zqRJjnLy3/WICjz8Y2tJGWXbhdmGvQ5/kX8Hcry+IuXQ7IQeolapnE3FXQpB8TA9qZ6yJ8qU/q9jYSYA==",
+        "requested": "[0.11.0, )",
+        "resolved": "0.11.0",
+        "contentHash": "oXp3w7in1nWa4Jhj2KpK4q30xOFITUIrFJaQjWKRs1/z/+XGkd3Bi0sllzZKfpRd0GFYDNxCciAJaYSHkJP7Mg==",
         "dependencies": {
-          "SnapshotAssertions": "0.10.0",
-          "TUnit.Assertions": "1.85.0",
-          "TUnit.Core": "1.85.0"
+          "SnapshotAssertions": "0.11.0",
+          "TUnit.Assertions": "1.87.12",
+          "TUnit.Core": "1.87.12"
         }
       },
       "SonarAnalyzer.CSharp": {
@@ -327,8 +327,8 @@
       },
       "SnapshotAssertions": {
         "type": "Transitive",
-        "resolved": "0.10.0",
-        "contentHash": "+JbMDtbAsvIXx+rSjYByDLcwW9iVyAEn7UaAU3biS5Ll8+j7bMb56HKJmqtHtNuhg3waodnvDjIf7KtU/j4uzg=="
+        "resolved": "0.11.0",
+        "contentHash": "ivmy6JIBDEeREkfKQgigZHWhA67fTRuxpKe5lH93+k3Rq29+yNYJt37IObtXXfhjHK47Hj4Q1mVXCezYzmuDEw=="
       },
       "System.CodeDom": {
         "type": "Transitive",
